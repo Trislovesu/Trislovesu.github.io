@@ -706,7 +706,8 @@ RULES:
 - Be SPECIFIC to what's in the image — body, outfit, vibe, expression — make it feel personal not generic
 - Each of the 3 replies must hit differently — vary from suggestive to direct to borderline explicit
 - Short and punchy — the less words, the harder it hits
-- No cringe lines, no pickup artist scripts, no "hey gorgeous"${avoidLine}
+- No cringe lines, no pickup artist scripts, no "hey gorgeous"
+- Write the actual message text ONLY — first person, as if you are the guy sending it. Never describe what he would say, never use "he" or 3rd person${avoidLine}
 
 Generate exactly 3 NSFW reply options. Return ONLY raw JSON, no markdown:
 {"replies":["reply 1","reply 2","reply 3"],"recommended":0}`
@@ -725,7 +726,8 @@ RULES — every single one is mandatory:
 - Be SPECIFIC to what's actually in the image — reference details, don't be vague
 - Each of the 3 replies must feel genuinely different — vary the delivery, the energy, the length
 - Make them feel effortless, not try-hard — like he barely thought about it but it still lands
-- Short is almost always better — if you can say it in 4 words, don't use 10${avoidLine}
+- Short is almost always better — if you can say it in 4 words, don't use 10
+- Write the actual message text ONLY — first person, as if you are the guy sending it. Never describe what he would say, never use "he" or 3rd person${avoidLine}
 
 Generate exactly 3 reply options. Return ONLY raw JSON, no markdown, no explanation:
 {"replies":["reply 1","reply 2","reply 3"],"recommended":0}`;
@@ -862,6 +864,7 @@ STRICT RULES:
 - Be SPECIFIC — reference actual details, not vague reactions
 - Don't sound like you're trying to impress her — sound like she's trying to impress you
 - ${tone==='short'?'5 words max, no exceptions':'1-2 short sentences max'}${avoidLine}
+- Write in first person — this is the actual message being sent. Never use "he", never describe what the guy would say, never write in 3rd person
 - Output ONLY the reply text. Nothing else.`;
 
   try{
