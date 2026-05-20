@@ -295,6 +295,31 @@ input[type="text"]::placeholder{color:var(--text3)}
 .train-icon-btn:hover{background:var(--surface3);border-color:var(--border2)}
 .train-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--green);border:2px solid var(--bg)}
 .train-empty-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--amber);border:2px solid var(--bg)}
+/* ── SINGLE-CARD TRAINING FLOW ── */
+.train-stage{position:relative;width:100%;min-height:340px;display:flex;align-items:flex-start;justify-content:center;perspective:1200px;overflow:hidden;margin-bottom:14px;padding:8px 4px}
+.train-active-card{position:relative;width:100%;background:linear-gradient(180deg,var(--surface) 0%,#191919 100%);border:1.5px solid var(--border);border-radius:20px;padding:26px 24px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 14px 50px rgba(0,0,0,0.55),0 0 80px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.06);animation:cardGlow 4.5s ease-in-out infinite,cardEnter .55s cubic-bezier(.22,1,.36,1)}
+.train-active-card::before{content:'';position:absolute;inset:-1px;border-radius:20px;padding:1.5px;background:linear-gradient(135deg,rgba(160,130,255,0.45),rgba(80,130,230,0.25) 40%,transparent 70%,rgba(160,130,255,0.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.7;animation:edgeRotate 9s linear infinite}
+@keyframes cardGlow{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 14px 50px rgba(0,0,0,0.55),0 0 80px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.06)}50%{box-shadow:0 0 0 1px rgba(255,255,255,0.07),0 14px 60px rgba(0,0,0,0.6),0 0 120px rgba(100,55,220,0.32),inset 0 1px 0 rgba(255,255,255,0.08)}}
+@keyframes edgeRotate{0%{background:linear-gradient(135deg,rgba(160,130,255,0.45),rgba(80,130,230,0.25) 40%,transparent 70%,rgba(160,130,255,0.35))}50%{background:linear-gradient(225deg,rgba(160,130,255,0.45),rgba(80,130,230,0.25) 40%,transparent 70%,rgba(160,130,255,0.35))}100%{background:linear-gradient(135deg,rgba(160,130,255,0.45),rgba(80,130,230,0.25) 40%,transparent 70%,rgba(160,130,255,0.35))}}
+@keyframes cardEnter{0%{opacity:0;transform:scale(.94) translateY(8px);filter:blur(6px)}100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
+.train-active-card.exit-left{animation:exitLeft .6s cubic-bezier(.7,.05,.95,.5) forwards}
+.train-active-card.exit-right{animation:exitRight .6s cubic-bezier(.7,.05,.95,.5) forwards}
+@keyframes exitLeft{0%{opacity:1;transform:translateX(0) rotate(0);filter:blur(0)}40%{filter:blur(3px)}100%{opacity:0;transform:translateX(-130vw) rotate(-6deg);filter:blur(14px)}}
+@keyframes exitRight{0%{opacity:1;transform:translateX(0) rotate(0);filter:blur(0)}40%{filter:blur(3px)}100%{opacity:0;transform:translateX(130vw) rotate(6deg);filter:blur(14px)}}
+.train-active-card.success{border-color:var(--green)!important;animation:cardGlow 4.5s ease-in-out infinite,successPulse .5s cubic-bezier(.22,1,.36,1) forwards!important}
+@keyframes successPulse{0%{box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 14px 50px rgba(0,0,0,0.55),0 0 80px rgba(100,55,220,0.18)}100%{box-shadow:0 0 0 2px var(--green),0 14px 60px rgba(0,0,0,0.5),0 0 100px rgba(77,179,122,0.55)}}
+.success-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,35,20,0.95),rgba(15,28,18,0.98));display:flex;align-items:center;justify-content:center;border-radius:18px;opacity:0;pointer-events:none;transition:opacity .35s ease;z-index:5}
+.train-active-card.success .success-overlay{opacity:1}
+.success-check{width:72px;height:72px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .55s cubic-bezier(.34,1.7,.5,1) .12s;box-shadow:0 0 40px rgba(77,179,122,0.6),0 0 80px rgba(77,179,122,0.3)}
+.train-active-card.success .success-check{transform:scale(1)}
+.success-check svg{width:36px;height:36px;color:#fff;stroke-dasharray:30;stroke-dashoffset:30;transition:stroke-dashoffset .4s ease-out .35s}
+.train-active-card.success .success-check svg{stroke-dashoffset:0}
+.train-input-row{display:flex;gap:8px;margin-top:14px}
+.train-input-row textarea{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;transition:border-color .2s,box-shadow .2s}
+.train-input-row textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(226,226,226,0.06)}
+.train-skip-link{background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;padding:6px 0;margin-top:10px;width:100%;text-align:center;transition:color .12s}
+.train-skip-link:hover{color:var(--text2)}
+.train-step-indicator{text-align:center;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;letter-spacing:.05em}
 .save-train-btn{flex-shrink:0;align-self:flex-end;padding:10px 14px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:background .45s ease,color .45s ease,border-color .45s ease,box-shadow .45s ease,transform .15s;white-space:nowrap}
 .save-train-btn:hover:not(.saved){background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .save-train-btn:active{transform:scale(.96)}
@@ -687,7 +712,10 @@ body{background:
     </div>
     <div class="train-progress" id="train-progress"></div>
     <div class="train-count" id="train-count"></div>
-    <div id="train-scenario-wrap"></div>
+    <div class="train-step-indicator" id="train-step"></div>
+    <div class="train-stage" id="train-stage">
+      <div id="train-scenario-wrap" style="width:100%"></div>
+    </div>
   </div>
 </div>
 
@@ -1591,20 +1619,20 @@ function closeTraining(){
   document.body.style.overflow='';
 }
 
-function pickBatch(size=6){
-  // Prioritise tones with fewest saved replies, never repeat shown scenarios
+let currentScenario=null;
+let isAnimating=false;
+
+function pickOneScenario(){
   const counts={};
   trainingData.forEach(d=>{counts[d.tone]=(counts[d.tone]||0)+1});
-  const pool=SCENARIO_BANK.filter(s=>{
-    const key=s.tone+'|'+s.message;
-    return!shownScenarioIds.has(key);
-  });
-  // Return whatever's left, even if less than size
+  const pool=SCENARIO_BANK.filter(s=>!shownScenarioIds.has(s.tone+'|'+s.message));
+  if(!pool.length)return null;
   pool.sort((a,b)=>(counts[a.tone]||0)-(counts[b.tone]||0));
-  const weighted=pool.slice(0,Math.min(pool.length,size*3));
-  const shuffled=weighted.sort(()=>Math.random()-.5);
-  return shuffled.slice(0,Math.min(pool.length,size));
+  const top=pool.slice(0,Math.min(5,pool.length));
+  return top[Math.floor(Math.random()*top.length)];
 }
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 function isPoolExhausted(){
   return SCENARIO_BANK.every(s=>shownScenarioIds.has(s.tone+'|'+s.message));
@@ -1632,99 +1660,138 @@ function notifyTris(){
 }
 
 function renderTrainingBatch(){
+  // Update header bits
   const trained=new Set(trainingData.map(d=>d.tone));
   const prog=document.getElementById('train-progress');
   prog.innerHTML=TRAIN_TONES.map(t=>`<span class="train-prog-chip${trained.has(t.id)?' done':''}">${t.emoji} ${t.label}</span>`).join('');
   const total=trainingData.length;
   document.getElementById('train-count').textContent=total?`${total} repl${total===1?'y':'ies'} saved — keep going, more = better`:'No replies yet — just text back naturally';
+  showNextScenario();
+}
 
-  const batch=pickBatch(6);
+function updateStepIndicator(){
+  const done=shownScenarioIds.size;
+  const total=SCENARIO_BANK.length;
+  document.getElementById('train-step').textContent=`SCENARIO ${Math.min(done+1,total)} OF ${total}`;
+}
+
+function showNextScenario(){
   const wrap=document.getElementById('train-scenario-wrap');
+  currentScenario=pickOneScenario();
 
-  // Remove any old load-more / all-done buttons up front
-  const oldLoad=document.getElementById('load-more-btn');if(oldLoad)oldLoad.remove();
-  const oldDone=document.getElementById('all-done-card');if(oldDone)oldDone.remove();
-
-  // POOL EXHAUSTED — show the "all done" prompt instead of cards
-  if(batch.length===0){
+  // POOL EXHAUSTED — show the "all done" card
+  if(!currentScenario){
     const isFriend=currentUser&&currentUser!=='Tris👑';
-    wrap.innerHTML=`<div id="all-done-card" class="train-scenario-card" style="text-align:center;padding:30px 24px">
-      <div style="font-size:34px;margin-bottom:10px">🎉</div>
-      <div style="font-size:17px;font-weight:600;color:var(--text);margin-bottom:6px">You've done them all</div>
-      <div style="font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.6">Saved <strong style="color:var(--text)">${total}</strong> repl${total===1?'y':'ies'} across every scenario in the bank. ${isFriend?'Want Tris to add more?':'Time to ship some new scenarios.'}</div>
+    const total=trainingData.length;
+    document.getElementById('train-step').textContent='COMPLETE';
+    wrap.innerHTML=`<div class="train-active-card" id="all-done-card" style="text-align:center;padding:34px 28px">
+      <div style="font-size:38px;margin-bottom:12px">🎉</div>
+      <div style="font-size:19px;font-weight:600;color:var(--text);margin-bottom:6px">You've done them all</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:22px;line-height:1.6">Saved <strong style="color:var(--text)">${total}</strong> repl${total===1?'y':'ies'} across every scenario in the bank. ${isFriend?'Want Tris to add more?':'Time to ship some new scenarios.'}</div>
       ${isFriend?`<button onclick="notifyTris()" style="width:100%;padding:13px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;box-shadow:0 0 32px rgba(226,226,226,0.18)">📧 Notify Tris for new scenarios</button>`:''}
-      <button onclick="resetScenarioPool()" style="width:100%;padding:11px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--surface3)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--surface2)';this.style.color='var(--text2)'">🔄 Replay scenarios from the start</button>
+      <button onclick="resetScenarioPool()" style="width:100%;padding:11px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">🔄 Replay scenarios from the start</button>
       ${isFriend?`<div style="font-size:11px;color:var(--text3);margin-top:14px;line-height:1.55">Don't forget to <strong style="color:var(--text2)">📤 Export</strong> your data so Tris can merge it in.</div>`:''}
     </div>`;
     return;
   }
 
-  batch.forEach(s=>{shownScenarioIds.add(s.tone+'|'+s.message)});
+  // Mark as shown so we don't repeat
+  shownScenarioIds.add(currentScenario.tone+'|'+currentScenario.message);
+  updateStepIndicator();
+  renderCurrentScenario();
+}
 
-  wrap.innerHTML=batch.map((s,i)=>{
-    const t=TRAIN_TONES.find(x=>x.id===s.tone)||TRAIN_TONES[0];
-    return`<div class="train-scenario-card" id="tsc-${i}" style="margin-bottom:12px">
-      <div class="train-tone-badge" style="background:${t.color}18;border-color:${t.color};color:${t.color}">${t.emoji} Reply ${t.label}</div>
-      <div class="train-context">${s.context}</div>
-      <div class="train-message">"${s.message}"</div>
-      <div class="train-hint">💡 ${s.hint}</div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <textarea class="train-input-${i}" placeholder="Your reply..." rows="2" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-        <button class="save-train-btn save-btn-${i}" onclick="saveOneReply(${i},'${s.tone.replace(/'/g,"\\'")}','${s.message.replace(/'/g,"\\'").replace(/"/g,'\\"')}','${s.context.replace(/'/g,"\\'")}')">Save ↵</button>
+function renderCurrentScenario(){
+  const s=currentScenario;
+  const t=TRAIN_TONES.find(x=>x.id===s.tone)||TRAIN_TONES[0];
+  const wrap=document.getElementById('train-scenario-wrap');
+  wrap.innerHTML=`<div class="train-active-card" id="active-card">
+    <div class="train-tone-badge" style="background:${t.color}24;border-color:${t.color};color:${t.color}">${t.emoji} Reply ${t.label}</div>
+    <div class="train-context">${s.context}</div>
+    <div class="train-message">"${s.message.replace(/"/g,'&quot;')}"</div>
+    <div class="train-hint">💡 ${s.hint}</div>
+    <div class="train-input-row">
+      <textarea id="train-reply-input" placeholder="Type your reply..." rows="2" onkeydown="handleReplyKey(event)"></textarea>
+      <button class="save-train-btn" id="active-save-btn" onclick="saveAndAdvance()">Save ↵</button>
+    </div>
+    <button class="train-skip-link" onclick="skipCurrentScenario()">Skip this one →</button>
+    <div class="success-overlay">
+      <div class="success-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
-      <div class="train-saved-indicator-${i}" style="display:none;font-size:12px;color:var(--green);margin-top:6px">✅ Saved</div>
-    </div>`;
-  }).join('');
+    </div>
+  </div>`;
+  // Auto-focus the textarea so the user can just start typing
+  setTimeout(()=>{const ta=document.getElementById('train-reply-input');if(ta)ta.focus()},80);
+}
 
-  // Remove old load-more button and add fresh one
-  const old=document.getElementById('load-more-btn');if(old)old.remove();
-  const btn=document.createElement('button');
-  btn.id='load-more-btn';
-  btn.textContent='Load more scenarios →';
-  btn.style.cssText='width:100%;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;margin-top:4px;transition:all .15s';
-  btn.onmouseover=()=>{btn.style.background='var(--surface3)';btn.style.color='var(--text)'};
-  btn.onmouseout=()=>{btn.style.background='var(--surface2)';btn.style.color='var(--text2)'};
-  btn.onclick=renderTrainingBatch;
-  document.getElementById('train-body-inner').appendChild(btn);
+function handleReplyKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveAndAdvance()}
 }
 
 let sessionSaveCount=0;
 let reminderTimer=null;
 
-function saveOneReply(i,tone,message,context){
-  const ta=document.querySelector(`.train-input-${i}`);
+async function saveAndAdvance(){
+  if(isAnimating)return;
+  const ta=document.getElementById('train-reply-input');
   const reply=ta?ta.value.trim():'';
-  if(!reply){showToast('Type your reply first');return}
-  // Prevent double-save
-  const btn=document.querySelector(`.save-btn-${i}`);
-  if(btn&&btn.classList.contains('saved'))return;
+  if(!reply){showToast('Type your reply first');ta?.focus();return}
+  if(!currentScenario)return;
 
-  trainingData.push({tone,message,context,userReply:reply,trainer:getTrainerCode(),ts:Date.now()});
+  isAnimating=true;
+  const card=document.getElementById('active-card');
+  const btn=document.getElementById('active-save-btn');
+
+  // Save the data
+  trainingData.push({
+    tone:currentScenario.tone,
+    message:currentScenario.message,
+    context:currentScenario.context,
+    userReply:reply,
+    trainer:getTrainerCode(),
+    ts:Date.now()
+  });
   saveTrainingData();
   renderContributors();
-  // Animate save button to green
-  if(btn){
-    btn.classList.add('saved');
-    btn.textContent='✓ Saved';
-    btn.disabled=true;
-  }
-  // Lock textarea
-  ta.disabled=true;ta.style.opacity='.5';
-  // Hide the old separate indicator (button color does the job now)
-  const ind=document.querySelector(`.train-saved-indicator-${i}`);
-  if(ind)ind.style.display='none';
-  // Update progress chips
+
+  // Disable input + trigger success animation
+  if(ta)ta.disabled=true;
+  if(btn){btn.disabled=true;btn.textContent='✓ Saved';btn.classList.add('saved')}
+  card.classList.add('success');
+
+  // Update progress + counter live
   const trained=new Set(trainingData.map(d=>d.tone));
   document.querySelectorAll('.train-prog-chip').forEach((el,idx)=>{
     if(trained.has(TRAIN_TONES[idx]?.id))el.classList.add('done');
   });
   document.getElementById('train-count').textContent=`${trainingData.length} repl${trainingData.length===1?'y':'ies'} saved — keep going, more = better`;
 
-  // Friend-only export reminder every 6 saves in this session
+  // Friend-only export reminder every 6 saves this session
   sessionSaveCount++;
   if(currentUser&&currentUser!=='Tris👑'&&sessionSaveCount%6===0){
     showExportReminder();
   }
+
+  // Hold for green/checkmark animation, then dash out
+  await sleep(900);
+  const dir=Math.random()>0.5?'left':'right';
+  card.classList.add('exit-'+dir);
+  await sleep(560);
+
+  isAnimating=false;
+  showNextScenario();
+}
+
+async function skipCurrentScenario(){
+  if(isAnimating)return;
+  isAnimating=true;
+  const card=document.getElementById('active-card');
+  const dir=Math.random()>0.5?'left':'right';
+  card.classList.add('exit-'+dir);
+  await sleep(560);
+  isAnimating=false;
+  showNextScenario();
 }
 
 function showExportReminder(){
