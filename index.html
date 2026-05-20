@@ -362,19 +362,28 @@ function checkPin(){
 }
 
 // ── API KEY ──────────────────────────────────
-let apiKey='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';
+let apiKey='';
 function saveApiKey(){
   const k=document.getElementById('api-key-input').value.trim();
   if(!k.startsWith('gsk_')){document.getElementById('key-status').textContent='⚠️ Should start with gsk_';return}
   apiKey=k;store.setItem('ig_api_key',k);
-  document.getElementById('key-status').textContent='✅ Key saved in your browser.';
+  document.getElementById('key-status').textContent='✅ Key saved.';
   document.getElementById('api-key-input').value=k.slice(0,14)+'••••••••••••';
+  collapseSetup();
 }
 function loadApiKey(){
   const k=store.getItem('ig_api_key');
-  if(k)apiKey=k;
-  document.getElementById('api-key-input').value=apiKey.slice(0,14)+'••••••••••••';
-  document.getElementById('key-status').textContent='✅ API key loaded.';
+  if(k){apiKey=k;collapseSetup();}
+}
+function collapseSetup(){
+  const card=document.getElementById('api-card');
+  card.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:var(--text3)">✅ API key saved</span><button class="action-btn" style="flex:none;padding:6px 14px;font-size:12px" onclick="expandSetup()">Change</button></div>`;
+}
+function expandSetup(){
+  document.getElementById('api-card').innerHTML=`<div class="card-label">Setup</div>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Groq API key. Get one free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--text);font-weight:500;">console.groq.com</a>.</p>
+  <div class="setup-row"><input type="text" id="api-key-input" placeholder="gsk_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1"/><button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveApiKey()">Save</button></div>
+  <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>`;
 }
 
 // ── MODE ─────────────────────────────────────
