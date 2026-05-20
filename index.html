@@ -250,6 +250,21 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
 
+/* ── USER SELECT SCREEN ── */
+#user-select-screen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:998;transition:opacity .35s,transform .35s;padding:20px}
+#user-select-screen.show{display:flex}
+#user-select-screen.out{opacity:0;transform:scale(.97);pointer-events:none}
+.user-select-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:42px 32px;width:100%;max-width:380px;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 24px 80px rgba(0,0,0,0.8),0 0 140px rgba(100,55,220,0.22),inset 0 1px 0 rgba(255,255,255,0.07)}
+.user-select-card h1{font-size:20px;font-weight:600;margin-bottom:6px}
+.user-select-card .sub{color:var(--text3);font-size:13px;margin-bottom:26px}
+.user-grid{display:flex;flex-direction:column;gap:10px}
+.user-btn{padding:16px 18px;border:1.5px solid var(--border);background:var(--surface2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.user-btn:hover{background:var(--surface3);border-color:var(--border2);transform:translateY(-1px)}
+.user-btn.owner{border-color:rgba(226,226,226,0.3);background:linear-gradient(135deg,var(--surface2),#1f1d18)}
+.user-btn.owner:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 24px rgba(226,226,226,0.15)}
+.user-btn .arrow{color:var(--text3);font-size:14px;transition:transform .15s,color .15s}
+.user-btn:hover .arrow{color:var(--text);transform:translateX(2px)}
+
 /* ── TRAINING MODAL ── */
 .train-overlay{position:fixed;inset:0;background:var(--bg);z-index:950;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto}
 .train-overlay.open{opacity:1;pointer-events:all}
@@ -346,6 +361,37 @@ body{background:
       <button class="nk" onclick="kp('4')">4</button><button class="nk" onclick="kp('5')">5</button><button class="nk" onclick="kp('6')">6</button>
       <button class="nk" onclick="kp('7')">7</button><button class="nk" onclick="kp('8')">8</button><button class="nk" onclick="kp('9')">9</button>
       <button class="nk sm" onclick="kc()">Clear</button><button class="nk" onclick="kp('0')">0</button><button class="nk sm" onclick="kd()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER SELECT SCREEN -->
+<div id="user-select-screen">
+  <div class="user-select-card">
+    <div class="logo-wrap"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4z"/></svg></div>
+    <h1 id="user-select-title">Who's training?</h1>
+    <p class="sub" id="user-select-sub">Select your name to continue</p>
+    <div class="user-grid" id="user-list">
+      <button class="user-btn" onclick="selectUser('Nikolia')"><span>Nikolia</span><span class="arrow">→</span></button>
+      <button class="user-btn" onclick="selectUser('Ismaaeel')"><span>Ismaaeel</span><span class="arrow">→</span></button>
+      <button class="user-btn" onclick="selectUser('Jayden')"><span>Jayden</span><span class="arrow">→</span></button>
+      <button class="user-btn owner" onclick="selectUser('Tris👑')"><span>Tris 👑</span><span class="arrow">→</span></button>
+    </div>
+    <!-- Tris secondary pin -->
+    <div id="tris-pin-area" style="display:none;margin-top:24px">
+      <p class="sub" style="margin-bottom:20px">Owner passcode required</p>
+      <div class="pin-row" id="tris-pin-dots">
+        <div class="pin-dot" id="tpd0"></div><div class="pin-dot" id="tpd1"></div>
+        <div class="pin-dot" id="tpd2"></div><div class="pin-dot" id="tpd3"></div>
+        <div class="pin-dot" id="tpd4"></div><div class="pin-dot" id="tpd5"></div>
+      </div>
+      <div class="numpad">
+        <button class="nk" onclick="tkp('1')">1</button><button class="nk" onclick="tkp('2')">2</button><button class="nk" onclick="tkp('3')">3</button>
+        <button class="nk" onclick="tkp('4')">4</button><button class="nk" onclick="tkp('5')">5</button><button class="nk" onclick="tkp('6')">6</button>
+        <button class="nk" onclick="tkp('7')">7</button><button class="nk" onclick="tkp('8')">8</button><button class="nk" onclick="tkp('9')">9</button>
+        <button class="nk sm" onclick="tkc()">Clear</button><button class="nk" onclick="tkp('0')">0</button><button class="nk sm" onclick="tkd()">⌫</button>
+      </div>
+      <button class="train-skip" onclick="cancelTrisPin()" style="margin-top:10px">← Back</button>
     </div>
   </div>
 </div>
@@ -660,18 +706,131 @@ function dots(){for(let i=0;i<4;i++){const e=document.getElementById('pd'+i);e.c
 function checkPin(){
   if(pin===PIN){
     const ls=document.getElementById('login-screen');
-    ls.classList.add('out');setTimeout(()=>ls.style.display='none',380);
-    document.getElementById('app').classList.add('show');
-    loadApiKey();loadGhSettings();loadHistory();loadTrainingData();
-    updateCardVisibility();
-    // Show train prompt on login if fewer than 5 examples saved
-    if(trainingData.length<5){
-      document.getElementById('login-train-prompt').style.display='block';
-    }
+    ls.classList.add('out');
+    setTimeout(()=>{
+      ls.style.display='none';
+      document.getElementById('user-select-screen').classList.add('show');
+    },380);
   }else{
     for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot err';
     setTimeout(()=>{pin='';dots()},700);
   }
+}
+
+// ── USER SELECTION + OWNER PIN ──────────────
+const OWNER_PIN='312007';
+let trisPin='';
+let currentUser=null;
+
+function selectUser(name){
+  if(name==='Tris👑'){
+    // Show secondary pin
+    document.querySelector('#user-select-screen h1').textContent='👑 Owner Access';
+    document.querySelector('#user-select-screen .sub').style.display='none';
+    document.getElementById('user-list').style.display='none';
+    document.getElementById('tris-pin-area').style.display='block';
+    trisPin='';tdots();
+  }else{
+    currentUser=name;
+    enterAppAsFriend(name);
+  }
+}
+
+function cancelTrisPin(){
+  document.querySelector('#user-select-screen h1').textContent='Who\'s training?';
+  document.querySelector('#user-select-screen .sub').style.display='block';
+  document.getElementById('user-list').style.display='flex';
+  document.getElementById('tris-pin-area').style.display='none';
+  trisPin='';tdots();
+}
+
+function tkp(d){if(trisPin.length>=6)return;trisPin+=d;tdots();if(trisPin.length===6)setTimeout(checkTrisPin,120)}
+function tkd(){trisPin=trisPin.slice(0,-1);tdots()}
+function tkc(){trisPin='';tdots()}
+function tdots(){for(let i=0;i<6;i++){const e=document.getElementById('tpd'+i);if(e)e.className='pin-dot'+(i<trisPin.length?' on':'')}}
+function checkTrisPin(){
+  if(trisPin===OWNER_PIN){
+    currentUser='Tris👑';
+    enterAppAsOwner();
+  }else{
+    for(let i=0;i<6;i++){const e=document.getElementById('tpd'+i);if(e)e.className='pin-dot err'}
+    setTimeout(()=>{trisPin='';tdots()},700);
+  }
+}
+
+function enterAppAsOwner(){
+  const us=document.getElementById('user-select-screen');
+  us.classList.add('out');
+  setTimeout(()=>{
+    us.classList.remove('show','out');
+    us.style.opacity='';us.style.transform='';
+    document.getElementById('app').classList.add('show');
+    loadApiKey();loadGhSettings();loadHistory();loadTrainingData();
+    updateCardVisibility();
+    // Force trainer code to Tris
+    trainerCode='Tris👑';store.setItem('trainer_code','Tris👑');
+    const input=document.getElementById('trainer-code-input');
+    if(input)input.value='Tris👑';
+    if(trainingData.length<5){
+      document.getElementById('login-train-prompt').style.display='block';
+    }
+  },380);
+}
+
+function enterAppAsFriend(name){
+  const us=document.getElementById('user-select-screen');
+  us.classList.add('out');
+  setTimeout(()=>{
+    us.classList.remove('show','out');
+    us.style.opacity='';us.style.transform='';
+    // Load minimal state for training only
+    loadApiKey();loadTrainingData();
+    // Lock trainer code to selected name
+    trainerCode=name;store.setItem('trainer_code',name);
+    // Open training in friend mode
+    openTrainingFriendMode(name);
+  },380);
+}
+
+function openTrainingFriendMode(name){
+  // Apply friend lock: hide import, lock trainer code, change Done to Sign Out
+  document.getElementById('train-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  // Lock the trainer code input
+  const input=document.getElementById('trainer-code-input');
+  if(input){input.value=name;input.disabled=true;input.style.opacity='.7'}
+  // Hide import button (friends can only export their own training)
+  const buttons=document.querySelectorAll('.train-body button.action-btn');
+  buttons.forEach(b=>{if(b.textContent.includes('Import'))b.style.display='none'});
+  // Change Done button to Sign Out
+  const closeBtn=document.querySelector('.train-close');
+  if(closeBtn){closeBtn.textContent='Sign Out';closeBtn.onclick=signOutFriend}
+  // Add a banner showing who's logged in
+  let banner=document.getElementById('friend-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='friend-banner';
+    banner.style.cssText='background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);text-align:center';
+    const body=document.getElementById('train-body-inner');
+    body.insertBefore(banner,body.firstChild);
+  }
+  banner.innerHTML=`👋 Logged in as <strong style="color:var(--text)">${name}</strong> — train and export your replies for Tris to import`;
+  renderContributors();
+  renderTrainingBatch();
+}
+
+function signOutFriend(){
+  document.getElementById('train-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  // Reset
+  currentUser=null;
+  pin='';dots();
+  // Restore login screen
+  const ls=document.getElementById('login-screen');
+  ls.style.display='flex';
+  ls.classList.remove('out');
+  // Restore user-select state
+  cancelTrisPin();
 }
 
 // ── API KEY ──────────────────────────────────
@@ -1332,39 +1491,62 @@ function exportTraining(){
   const myData=trainingData.filter(d=>(d.trainer||'anon')===getTrainerCode());
   if(!myData.length){showToast('Nothing to export yet — train a few first');return}
   const payload={trainer:getTrainerCode(),exportedAt:Date.now(),entries:myData};
-  const json=JSON.stringify(payload);
-  navigator.clipboard.writeText(json).then(()=>{
-    showToast(`📤 ${myData.length} entries copied — share the text with the owner`);
-  }).catch(()=>{
-    // Fallback: show in a prompt
-    prompt('Copy this JSON and share it:',json);
-  });
+  const json=JSON.stringify(payload,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const safeName=getTrainerCode().replace(/[^a-z0-9A-Z_-]/g,'_');
+  const date=new Date().toISOString().slice(0,10);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`rizz-training-${safeName}-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast(`📤 Downloaded ${myData.length} entries — send the file to Tris`);
 }
 
 function importTraining(){
-  const raw=prompt('Paste the training JSON from a friend:');
-  if(!raw)return;
-  try{
-    const payload=JSON.parse(raw);
-    if(!payload.entries||!Array.isArray(payload.entries))throw new Error('Invalid format');
-    // Dedupe: skip entries with same trainer+message+reply
-    const existing=new Set(trainingData.map(d=>`${d.trainer||'anon'}|${d.message}|${d.userReply}`));
-    let added=0;
-    payload.entries.forEach(e=>{
-      const key=`${e.trainer||payload.trainer||'anon'}|${e.message}|${e.userReply}`;
-      if(!existing.has(key)){
-        trainingData.push({...e,trainer:e.trainer||payload.trainer||'anon'});
-        existing.add(key);
-        added++;
-      }
-    });
-    saveTrainingData();
-    showToast(`📥 Imported ${added} new entries from ${payload.trainer||'friend'}`);
-    if(document.getElementById('train-overlay').classList.contains('open'))renderTrainingBatch();
-  }catch(e){
-    showToast('Invalid JSON — could not import');
-    console.error(e);
+  // Owner-only check
+  if(currentUser!=='Tris👑'){
+    showToast('Only the owner can import training data');
+    return;
   }
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.json,application/json';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const payload=JSON.parse(ev.target.result);
+        if(!payload.entries||!Array.isArray(payload.entries))throw new Error('Invalid format');
+        const existing=new Set(trainingData.map(d=>`${d.trainer||'anon'}|${d.message}|${d.userReply}`));
+        let added=0;
+        payload.entries.forEach(en=>{
+          const key=`${en.trainer||payload.trainer||'anon'}|${en.message}|${en.userReply}`;
+          if(!existing.has(key)){
+            trainingData.push({...en,trainer:en.trainer||payload.trainer||'anon'});
+            existing.add(key);
+            added++;
+          }
+        });
+        saveTrainingData();
+        showToast(`📥 Imported ${added} new entries from ${payload.trainer||'friend'}`);
+        if(document.getElementById('train-overlay').classList.contains('open')){
+          renderContributors();
+          renderTrainingBatch();
+        }
+      }catch(err){
+        showToast('Invalid file — could not import');
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 function updateTrainBadge(){
   const badge=document.getElementById('train-badge');if(!badge)return;
