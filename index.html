@@ -295,6 +295,15 @@ input[type="text"]::placeholder{color:var(--text3)}
 .train-icon-btn:hover{background:var(--surface3);border-color:var(--border2)}
 .train-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--green);border:2px solid var(--bg)}
 .train-empty-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--amber);border:2px solid var(--bg)}
+.save-train-btn{flex-shrink:0;align-self:flex-end;padding:10px 14px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:background .45s ease,color .45s ease,border-color .45s ease,box-shadow .45s ease,transform .15s;white-space:nowrap}
+.save-train-btn:hover:not(.saved){background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.save-train-btn:active{transform:scale(.96)}
+.save-train-btn.saved{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 0 22px rgba(77,179,122,0.55);cursor:default}
+.export-reminder{background:var(--surface);border:1px solid var(--green);border-radius:10px;padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);box-shadow:0 0 0 1px rgba(77,179,122,0.15),0 0 28px rgba(77,179,122,0.18);opacity:0;transform:translateY(-6px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+.export-reminder.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.export-reminder-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);flex-shrink:0}
+.export-reminder-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0 4px;font-family:inherit}
+.export-reminder-close:hover{color:var(--text)}
 .login-train-prompt{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:20px;text-align:left}
 .login-train-prompt p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px}
 .login-train-btn{width:100%;padding:11px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
@@ -372,7 +381,7 @@ body{background:
     <h1 id="user-select-title">Who's training?</h1>
     <p class="sub" id="user-select-sub">Select your name to continue</p>
     <div class="user-grid" id="user-list">
-      <button class="user-btn" onclick="selectUser('Nikolia')"><span>Nikolia</span><span class="arrow">→</span></button>
+      <button class="user-btn" onclick="selectUser('Nikolai')"><span>Nikolai</span><span class="arrow">→</span></button>
       <button class="user-btn" onclick="selectUser('Ismaaeel')"><span>Ismaaeel</span><span class="arrow">→</span></button>
       <button class="user-btn" onclick="selectUser('Jayden')"><span>Jayden</span><span class="arrow">→</span></button>
       <button class="user-btn owner" onclick="selectUser('Tris👑')"><span>Tris 👑</span><span class="arrow">→</span></button>
@@ -671,6 +680,11 @@ body{background:
       </div>
       <div id="trainer-contributors" style="font-size:11px;color:var(--text3);margin-top:8px;display:none"></div>
     </div>
+    <div class="export-reminder" id="export-reminder">
+      <div class="export-reminder-dot"></div>
+      <div>Don't forget to <strong>export</strong> when you're done — your progress only saves to your device.</div>
+      <button class="export-reminder-close" onclick="hideExportReminder()" title="Dismiss">✕</button>
+    </div>
     <div class="train-progress" id="train-progress"></div>
     <div class="train-count" id="train-count"></div>
     <div id="train-scenario-wrap"></div>
@@ -793,6 +807,9 @@ function enterAppAsFriend(name){
 }
 
 function openTrainingFriendMode(name){
+  // Reset session counter so the 6-save reminder fires for this session
+  sessionSaveCount=0;
+  hideExportReminder();
   // Apply friend lock: hide import, lock trainer code, change Done to Sign Out
   document.getElementById('train-overlay').classList.add('open');
   document.body.style.overflow='hidden';
@@ -1361,95 +1378,96 @@ const TRAIN_TONES=[
 ];
 
 // Pre-written scenario bank — NO API calls needed
+// Each context describes HER situation/state of mind — what made her send this exact message
 const SCENARIO_BANK=[
   // FLIRTY
-  {tone:'flirty',context:'Girl from explore, she keeps appearing on your feed',message:"you're literally everywhere on my explore page 😭",hint:'Acknowledge it but flip it — sound amused, not pressed'},
-  {tone:'flirty',context:'She matched you and just gave in after your joke',message:"okay you're actually funny I'll give you that",hint:'Accept the compliment briefly and keep the tension going'},
-  {tone:'flirty',context:'She noticed all your pics look serious',message:"why do you look so serious in all your pics",hint:'Be playful about it — don\'t over-explain'},
-  {tone:'flirty',context:'She\'s using her friend as cover to tell you she\'s interested',message:"my friend thinks you\'re cute btw",hint:'Make it about her, not the friend'},
-  {tone:'flirty',context:'Been texting back and forth, she\'s enjoying it',message:"stop making me laugh at work",hint:'Light and effortless — show you enjoy it too without being eager'},
-  {tone:'flirty',context:'She checked your profile and is sliding in softly',message:"okay I looked at your profile... you seem interesting",hint:'Short, confident, turn it around on her'},
-  {tone:'flirty',context:'She can\'t figure your vibe out yet',message:"you give me a vibe I can\'t figure out yet",hint:'Stay mysterious — don\'t explain yourself'},
-  {tone:'flirty',context:'She texted first after debating it',message:"I was gonna wait for you to text but here we are",hint:'Reward her for doing it — but keep your cool'},
-  {tone:'flirty',context:'Playfully complaining you\'re too good at conversation',message:"talking to you is actually too easy which is annoying",hint:'Agree without being smug about it'},
-  {tone:'flirty',context:'She\'s noticed you\'re different from other guys she talks to',message:"you\'re not like what I expected tbh",hint:'Ask what she expected — but casually'},
+  {tone:'flirty',context:'She keeps seeing your posts on her explore page and finally said something about it',message:"you're literally everywhere on my explore page 😭",hint:'Acknowledge it but flip it — sound amused, not pressed'},
+  {tone:'flirty',context:'You\'ve been making her laugh and she\'s finally admitting you have a sense of humor',message:"okay you're actually funny I'll give you that",hint:'Accept the compliment briefly and keep the tension going'},
+  {tone:'flirty',context:'She\'s been scrolling your profile and noticed you look serious in every photo',message:"why do you look so serious in all your pics",hint:'Be playful about it — don\'t over-explain'},
+  {tone:'flirty',context:'She\'s using her friend as cover to tell you that she finds you attractive',message:"my friend thinks you\'re cute btw",hint:'Make it about her, not the friend'},
+  {tone:'flirty',context:'You\'ve been texting back and forth at her job and your jokes are killing her composure',message:"stop making me laugh at work",hint:'Light and effortless — show you enjoy it too without being eager'},
+  {tone:'flirty',context:'She finally went and checked out your profile and is softly sliding into your DMs',message:"okay I looked at your profile... you seem interesting",hint:'Short, confident, turn it around on her'},
+  {tone:'flirty',context:'She can\'t pin down your personality yet and it\'s drawing her in',message:"you give me a vibe I can\'t figure out yet",hint:'Stay mysterious — don\'t explain yourself'},
+  {tone:'flirty',context:'She debated for a while before texting you first and is half-admitting it',message:"I was gonna wait for you to text but here we are",hint:'Reward her for doing it — but keep your cool'},
+  {tone:'flirty',context:'She\'s playfully complaining that conversation flows too easily between you two',message:"talking to you is actually too easy which is annoying",hint:'Agree without being smug about it'},
+  {tone:'flirty',context:'She\'s pleasantly surprised you\'re different from the other guys in her DMs',message:"you\'re not like what I expected tbh",hint:'Ask what she expected — but casually'},
   // FUNNY
-  {tone:'funny',context:'Random opener, she saw something wild',message:"I just saw the most unhinged thing at the mall",hint:'Match the chaotic energy — be curious and weird about it'},
-  {tone:'funny',context:'She\'s jabbing at you playfully',message:"be honest, were you always this weird or is it just with me",hint:'Lean into it — own the weird'},
-  {tone:'funny',context:'She burned her food again and is being helpless about it',message:"I burned my food AGAIN send help",hint:'Roast her a little, then offer something useless as help'},
-  {tone:'funny',context:'Reacting to something random you said',message:"you\'re actually so random lol",hint:'Double down on whatever made her say that'},
-  {tone:'funny',context:'She embarrassed herself in public',message:"I just fell in front of like 20 people I want to disappear",hint:'Make her laugh at it — don\'t be too sympathetic'},
-  {tone:'funny',context:'Jabbing at your taste in music',message:"why does your taste in music make absolutely no sense",hint:'Defend it confidently or admit it absurdly'},
-  {tone:'funny',context:'She\'s being dramatic about something small',message:"this is literally the worst day of my entire life",hint:'Match the drama — out-dramatize her'},
-  {tone:'funny',context:'She saw your story and it was odd',message:"what was that story you just posted 😭",hint:'Explain it in an even weirder way'},
-  {tone:'funny',context:'She\'s asking what you\'re doing and you can make it funny',message:"what are you actually doing right now be honest",hint:'Say something truthful but frame it hilariously'},
+  {tone:'funny',context:'She just witnessed something chaotic and her first instinct was to tell you',message:"I just saw the most unhinged thing at the mall",hint:'Match the chaotic energy — be curious and weird about it'},
+  {tone:'funny',context:'You said something out of pocket and she\'s playfully jabbing at you for it',message:"be honest, were you always this weird or is it just with me",hint:'Lean into it — own the weird'},
+  {tone:'funny',context:'She burned her food again and is being dramatic and helpless about it',message:"I burned my food AGAIN send help",hint:'Roast her a little, then offer something useless as help'},
+  {tone:'funny',context:'You said something completely out of left field and she\'s laughing at it',message:"you\'re actually so random lol",hint:'Double down on whatever made her say that'},
+  {tone:'funny',context:'She just embarrassed herself in public and is venting about it to you',message:"I just fell in front of like 20 people I want to disappear",hint:'Make her laugh at it — don\'t be too sympathetic'},
+  {tone:'funny',context:'You sent her a song and she\'s questioning your entire taste in music',message:"why does your taste in music make absolutely no sense",hint:'Defend it confidently or admit it absurdly'},
+  {tone:'funny',context:'Something small went wrong and she\'s being deliberately over-dramatic about it',message:"this is literally the worst day of my entire life",hint:'Match the drama — out-dramatize her'},
+  {tone:'funny',context:'You posted something weird on your story and she had to ask what it was',message:"what was that story you just posted 😭",hint:'Explain it in an even weirder way'},
+  {tone:'funny',context:'She\'s checking in on what you\'re doing and asking for the unfiltered version',message:"what are you actually doing right now be honest",hint:'Say something truthful but frame it hilariously'},
   // CHILL
-  {tone:'chill',context:'Casual check-in, nothing specific',message:"what you up to",hint:'One line, low key — don\'t over-answer'},
-  {tone:'chill',context:'Simple opener to start the day',message:"how was your day",hint:'Brief and real — not a full report'},
-  {tone:'chill',context:'She noticed you don\'t text first often',message:"you never text first 🙄",hint:'Don\'t defend it — acknowledge it smoothly'},
-  {tone:'chill',context:'She\'s reappearing after some time away',message:"been a while",hint:'Keep it simple — two can play that game'},
-  {tone:'chill',context:'She noticed you\'re quieter today',message:"you\'re quiet today",hint:'Short response — don\'t explain your whole mood'},
-  {tone:'chill',context:'She\'s bored and reaching out with no real reason',message:"I\'m bored",hint:'Give her something to do — don\'t just sympathize'},
-  {tone:'chill',context:'Random thought, she thought of you out of nowhere',message:"randomly thought about you",hint:'Keep it cool — don\'t make it a big deal'},
-  {tone:'chill',context:'She\'s testing if you\'ll make plans',message:"we never do anything fun anymore",hint:'Agree and suggest something — casually'},
+  {tone:'chill',context:'Casual mid-day check-in, no real agenda',message:"what you up to",hint:'One line, low key — don\'t over-answer'},
+  {tone:'chill',context:'She\'s opening the conversation with a simple end-of-day question',message:"how was your day",hint:'Brief and real — not a full report'},
+  {tone:'chill',context:'She\'s noticed you only reply when she texts first and is calling it out lightly',message:"you never text first 🙄",hint:'Don\'t defend it — acknowledge it smoothly'},
+  {tone:'chill',context:'She\'s reappearing after going quiet for a while, low-key reopening the convo',message:"been a while",hint:'Keep it simple — two can play that game'},
+  {tone:'chill',context:'She\'s picked up that your energy is lower than usual today',message:"you\'re quiet today",hint:'Short response — don\'t explain your whole mood'},
+  {tone:'chill',context:'She\'s bored and texting you with no real reason in mind',message:"I\'m bored",hint:'Give her something to do — don\'t just sympathize'},
+  {tone:'chill',context:'You popped into her head out of nowhere and she decided to tell you',message:"randomly thought about you",hint:'Keep it cool — don\'t make it a big deal'},
+  {tone:'chill',context:'She\'s nudging you about not making plans together lately',message:"we never do anything fun anymore",hint:'Agree and suggest something — casually'},
   {tone:'chill',context:'She just woke up and opened her phone',message:"morning",hint:'Simple. Don\'t overthink a one-word message'},
   // SAVAGE
-  {tone:'savage',context:'She\'s testing you to see how you handle a jab',message:"you think you\'re that guy huh",hint:'Yes. Don\'t flinch. Don\'t argue. Just confirm it'},
-  {tone:'savage',context:'Calling you out for leaving her on read',message:"you left me on read for 3 days and NOW you text",hint:'Don\'t apologize excessively — acknowledge it simply'},
-  {tone:'savage',context:'Direct confrontation on how you\'ve been acting',message:"do you treat everyone like this or just me",hint:'Answer honestly but don\'t grovel'},
-  {tone:'savage',context:'She\'s trying to box you in as a type',message:"I\'ve seen your type before",hint:'Don\'t take the bait. Be calm and unbothered'},
-  {tone:'savage',context:'General shot at guys, wants to see if you react',message:"boys like you are all the same",hint:'Stay ice cold — don\'t prove her right by reacting'},
-  {tone:'savage',context:'Establishing she won\'t wait around',message:"I\'m not one of those girls who waits around fyi",hint:'Good. Pressure\'s off. Say that'},
-  {tone:'savage',context:'Testing if you\'ll fold under pressure',message:"I don\'t really see this going anywhere",hint:'Shrug it off — don\'t beg or argue'},
-  {tone:'savage',context:'Came in with attitude for no reason',message:"you\'re honestly so annoying sometimes",hint:'Agree — unbothered energy kills the argument'},
+  {tone:'savage',context:'She\'s testing you with a jab to see if you\'ll get defensive or roll with it',message:"you think you\'re that guy huh",hint:'Yes. Don\'t flinch. Don\'t argue. Just confirm it'},
+  {tone:'savage',context:'You left her on read for days and she\'s calling you out on it now that you\'re back',message:"you left me on read for 3 days and NOW you text",hint:'Don\'t apologize excessively — acknowledge it simply'},
+  {tone:'savage',context:'She\'s directly confronting you about how you\'ve been acting toward her',message:"do you treat everyone like this or just me",hint:'Answer honestly but don\'t grovel'},
+  {tone:'savage',context:'She\'s trying to box you into a category she\'s already dealt with before',message:"I\'ve seen your type before",hint:'Don\'t take the bait. Be calm and unbothered'},
+  {tone:'savage',context:'She\'s baiting you with a general shot at guys to see if you\'ll react defensively',message:"boys like you are all the same",hint:'Stay ice cold — don\'t prove her right by reacting'},
+  {tone:'savage',context:'She\'s establishing upfront that she won\'t wait around for you',message:"I\'m not one of those girls who waits around fyi",hint:'Good. Pressure\'s off. Say that'},
+  {tone:'savage',context:'She\'s threatening to walk away to see how hard you push back',message:"I don\'t really see this going anywhere",hint:'Shrug it off — don\'t beg or argue'},
+  {tone:'savage',context:'She\'s in a mood and coming in hot with attitude for no real reason',message:"you\'re honestly so annoying sometimes",hint:'Agree — unbothered energy kills the argument'},
   // MYSTERIOUS
-  {tone:'mysterious',context:'She senses you\'re hiding something or have layers',message:"I feel like you\'re hiding something",hint:'Don\'t deny or confirm — make her more curious'},
-  {tone:'mysterious',context:'Deep conversation starter',message:"tell me something nobody else knows about you",hint:'Give something real but brief — not your entire life story'},
-  {tone:'mysterious',context:'Late night, philosophical mood',message:"what do you think about at 3am",hint:'Actually answer this interestingly — show some depth'},
-  {tone:'mysterious',context:'She thinks you\'re complex',message:"you seem like you have layers",hint:'Acknowledge it with intrigue — don\'t explain the layers'},
-  {tone:'mysterious',context:'Intrigued but frustrated she can\'t read you',message:"I can\'t figure you out and it\'s lowkey annoying",hint:'Good. Keep it that way. Say something that adds to the mystery'},
-  {tone:'mysterious',context:'Late night, she\'s in a reflective mood',message:"do you ever feel like you\'re supposed to be somewhere else",hint:'Engage with it genuinely — this is a real moment'},
-  {tone:'mysterious',context:'She wants to know what goes on in your head',message:"what\'s actually going on in your head right now",hint:'Half-answer. Make her want the other half'},
-  {tone:'mysterious',context:'She\'s asking how you really are — genuinely',message:"no but how are you actually",hint:'Be real but brief — don\'t dump everything'},
+  {tone:'mysterious',context:'She senses there\'s more to you than you\'re showing and wants to dig',message:"I feel like you\'re hiding something",hint:'Don\'t deny or confirm — make her more curious'},
+  {tone:'mysterious',context:'She\'s trying to go deeper into the conversation by asking for a real secret',message:"tell me something nobody else knows about you",hint:'Give something real but brief — not your entire life story'},
+  {tone:'mysterious',context:'It\'s late at night and she\'s feeling introspective enough to ask deep questions',message:"what do you think about at 3am",hint:'Actually answer this interestingly — show some depth'},
+  {tone:'mysterious',context:'She\'s noticed you\'re more complex than you let on',message:"you seem like you have layers",hint:'Acknowledge it with intrigue — don\'t explain the layers'},
+  {tone:'mysterious',context:'She\'s intrigued by you but frustrated she can\'t read you yet',message:"I can\'t figure you out and it\'s lowkey annoying",hint:'Good. Keep it that way. Say something that adds to the mystery'},
+  {tone:'mysterious',context:'Late night, she\'s in a reflective and philosophical mood',message:"do you ever feel like you\'re supposed to be somewhere else",hint:'Engage with it genuinely — this is a real moment'},
+  {tone:'mysterious',context:'She wants to know what you\'re actually thinking in this exact moment',message:"what\'s actually going on in your head right now",hint:'Half-answer. Make her want the other half'},
+  {tone:'mysterious',context:'She\'s pressing past the surface answer to get a real one from you',message:"no but how are you actually",hint:'Be real but brief — don\'t dump everything'},
   // BOLD
-  {tone:'bold',context:'She wants clarity — are you interested or playing games',message:"are you actually interested or just bored",hint:'Be direct. No games. Say what you mean'},
-  {tone:'bold',context:'She\'s setting terms upfront',message:"I don\'t do the back and forth thing just so you know",hint:'Respect it and match the directness'},
-  {tone:'bold',context:'She wants to know what you actually want',message:"what do you actually want from me",hint:'Answer honestly — this isn\'t a trap if you\'re real'},
-  {tone:'bold',context:'She\'s cutting through the tension',message:"if you like me just say it",hint:'Say it. Confidence is the whole reply'},
-  {tone:'bold',context:'She\'s not going to chase',message:"I\'m not gonna chase you",hint:'Good. You wouldn\'t want her to. Say that'},
-  {tone:'bold',context:'She\'s asking if you\'re serious about her',message:"do you actually see a future with me or nah",hint:'Be honest either way — bold means no sugarcoating'},
+  {tone:'bold',context:'She wants a clear answer about whether you\'re actually into her',message:"are you actually interested or just bored",hint:'Be direct. No games. Say what you mean'},
+  {tone:'bold',context:'She\'s setting her terms upfront so you know where she stands',message:"I don\'t do the back and forth thing just so you know",hint:'Respect it and match the directness'},
+  {tone:'bold',context:'She\'s tired of guessing what you want and is asking you to spell it out',message:"what do you actually want from me",hint:'Answer honestly — this isn\'t a trap if you\'re real'},
+  {tone:'bold',context:'She\'s done dancing around the tension and wants you to be straightforward',message:"if you like me just say it",hint:'Say it. Confidence is the whole reply'},
+  {tone:'bold',context:'She\'s laying down a boundary that she won\'t chase after you',message:"I\'m not gonna chase you",hint:'Good. You wouldn\'t want her to. Say that'},
+  {tone:'bold',context:'She\'s asking the hard question about where this is actually going',message:"do you actually see a future with me or nah",hint:'Be honest either way — bold means no sugarcoating'},
   // WHOLESOME
-  {tone:'wholesome',context:'She had a rough day and you helped',message:"you genuinely made my day better today",hint:'Accept it warmly — don\'t deflect'},
-  {tone:'wholesome',context:'She told her mom, she\'s comfortable around you',message:"I told my mum about you lol",hint:'Be warm and a little curious — ask what she said'},
-  {tone:'wholesome',context:'Genuine compliment on your character',message:"you\'re actually one of the good ones I think",hint:'Receive it without being awkward about it'},
-  {tone:'wholesome',context:'She trusts you to talk about real things',message:"I feel like I can talk to you about anything",hint:'Honor that — show it means something to you'},
-  {tone:'wholesome',context:'Thanking you for actually listening',message:"thanks for actually listening earlier",hint:'Make her feel like it was nothing — because it wasn\'t a big deal, it was just real'},
-  {tone:'wholesome',context:'You surprised her in a good way',message:"you\'re different from who I thought you were (in a good way)",hint:'Ask what she thought before — show curiosity'},
-  {tone:'wholesome',context:'She misses you genuinely',message:"I miss talking to you",hint:'Real and warm — not desperate'},
+  {tone:'wholesome',context:'You said something earlier that genuinely lifted her mood',message:"you genuinely made my day better today",hint:'Accept it warmly — don\'t deflect'},
+  {tone:'wholesome',context:'She\'s comfortable enough with you to mention you to her mom',message:"I told my mum about you lol",hint:'Be warm and a little curious — ask what she said'},
+  {tone:'wholesome',context:'She\'s reflecting on your character and giving you a genuine compliment',message:"you\'re actually one of the good ones I think",hint:'Receive it without being awkward about it'},
+  {tone:'wholesome',context:'She trusts you enough to feel like she can open up about anything',message:"I feel like I can talk to you about anything",hint:'Honor that — show it means something to you'},
+  {tone:'wholesome',context:'You actually listened to her vent earlier and she\'s appreciating it now',message:"thanks for actually listening earlier",hint:'Make her feel like it was nothing — because it wasn\'t a big deal, it was just real'},
+  {tone:'wholesome',context:'You turned out to be different from her first impression of you',message:"you\'re different from who I thought you were (in a good way)",hint:'Ask what she thought before — show curiosity'},
+  {tone:'wholesome',context:'It\'s been a while since you talked and she\'s genuinely missing the conversations',message:"I miss talking to you",hint:'Real and warm — not desperate'},
   // SPICY
-  {tone:'spicy',context:'She\'s confessing she keeps thinking about you',message:"I literally cannot stop thinking about you",hint:'Direct and confident — reciprocate without being desperate'},
-  {tone:'spicy',context:'Loaded opener, she had a dream',message:"I had a dream about you last night 👀",hint:'Be curious and a little bold — ask the right question'},
-  {tone:'spicy',context:'She\'s saying you have a dangerous energy',message:"you\'re dangerous and I think you know it",hint:'Own it — don\'t downplay it'},
-  {tone:'spicy',context:'Late night, she shouldn\'t be texting you but is',message:"I should not be texting you right now",hint:'Make her glad she did anyway'},
-  {tone:'spicy',context:'She\'s building tension and hinting at wanting to be there',message:"what would you do if I was there right now",hint:'Answer it. Don\'t dodge. Be specific'},
-  {tone:'spicy',context:'She\'s been replaying a conversation',message:"I\'ve been thinking about that conversation we had...",hint:'Ask what part — drag it out'},
-  {tone:'spicy',context:'She admitted she finds you attractive',message:"okay I\'ll admit you\'re actually fine fine",hint:'Say something that makes her regret saying it (in a good way)'},
-  {tone:'spicy',context:'She\'s being forward about wanting to see you',message:"I need to see you soon",hint:'Set it up. Be direct about when'},
+  {tone:'spicy',context:'She\'s admitting that you\'ve been on her mind constantly',message:"I literally cannot stop thinking about you",hint:'Direct and confident — reciprocate without being desperate'},
+  {tone:'spicy',context:'She had a dream about you and is teasing you with it',message:"I had a dream about you last night 👀",hint:'Be curious and a little bold — ask the right question'},
+  {tone:'spicy',context:'She\'s telling you that you have a dangerous, magnetic energy and she knows you sense it',message:"you\'re dangerous and I think you know it",hint:'Own it — don\'t downplay it'},
+  {tone:'spicy',context:'It\'s late, she knows she shouldn\'t be texting you, but she can\'t help it',message:"I should not be texting you right now",hint:'Make her glad she did anyway'},
+  {tone:'spicy',context:'She\'s building sexual tension by hinting at wanting to be physically with you',message:"what would you do if I was there right now",hint:'Answer it. Don\'t dodge. Be specific'},
+  {tone:'spicy',context:'She\'s been replaying a charged conversation you two had and brought it back up',message:"I\'ve been thinking about that conversation we had...",hint:'Ask what part — drag it out'},
+  {tone:'spicy',context:'She\'s breaking and finally admitting she finds you attractive',message:"okay I\'ll admit you\'re actually fine fine",hint:'Say something that makes her regret saying it (in a good way)'},
+  {tone:'spicy',context:'She\'s being forward about wanting to see you in person soon',message:"I need to see you soon",hint:'Set it up. Be direct about when'},
   // PLANS
-  {tone:'plans',context:'She\'s putting the idea out there softly',message:"we should actually hang out one day",hint:'Lock it in — turn \'one day\' into a specific plan'},
-  {tone:'plans',context:'She found a place she thinks you\'d like',message:"there\'s this place I think you\'d actually like",hint:'Ask what it is and pivot to making it happen'},
-  {tone:'plans',context:'She left a window open — she\'s free',message:"I\'m free this weekend randomly",hint:'Fill that window. Suggest something specific'},
-  {tone:'plans',context:'Playful complaint you\'ve never taken her anywhere',message:"you\'ve never actually taken me anywhere 😒",hint:'Acknowledge it and fix it right now — suggest something'},
-  {tone:'plans',context:'She\'s getting direct about actually meeting',message:"okay so when are we actually doing something",hint:'Give a day and a plan — don\'t be vague'},
-  {tone:'plans',context:'She wants to do something but won\'t say what',message:"I want to do something but idk what",hint:'Decide for her. Confidence in making a plan is attractive'},
+  {tone:'plans',context:'She\'s softly putting the idea of hanging out into the conversation',message:"we should actually hang out one day",hint:'Lock it in — turn \'one day\' into a specific plan'},
+  {tone:'plans',context:'She found a spot she genuinely thinks would match your vibe',message:"there\'s this place I think you\'d actually like",hint:'Ask what it is and pivot to making it happen'},
+  {tone:'plans',context:'She\'s telling you her schedule is open and leaving a window for you to take',message:"I\'m free this weekend randomly",hint:'Fill that window. Suggest something specific'},
+  {tone:'plans',context:'She\'s playfully complaining you haven\'t made real plans together yet',message:"you\'ve never actually taken me anywhere 😒",hint:'Acknowledge it and fix it right now — suggest something'},
+  {tone:'plans',context:'She\'s done waiting and wants you to commit to actual plans',message:"okay so when are we actually doing something",hint:'Give a day and a plan — don\'t be vague'},
+  {tone:'plans',context:'She wants to do something but is hoping you\'ll decide what',message:"I want to do something but idk what",hint:'Decide for her. Confidence in making a plan is attractive'},
   // DRY
-  {tone:'dry',context:'One word response — could mean anything',message:"k",hint:'Match the energy. Short is better than long'},
-  {tone:'dry',context:'Noncommittal and minimal',message:"sure",hint:'Don\'t over-respond to a one-word message'},
-  {tone:'dry',context:'She\'s being vague',message:"maybe",hint:'Nail it down without pressure'},
-  {tone:'dry',context:'Lukewarm agreement',message:"I guess",hint:'Leave room — don\'t chase a half-hearted response'},
-  {tone:'dry',context:'She\'s commenting on you deadpan',message:"you\'re so much",hint:'Agree simply — dry energy matches dry energy'},
-  {tone:'dry',context:'Minimal engagement but she still replied',message:"lol",hint:'Say something that makes the next reply harder to be dry'},
-  {tone:'dry',context:'She\'s being short because she\'s testing your reaction',message:"whatever",hint:'Don\'t react to the attitude — stay unbothered'},
+  {tone:'dry',context:'She\'s replying with just one letter — could be busy, could be distant',message:"k",hint:'Match the energy. Short is better than long'},
+  {tone:'dry',context:'She\'s giving you a noncommittal one-word reply',message:"sure",hint:'Don\'t over-respond to a one-word message'},
+  {tone:'dry',context:'She\'s being vague about a plan or question you asked',message:"maybe",hint:'Nail it down without pressure'},
+  {tone:'dry',context:'She\'s agreeing without enthusiasm',message:"I guess",hint:'Leave room — don\'t chase a half-hearted response'},
+  {tone:'dry',context:'You said something extra and she\'s commenting on it deadpan',message:"you\'re so much",hint:'Agree simply — dry energy matches dry energy'},
+  {tone:'dry',context:'You sent something funny and she gave the minimum acknowledgment',message:"lol",hint:'Say something that makes the next reply harder to be dry'},
+  {tone:'dry',context:'She\'s being short on purpose to see how you react to the cold energy',message:"whatever",hint:'Don\'t react to the attitude — stay unbothered'},
 ];
 
 let trainingData=[];
@@ -1581,13 +1599,36 @@ function pickBatch(size=6){
     const key=s.tone+'|'+s.message;
     return!shownScenarioIds.has(key);
   });
-  // If pool exhausted, reset
-  if(pool.length<size){shownScenarioIds.clear();return pickBatch(size)}
-  // Sort by tone scarcity then shuffle
+  // Return whatever's left, even if less than size
   pool.sort((a,b)=>(counts[a.tone]||0)-(counts[b.tone]||0));
   const weighted=pool.slice(0,Math.min(pool.length,size*3));
   const shuffled=weighted.sort(()=>Math.random()-.5);
-  return shuffled.slice(0,size);
+  return shuffled.slice(0,Math.min(pool.length,size));
+}
+
+function isPoolExhausted(){
+  return SCENARIO_BANK.every(s=>shownScenarioIds.has(s.tone+'|'+s.message));
+}
+
+function resetScenarioPool(){
+  shownScenarioIds.clear();
+  saveTrainingData();
+  renderTrainingBatch();
+}
+
+function notifyTris(){
+  const name=getTrainerCode()||'friend';
+  const myCount=trainingData.filter(d=>(d.trainer||'anon')===getTrainerCode()).length;
+  const subject=`DM Assistant — ${name} finished all training scenarios`;
+  const body=`Hey Tris,\n\n${name} here. I just finished all the training scenarios you have in the app — got through every one of them.\n\nMy total saved replies: ${myCount}\n\nWhen you get a chance, would be sick to have some fresh scenarios to keep training. I'm gonna export my training data now so you can import it.\n\n— ${name}`;
+  const url=`mailto:tristan.sooklal@icloud.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  // Use anchor click — most reliable cross-platform way to trigger mailto
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('📧 Opening your email app...');
 }
 
 function renderTrainingBatch(){
@@ -1598,9 +1639,28 @@ function renderTrainingBatch(){
   document.getElementById('train-count').textContent=total?`${total} repl${total===1?'y':'ies'} saved — keep going, more = better`:'No replies yet — just text back naturally';
 
   const batch=pickBatch(6);
+  const wrap=document.getElementById('train-scenario-wrap');
+
+  // Remove any old load-more / all-done buttons up front
+  const oldLoad=document.getElementById('load-more-btn');if(oldLoad)oldLoad.remove();
+  const oldDone=document.getElementById('all-done-card');if(oldDone)oldDone.remove();
+
+  // POOL EXHAUSTED — show the "all done" prompt instead of cards
+  if(batch.length===0){
+    const isFriend=currentUser&&currentUser!=='Tris👑';
+    wrap.innerHTML=`<div id="all-done-card" class="train-scenario-card" style="text-align:center;padding:30px 24px">
+      <div style="font-size:34px;margin-bottom:10px">🎉</div>
+      <div style="font-size:17px;font-weight:600;color:var(--text);margin-bottom:6px">You've done them all</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.6">Saved <strong style="color:var(--text)">${total}</strong> repl${total===1?'y':'ies'} across every scenario in the bank. ${isFriend?'Want Tris to add more?':'Time to ship some new scenarios.'}</div>
+      ${isFriend?`<button onclick="notifyTris()" style="width:100%;padding:13px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;box-shadow:0 0 32px rgba(226,226,226,0.18)">📧 Notify Tris for new scenarios</button>`:''}
+      <button onclick="resetScenarioPool()" style="width:100%;padding:11px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--surface3)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--surface2)';this.style.color='var(--text2)'">🔄 Replay scenarios from the start</button>
+      ${isFriend?`<div style="font-size:11px;color:var(--text3);margin-top:14px;line-height:1.55">Don't forget to <strong style="color:var(--text2)">📤 Export</strong> your data so Tris can merge it in.</div>`:''}
+    </div>`;
+    return;
+  }
+
   batch.forEach(s=>{shownScenarioIds.add(s.tone+'|'+s.message)});
 
-  const wrap=document.getElementById('train-scenario-wrap');
   wrap.innerHTML=batch.map((s,i)=>{
     const t=TRAIN_TONES.find(x=>x.id===s.tone)||TRAIN_TONES[0];
     return`<div class="train-scenario-card" id="tsc-${i}" style="margin-bottom:12px">
@@ -1610,7 +1670,7 @@ function renderTrainingBatch(){
       <div class="train-hint">💡 ${s.hint}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
         <textarea class="train-input-${i}" placeholder="Your reply..." rows="2" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-        <button onclick="saveOneReply(${i},'${s.tone.replace(/'/g,"\\'")}','${s.message.replace(/'/g,"\\'").replace(/"/g,'\\"')}','${s.context.replace(/'/g,"\\'")}')" style="flex-shrink:0;align-self:flex-end;padding:10px 14px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--accent)';this.style.color='var(--accent-fg)'" onmouseout="this.style.background='var(--surface3)';this.style.color='var(--text2)'">Save ↵</button>
+        <button class="save-train-btn save-btn-${i}" onclick="saveOneReply(${i},'${s.tone.replace(/'/g,"\\'")}','${s.message.replace(/'/g,"\\'").replace(/"/g,'\\"')}','${s.context.replace(/'/g,"\\'")}')">Save ↵</button>
       </div>
       <div class="train-saved-indicator-${i}" style="display:none;font-size:12px;color:var(--green);margin-top:6px">✅ Saved</div>
     </div>`;
@@ -1628,23 +1688,58 @@ function renderTrainingBatch(){
   document.getElementById('train-body-inner').appendChild(btn);
 }
 
+let sessionSaveCount=0;
+let reminderTimer=null;
+
 function saveOneReply(i,tone,message,context){
   const ta=document.querySelector(`.train-input-${i}`);
   const reply=ta?ta.value.trim():'';
   if(!reply){showToast('Type your reply first');return}
+  // Prevent double-save
+  const btn=document.querySelector(`.save-btn-${i}`);
+  if(btn&&btn.classList.contains('saved'))return;
+
   trainingData.push({tone,message,context,userReply:reply,trainer:getTrainerCode(),ts:Date.now()});
   saveTrainingData();
   renderContributors();
-  // Show saved indicator
-  const ind=document.querySelector(`.train-saved-indicator-${i}`);
-  if(ind){ind.style.display='block'}
+  // Animate save button to green
+  if(btn){
+    btn.classList.add('saved');
+    btn.textContent='✓ Saved';
+    btn.disabled=true;
+  }
+  // Lock textarea
   ta.disabled=true;ta.style.opacity='.5';
+  // Hide the old separate indicator (button color does the job now)
+  const ind=document.querySelector(`.train-saved-indicator-${i}`);
+  if(ind)ind.style.display='none';
   // Update progress chips
   const trained=new Set(trainingData.map(d=>d.tone));
   document.querySelectorAll('.train-prog-chip').forEach((el,idx)=>{
     if(trained.has(TRAIN_TONES[idx]?.id))el.classList.add('done');
   });
   document.getElementById('train-count').textContent=`${trainingData.length} repl${trainingData.length===1?'y':'ies'} saved — keep going, more = better`;
+
+  // Friend-only export reminder every 6 saves in this session
+  sessionSaveCount++;
+  if(currentUser&&currentUser!=='Tris👑'&&sessionSaveCount%6===0){
+    showExportReminder();
+  }
+}
+
+function showExportReminder(){
+  const el=document.getElementById('export-reminder');
+  if(!el)return;
+  el.classList.add('show');
+  // Scroll the reminder into view
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  clearTimeout(reminderTimer);
+  reminderTimer=setTimeout(()=>el.classList.remove('show'),8000);
+}
+function hideExportReminder(){
+  const el=document.getElementById('export-reminder');
+  if(el)el.classList.remove('show');
+  clearTimeout(reminderTimer);
 }
 
 // Get relevant training examples to inject into prompts (style hint, not override)
