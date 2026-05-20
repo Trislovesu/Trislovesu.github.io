@@ -354,6 +354,14 @@ input[type="text"]::placeholder{color:var(--text3)}
 .vibe-score-fill{height:100%;border-radius:100px;transition:width .8s ease}
 .profile-analyzing{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3);padding:18px 0}
 
+/* ── AESTHETIC TAP FLASH ── */
+@keyframes tapFlash{
+  0%{box-shadow:0 0 0 0 rgba(255,255,255,0),0 0 0 0 rgba(255,255,255,0);background-color:initial}
+  18%{box-shadow:0 0 0 3px rgba(255,255,255,0.32),0 0 38px rgba(255,255,255,0.45),inset 0 0 18px rgba(255,255,255,0.12)}
+  100%{box-shadow:0 0 0 0 rgba(255,255,255,0),0 0 0 0 rgba(255,255,255,0)}
+}
+.tap-flash{animation:tapFlash .55s cubic-bezier(.22,1,.36,1)}
+
 /* ── SMOOTH PAGE TRANSITIONS ── */
 @keyframes screenFadeIn{0%{opacity:0;transform:scale(.97);filter:blur(10px)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
 @keyframes screenFadeOut{0%{opacity:1;transform:scale(1);filter:blur(0)}100%{opacity:0;transform:scale(1.03);filter:blur(10px)}}
@@ -793,6 +801,21 @@ body{background:
 <script>
 // ── STORAGE ──────────────────────────────────
 const store=(()=>{try{window.localStorage.setItem('_t','1');window.localStorage.removeItem('_t');return window.localStorage}catch(e){const m={};return{getItem:k=>m[k]??null,setItem:(k,v)=>{m[k]=v},removeItem:k=>{delete m[k]}}}})();
+
+// ── AESTHETIC TAP FLASH ──────────────────────
+// Lights up any button-like element with a soft white glow on press
+const TAP_SELECTOR='button:not(.preview-remove):not(.export-reminder-close), .nk, .user-btn, .itab, .tone-btn, .rtype-btn, .len-btn, .mode-btn, .qtoggle-btn, .angle-card, .suggestion-card';
+document.addEventListener('pointerdown',e=>{
+  const btn=e.target.closest(TAP_SELECTOR);
+  if(!btn)return;
+  if(btn.disabled||btn.classList.contains('saved'))return;
+  btn.classList.remove('tap-flash');
+  void btn.offsetWidth;
+  btn.classList.add('tap-flash');
+},true);
+document.addEventListener('animationend',e=>{
+  if(e.animationName==='tapFlash')e.target.classList.remove('tap-flash');
+},true);
 // ── PIN ──────────────────────────────────────
 const PIN='9999';let pin='';
 function kp(d){if(pin.length>=4)return;pin+=d;dots();if(pin.length===4)setTimeout(checkPin,120)}
