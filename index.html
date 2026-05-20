@@ -123,14 +123,41 @@ input[type="text"]::placeholder{color:var(--text3)}
 .obs-item::before{content:'→';position:absolute;left:0;color:var(--text3);font-size:11px;top:1px}
 .angles-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .angle-card{background:var(--surface3);border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;cursor:pointer;transition:all .18s;position:relative}
-.angle-card:hover{border-color:var(--border2);background:#2e2e2e}
-.angle-card.selected{border-color:var(--accent);background:#1e1e1e;box-shadow:0 0 0 2px var(--accent),0 0 20px rgba(226,226,226,0.18)}
+.angle-card:hover{border-color:rgba(226,226,226,0.35);background:#222;box-shadow:0 0 0 1px rgba(226,226,226,0.07),0 0 22px rgba(226,226,226,0.13)}
+.angle-card.selected{border-color:rgba(226,226,226,0.7);background:#1c1c1c;box-shadow:0 0 0 2px rgba(226,226,226,0.5),0 0 32px rgba(226,226,226,0.22)}
 .angle-card.recommended-angle{border-color:var(--green)}
-.angle-card.recommended-angle.selected{border-color:var(--green);box-shadow:0 0 0 2px var(--green),0 0 24px rgba(77,179,122,0.45)}
+.angle-card.recommended-angle:hover{border-color:var(--green);box-shadow:0 0 0 1px rgba(77,179,122,0.2),0 0 22px rgba(77,179,122,0.25)}
+.angle-card.recommended-angle.selected{border-color:var(--green);box-shadow:0 0 0 2px var(--green),0 0 30px rgba(77,179,122,0.4)}
 .angle-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .angle-desc{font-size:12px;color:var(--text2);line-height:1.5}
 .angle-rec-badge{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--green);background:var(--green-bg);border:1px solid var(--green);padding:1px 6px;border-radius:100px}
 .intel-analyzing{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text3);padding:16px}
+
+/* ── ANGLE MODAL ── */
+.angle-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:900;display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(6px)}
+.angle-modal-overlay.open{opacity:1;pointer-events:all}
+.angle-modal{background:var(--surface);border:1px solid var(--border);border-radius:22px 22px 0 0;width:100%;max-width:720px;padding:0;transform:translateY(40px);transition:transform .28s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 80px rgba(0,0,0,0.7),0 0 120px rgba(100,55,220,0.15),0 0 0 1px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06)}
+.angle-modal-overlay.open .angle-modal{transform:translateY(0)}
+.angle-modal-handle{width:36px;height:4px;background:var(--border2);border-radius:100px;margin:14px auto 0}
+.angle-modal-header{padding:18px 22px 14px}
+.angle-back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;margin-bottom:14px;transition:color .13s}
+.angle-back-btn:hover{color:var(--text)}
+.angle-modal-name{font-size:17px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.angle-modal-approach{font-size:13px;color:var(--text3);line-height:1.55}
+.angle-modal-body{padding:0 22px 32px;display:flex;flex-direction:column;gap:10px}
+.suggestion-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:13px;padding:16px;cursor:pointer;transition:all .18s;position:relative}
+.suggestion-card:hover{border-color:rgba(226,226,226,0.3);background:var(--surface3);box-shadow:0 0 0 1px rgba(226,226,226,0.06),0 0 20px rgba(226,226,226,0.08)}
+.suggestion-card.rec{border-color:rgba(226,226,226,0.55);background:#1a1a1a;box-shadow:0 0 0 2px rgba(226,226,226,0.35),0 0 36px rgba(226,226,226,0.15),inset 0 1px 0 rgba(255,255,255,0.06)}
+.suggestion-card.rec:hover{box-shadow:0 0 0 2px rgba(226,226,226,0.55),0 0 50px rgba(226,226,226,0.22)}
+.suggestion-rec-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.suggestion-rec-label::before{content:'✦';font-size:9px}
+.suggestion-text{font-size:15px;color:var(--text);line-height:1.55}
+.suggestion-use{font-size:12px;color:var(--text3);margin-top:8px;transition:color .13s}
+.suggestion-card:hover .suggestion-use{color:var(--text2)}
+.suggestion-card.rec .suggestion-use{color:var(--text2)}
+.sugg-loading{display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
+.sugg-skeleton{height:72px;background:var(--surface2);border-radius:13px;border:1px solid var(--border);animation:shimmer 1.4s ease infinite}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.8}}
 
 /* ── GEN BTN ── */
 .gen-btn{width:100%;padding:15px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -393,6 +420,19 @@ body{background:
 
 <div class="toast" id="toast"></div>
 
+<!-- ANGLE SUGGESTIONS MODAL -->
+<div class="angle-modal-overlay" id="angle-modal-overlay" onclick="overlayClick(event)">
+  <div class="angle-modal">
+    <div class="angle-modal-handle"></div>
+    <div class="angle-modal-header">
+      <button class="angle-back-btn" onclick="closeAngleModal()">← Back to angles</button>
+      <div class="angle-modal-name" id="modal-angle-name"></div>
+      <div class="angle-modal-approach" id="modal-angle-approach"></div>
+    </div>
+    <div class="angle-modal-body" id="modal-suggestions-body"></div>
+  </div>
+</div>
+
 <script>
 // ── STORAGE ──────────────────────────────────
 const store=(()=>{try{window.localStorage.setItem('_t','1');window.localStorage.removeItem('_t');return window.localStorage}catch(e){const m={};return{getItem:k=>m[k]??null,setItem:(k,v)=>{m[k]=v},removeItem:k=>{delete m[k]}}}})();
@@ -593,21 +633,122 @@ function renderImageAnalysis(data,id){
   // Angle cards
   if(angles&&angles.length){
     anglesEl.innerHTML=angles.map((a,i)=>`
-      <div class="angle-card${a.recommended?' recommended-angle':''}" onclick="selectAngle(${i},'${id}')" id="angle-${id}-${i}">
+      <div class="angle-card${a.recommended?' recommended-angle':''}" onclick="openAngleSuggestions(${i},'${id}')" id="angle-${id}-${i}">
         <div class="angle-label">${a.icon||'💬'} ${a.label}${a.recommended?'<span class="angle-rec-badge">best</span>':''}</div>
         <div class="angle-desc">${a.approach}</div>
       </div>`).join('');
-    // Auto-select recommended
+    // Pre-select recommended without opening modal
     const recIdx=typeof recommended_angle==='number'?recommended_angle:0;
     selectAngle(recIdx,id);
   }
 }
 
+let activeModalId=null;
+let activeModalIndex=null;
+
 function selectAngle(index,id){
   selectedAngles[id]=imageAngles[id][index]||null;
-  document.querySelectorAll(`#${id}-angles-grid .angle-card`).forEach((el,i)=>{
-    el.classList.toggle('selected',i===index);
-  });
+  document.querySelectorAll(`#${id}-angles-grid .angle-card`).forEach((el,i)=>el.classList.toggle('selected',i===index));
+}
+
+function openAngleSuggestions(index,id){
+  selectAngle(index,id);
+  activeModalId=id;
+  activeModalIndex=index;
+  const angle=imageAngles[id][index];
+  if(!angle)return;
+
+  document.getElementById('modal-angle-name').innerHTML=`${angle.icon||'💬'} ${angle.label}${angle.recommended?'<span class="angle-rec-badge" style="margin-left:8px">best</span>':''}`;
+  document.getElementById('modal-angle-approach').textContent=angle.approach;
+  document.getElementById('modal-suggestions-body').innerHTML=`<div class="sugg-loading"><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div></div>`;
+
+  const overlay=document.getElementById('angle-modal-overlay');
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+
+  generateAngleSuggestions(angle,id);
+}
+
+function closeAngleModal(){
+  document.getElementById('angle-modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function overlayClick(e){
+  if(e.target===document.getElementById('angle-modal-overlay'))closeAngleModal();
+}
+
+async function generateAngleSuggestions(angle,id){
+  if(!apiKey)return;
+  const tone=getActiveTone();
+  const ctx=document.getElementById('ctx-input').value.trim();
+  const isStory=id==='story';
+
+  const system=`You write Instagram DMs for a confident guy in 2026 with natural rizz. Unbothered, confident, texts like he has 5 other conversations going. ZERO exclamation marks. No feminine phrases (omg, bestie, slay, aww). No AI phrases. Lowercase preferred. 1-2 short sentences max. Never over-explain.
+Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
+${ctx?`Context: ${ctx}`:''}
+Approach angle: "${angle.label}" — ${angle.approach}
+Generate exactly 3 different reply options using this angle. Return ONLY raw JSON, no markdown:
+{"replies":["reply 1","reply 2","reply 3"],"recommended":0}
+where recommended is the index (0-2) of the best one.`;
+
+  const imagePrompt=isStory
+    ?`This is an Instagram story. Generate 3 reply options reacting to it using the specified angle.`
+    :`This is an Instagram DM conversation. RIGHT bubbles = my messages, LEFT = theirs. Generate 3 reply options to their latest message using the specified angle.`;
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({
+        model:'meta-llama/llama-4-scout-17b-16e-instruct',
+        max_tokens:300,
+        messages:[
+          {role:'system',content:system},
+          {role:'user',content:[{type:'image_url',image_url:{url:`data:${imgs[id].type};base64,${imgs[id].b64}`}},{type:'text',text:imagePrompt}]}
+        ]
+      })
+    });
+    if(!res.ok)throw new Error('API error '+res.status);
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderSuggestions(parsed.replies||[],parsed.recommended||0);
+  }catch(e){
+    document.getElementById('modal-suggestions-body').innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Could not generate suggestions. Try again.</div>';
+    console.error(e);
+  }
+}
+
+let currentSuggestions=[];
+function renderSuggestions(replies,recommended){
+  currentSuggestions=replies;
+  const body=document.getElementById('modal-suggestions-body');
+  if(!replies.length){body.innerHTML='<div style="font-size:13px;color:var(--text3)">No suggestions returned.</div>';return}
+  body.innerHTML=replies.map((r,i)=>{
+    const isRec=i===recommended;
+    return`<div class="suggestion-card${isRec?' rec':''}" onclick="useSuggestion(${i})">
+      ${isRec?'<div class="suggestion-rec-label">Recommended</div>':''}
+      <div class="suggestion-text">${r}</div>
+      <div class="suggestion-use">Tap to use →</div>
+    </div>`;
+  }).join('');
+}
+
+function useSuggestion(index){
+  const text=currentSuggestions[index];
+  if(!text)return;
+  lastReply=text;
+  const box=document.getElementById('result-box');
+  box.textContent=text;
+  document.getElementById('result-actions').style.display='flex';
+  const cpBtn=document.getElementById('copy-btn');
+  cpBtn.className='action-btn';cpBtn.textContent='📋 Copy Reply';
+  const src=activeModalId==='story'?'[Story]':'[Screenshot]';
+  const imgUrl=activeModalId==='story'?imgUrls.story:imgUrls.dm;
+  addToHistory(getActiveTone(),src,text,activeModalId==='story'?'story':'dm',imgUrl);
+  closeAngleModal();
+  document.getElementById('result-box').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function clearIntelPanel(id){
