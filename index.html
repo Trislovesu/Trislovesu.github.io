@@ -250,6 +250,26 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
 
+/* ── PROFILE REVIEW ── */
+.profile-suggestion-grid{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.ps-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px}
+.ps-card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ps-area-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:100px;background:var(--surface3);border:1px solid var(--border2);color:var(--text3)}
+.ps-card.urgent .ps-area-tag{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.ps-card.good .ps-area-tag{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.ps-issue{font-size:13px;color:var(--text);line-height:1.55;margin-bottom:6px;font-weight:500}
+.ps-fix{font-size:12px;color:var(--text2);line-height:1.6;padding-left:10px;border-left:2px solid var(--border2)}
+.post-ideas-grid{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.post-idea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.55;display:flex;gap:10px;align-items:flex-start}
+.post-idea-num{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text3);min-width:20px;margin-top:1px}
+.vibe-score-row{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.vibe-score-num{font-size:32px;font-weight:700;font-family:'DM Mono',monospace;line-height:1}
+.vibe-score-bar-wrap{flex:1}
+.vibe-score-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.vibe-score-track{height:6px;background:var(--surface3);border-radius:100px;overflow:hidden}
+.vibe-score-fill{height:100%;border-radius:100px;transition:width .8s ease}
+.profile-analyzing{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3);padding:18px 0}
+
 /* ── AMBIENT GLOW ── */
 body{background:
   radial-gradient(ellipse 80% 55% at 15% -5%,rgba(100,55,220,0.22) 0%,transparent 60%),
@@ -336,6 +356,7 @@ body{background:
     <div class="mode-row">
       <button class="mode-btn active" id="mode-dm" onclick="setMode('dm')">💬 Reply to DM</button>
       <button class="mode-btn" id="mode-story" onclick="setMode('story')">📖 React to Story</button>
+      <button class="mode-btn" id="mode-profile" onclick="setMode('profile')">👤 Profile</button>
     </div>
 
     <!-- DM PANEL -->
@@ -370,6 +391,39 @@ body{background:
             <div class="intel-section-title">📐 Pick your angle</div>
             <div class="angles-grid" id="dm-angles-grid"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE PANEL -->
+    <div id="panel-profile" style="display:none">
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:7px">Instagram username <span style="color:var(--text3);font-weight:400">(optional — just for context)</span></div>
+        <input type="text" id="profile-username" placeholder="@yourusername" style="font-family:'DM Mono',monospace;font-size:13px" />
+      </div>
+      <div class="drop-zone" id="dz-profile" ondragover="dzOver(event,'profile')" ondragleave="dzLeave('profile')" ondrop="dzDrop(event,'profile')">
+        <input type="file" accept="image/*" onchange="dzFile(this,'profile')" />
+        <div class="drop-icon">📱</div>
+        <div class="drop-label">Drop your profile screenshot</div>
+        <div class="drop-sub">Screenshot your Instagram profile page — bio, grid, highlights visible</div>
+      </div>
+      <div id="preview-profile" style="text-align:center"></div>
+      <div class="intel-panel" id="intel-profile">
+        <div class="intel-section">
+          <div class="intel-section-title">📊 Profile Score</div>
+          <div id="profile-score-area"><div class="profile-analyzing"><div class="analyzing-dot"></div> Analyzing your profile...</div></div>
+        </div>
+        <div class="intel-section">
+          <div class="intel-section-title">✅ What's working</div>
+          <div class="obs-list" id="profile-working"></div>
+        </div>
+        <div class="intel-section">
+          <div class="intel-section-title">🔧 What to fix</div>
+          <div class="profile-suggestion-grid" id="profile-fixes"></div>
+        </div>
+        <div class="intel-section">
+          <div class="intel-section-title">💡 Post ideas for you</div>
+          <div class="post-ideas-grid" id="profile-post-ideas"></div>
         </div>
       </div>
     </div>
@@ -576,8 +630,10 @@ function setMode(m){
   mode=m;
   document.getElementById('mode-dm').classList.toggle('active',m==='dm');
   document.getElementById('mode-story').classList.toggle('active',m==='story');
+  document.getElementById('mode-profile').classList.toggle('active',m==='profile');
   document.getElementById('panel-dm').style.display=m==='dm'?'block':'none';
   document.getElementById('panel-story').style.display=m==='story'?'block':'none';
+  document.getElementById('panel-profile').style.display=m==='profile'?'block':'none';
   updateCardVisibility();
 }
 
@@ -595,15 +651,16 @@ function switchTab(t){
 
 function updateCardVisibility(){
   const isTextMode=mode==='dm'&&activeTab==='text';
+  const isProfile=mode==='profile';
   document.getElementById('text-context-card').style.display=isTextMode?'block':'none';
-  document.getElementById('tone-card').style.display=isTextMode?'none':'block';
+  document.getElementById('tone-card').style.display=(isTextMode||isProfile)?'none':'block';
   document.getElementById('replies-area').style.display=isTextMode&&currentReplies.length?'block':'none';
-  document.getElementById('result-card').style.display=isTextMode?'none':'block';
-  document.getElementById('gen-label').textContent=mode==='story'?'✨ Generate Story Reply':isTextMode?'✨ Generate Replies':'✨ Generate Reply';
+  document.getElementById('result-card').style.display=(isTextMode||isProfile)?'none':'block';
+  document.getElementById('gen-btn').style.display=isProfile?'none':'block';
 }
 
 // ── DROP ZONES ───────────────────────────────
-let imgs={dm:{b64:null,type:null},story:{b64:null,type:null}};
+let imgs={dm:{b64:null,type:null},story:{b64:null,type:null},profile:{b64:null,type:null}};
 let imgUrls={dm:null,story:null};
 let currentReplies=[];
 function dzOver(e,id){e.preventDefault();document.getElementById('dz-'+id).classList.add('over')}
@@ -613,25 +670,42 @@ function dzFile(input,id){if(input.files[0])handleFile(input.files[0],id)}
 
 function handleFile(file,id){
   if(!file||!file.type.startsWith('image/')){showToast('Please upload an image');return}
+  if(file.size>20*1024*1024){showToast('Image too large — max 20MB');return}
   const reader=new FileReader();
   reader.onload=async e=>{
-    const compressed=await compressImage(e.target.result.split(',')[1],file.type,800,0.78);
+    const raw=e.target.result;
+    const b64=raw.split(',')[1];
+    const mimeHint=file.type||'image/jpeg';
+    const compressed=await compressImage(b64,mimeHint,800,0.78);
+    if(!compressed){
+      showToast('Could not read this image — try a screenshot or save as PNG/JPG first');
+      return;
+    }
     imgs[id]={b64:compressed.b64,type:compressed.type};
-    document.getElementById('preview-'+id).innerHTML=`<div class="preview-wrap" style="margin-top:12px;display:inline-block"><img src="data:${compressed.type};base64,${compressed.b64}" alt="Preview"/><button class="preview-remove" onclick="removeImg('${id}')">✕</button></div>`;
-    analyzeImage(id);
-    const ghUrl=await uploadImageToGithub(compressed.b64,compressed.type,id);
-    imgUrls[id]=ghUrl;
-    if(ghUrl)showToast('📸 Image saved to GitHub');
+    document.getElementById('preview-'+id).innerHTML=`<div class="preview-wrap" style="margin-top:12px;display:inline-block"><img src="data:${compressed.type};base64,${compressed.b64}" alt="Preview" onerror="this.parentElement.parentElement.innerHTML='<p style=\\'color:var(--red);font-size:13px;padding:8px 0\\'>Preview failed — but analysis will still run.</p>'"/><button class="preview-remove" onclick="removeImg('${id}')">✕</button></div>`;
+    if(id==='profile'){
+      analyzeProfile();
+    }else{
+      analyzeImage(id);
+      const ghUrl=await uploadImageToGithub(compressed.b64,compressed.type,id);
+      imgUrls[id]=ghUrl;
+      if(ghUrl)showToast('📸 Image saved to GitHub');
+    }
   };
+  reader.onerror=()=>showToast('Could not read file — try a different image');
   reader.readAsDataURL(file);
 }
 function removeImg(id){
   imgs[id]={b64:null,type:null};
-  imgUrls[id]=null;
-  selectedAngles[id]=null;
-  imageAngles[id]=[];
+  if(imgUrls[id]!==undefined)imgUrls[id]=null;
+  if(id==='profile'){
+    document.getElementById('intel-profile').classList.remove('visible');
+  }else{
+    selectedAngles[id]=null;
+    imageAngles[id]=[];
+    clearIntelPanel(id);
+  }
   document.getElementById('preview-'+id).innerHTML='';
-  clearIntelPanel(id);
 }
 
 // ── IMAGE ANALYSIS ───────────────────────────
@@ -1010,6 +1084,109 @@ function clearIntelPanel(id){
     document.getElementById('tone-auto-label').style.display='none';
     document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('recommended'));
     ALL_TONES.forEach(t=>{const p=document.getElementById('pct-'+t);if(p){p.textContent='';p.style.display='none'}});
+  }
+}
+
+// ── PROFILE ANALYSIS ─────────────────────────
+async function analyzeProfile(){
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(!imgs.profile?.b64)return;
+  const username=document.getElementById('profile-username').value.trim();
+  const panel=document.getElementById('intel-profile');
+  panel.classList.add('visible');
+  document.getElementById('profile-score-area').innerHTML='<div class="profile-analyzing"><div class="analyzing-dot"></div> Reading your profile...</div>';
+  document.getElementById('profile-working').innerHTML='';
+  document.getElementById('profile-fixes').innerHTML='';
+  document.getElementById('profile-post-ideas').innerHTML='';
+
+  const system=`You are an expert Instagram growth consultant who reviews profiles with brutal honesty and gives actionable advice. You have a sharp eye for what makes profiles attractive, what kills engagement, and what content strategies actually work.
+
+Analyze this Instagram profile screenshot carefully. Look at: the bio (text, links, emojis), profile photo, highlights (names, count, covers), post grid (aesthetic, consistency, content types, quality), follower/following ratio if visible, username if visible.
+
+The username is: ${username||'not provided'}
+
+Return ONLY raw JSON, no markdown:
+{
+  "vibe_score": <number 1-10>,
+  "vibe_label": "<short label like 'Inconsistent' or 'Clean and on-brand'>",
+  "working": ["specific thing that's already good 1", "specific thing 2"],
+  "fixes": [
+    {"area": "Bio", "priority": "urgent|normal|minor", "issue": "specific problem", "fix": "exact actionable fix"},
+    ...
+  ],
+  "post_ideas": ["specific post idea tailored to this profile 1", "idea 2", "idea 3", "idea 4", "idea 5"],
+  "summary": "one punchy sentence about the overall profile"
+}
+
+Rules:
+- Be specific — reference what you actually see, not generic advice
+- fixes should have 4-7 entries covering different areas (bio, grid, highlights, engagement, branding, etc.)
+- post_ideas must be specific to this person's apparent niche/vibe — not generic like "post a selfie"
+- priority "urgent" = big impact, fix first. "normal" = should fix. "minor" = nice to have
+- Be direct and honest — don't sugarcoat issues`;
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({
+        model:'meta-llama/llama-4-scout-17b-16e-instruct',
+        max_tokens:900,
+        temperature:0.7,
+        messages:[
+          {role:'system',content:system},
+          {role:'user',content:[
+            {type:'image_url',image_url:{url:`data:${imgs.profile.type};base64,${imgs.profile.b64}`}},
+            {type:'text',text:'Analyze this Instagram profile screenshot and return the JSON.'}
+          ]}
+        ]
+      })
+    });
+    if(!res.ok)throw new Error('API error '+res.status);
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderProfileAnalysis(parsed);
+  }catch(e){
+    document.getElementById('profile-score-area').innerHTML='<div style="font-size:12px;color:var(--text3)">Could not analyze — try again.</div>';
+    console.error(e);
+  }
+}
+
+function renderProfileAnalysis(d){
+  const scoreColor=d.vibe_score>=8?'#4db37a':d.vibe_score>=5?'#e0a847':'#e05555';
+  document.getElementById('profile-score-area').innerHTML=`
+    <div class="vibe-score-row">
+      <div class="vibe-score-num" style="color:${scoreColor}">${d.vibe_score}</div>
+      <div class="vibe-score-bar-wrap">
+        <div class="vibe-score-label">${d.vibe_label||''}</div>
+        <div class="vibe-score-track"><div class="vibe-score-fill" style="width:${d.vibe_score*10}%;background:${scoreColor}"></div></div>
+        ${d.summary?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${d.summary}</div>`:''}
+      </div>
+    </div>`;
+
+  if(d.working?.length){
+    document.getElementById('profile-working').innerHTML=d.working.map(w=>`<div class="obs-item">${w}</div>`).join('');
+  }
+
+  if(d.fixes?.length){
+    document.getElementById('profile-fixes').innerHTML=d.fixes.map(f=>`
+      <div class="ps-card ${f.priority==='urgent'?'urgent':f.priority==='minor'?'':''}">
+        <div class="ps-card-header">
+          <span class="ps-area-tag">${f.area}</span>
+          ${f.priority==='urgent'?'<span style="font-size:10px;color:var(--red);font-weight:600">urgent</span>':''}
+        </div>
+        <div class="ps-issue">${f.issue}</div>
+        <div class="ps-fix">→ ${f.fix}</div>
+      </div>`).join('');
+  }
+
+  if(d.post_ideas?.length){
+    document.getElementById('profile-post-ideas').innerHTML=d.post_ideas.map((idea,i)=>`
+      <div class="post-idea">
+        <span class="post-idea-num">${i+1}</span>
+        <span>${idea}</span>
+      </div>`).join('');
   }
 }
 
@@ -1436,18 +1613,26 @@ function saveGhSettings(){
   document.getElementById('gh-status').textContent='✅ GitHub connected — images will be saved automatically.';
   document.getElementById('gh-token').value=tok.slice(0,10)+'••••••••';
 }
-function compressImage(b64,mimeType,maxDim=1600,quality=0.82){
+function compressImage(b64,mimeType,maxDim=800,quality=0.78){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
-      const scale=Math.min(1,maxDim/Math.max(img.width,img.height));
-      const canvas=document.createElement('canvas');
-      canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-      const dataUrl=canvas.toDataURL('image/jpeg',quality);
-      resolve({b64:dataUrl.split(',')[1],type:'image/jpeg'});
+      try{
+        const scale=Math.min(1,maxDim/Math.max(img.width||1,img.height||1));
+        const w=Math.round((img.width||800)*scale);
+        const h=Math.round((img.height||800)*scale);
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const dataUrl=canvas.toDataURL('image/jpeg',quality);
+        // Validate result isn't empty or broken
+        const result=dataUrl.split(',')[1]||'';
+        if(result.length>100){resolve({b64:result,type:'image/jpeg'});return}
+      }catch(err){console.warn('Canvas compression failed',err)}
+      // Fallback: use original only if it decoded OK (img loaded means browser can display it)
+      resolve({b64,type:'image/jpeg'});
     };
-    img.onerror=()=>resolve({b64,type:mimeType});
+    img.onerror=()=>resolve(null); // Signal failure
     img.src=`data:${mimeType};base64,${b64}`;
   });
 }
