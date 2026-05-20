@@ -128,6 +128,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 .angle-card.recommended-angle{border-color:var(--green)}
 .angle-card.recommended-angle:hover{border-color:var(--green);box-shadow:0 0 0 1px rgba(77,179,122,0.2),0 0 22px rgba(77,179,122,0.25)}
 .angle-card.recommended-angle.selected{border-color:var(--green);box-shadow:0 0 0 2px var(--green),0 0 30px rgba(77,179,122,0.4)}
+.angle-card.spicy{border-color:rgba(220,60,60,0.35);grid-column:1/-1}
+.angle-card.spicy:hover{border-color:rgba(255,80,60,0.6);background:#221010;box-shadow:0 0 0 1px rgba(220,60,60,0.12),0 0 28px rgba(220,60,60,0.28)}
+.angle-card.spicy.selected{border-color:rgba(255,70,50,0.85);background:#1e0c0c;box-shadow:0 0 0 2px rgba(220,60,60,0.65),0 0 36px rgba(220,60,60,0.38)}
 .angle-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .angle-desc{font-size:12px;color:var(--text2);line-height:1.5}
 .angle-rec-badge{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--green);background:var(--green-bg);border:1px solid var(--green);padding:1px 6px;border-radius:100px}
@@ -555,10 +558,10 @@ async function analyzeImage(id='dm'){
   const sysPrompt=isStory
     ?`You are an expert at reading Instagram stories and figuring out exactly how to reply to them. Analyze the story screenshot with extreme detail. Return ONLY a raw JSON object, no markdown. Format:
 {"observations":["specific detail 1","specific detail 2","specific detail 3"],"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended_tone":"tonename","angles":[{"label":"Angle name","icon":"emoji","approach":"exact approach description — what angle to take and why it works","recommended":false},...],"recommended_angle":0}
-Rules: observations must be SPECIFIC — describe what you actually see (person's appearance, expression, location, activity, outfit, mood, what's in frame). tones sum to 100. angles array has exactly 4 entries, set recommended:true on the best one and set recommended_angle to its index (0-3). Each angle should be a genuinely different way to react.`
+Rules: observations must be SPECIFIC to the actual story content only — describe the person's appearance, expression, outfit, body language, location, mood, activity, what's happening. COMPLETELY IGNORE and never mention: phone/device frame, Instagram UI (time, battery bar, signal, username bar, story ring, progress dots), browser chrome, desktop wallpaper, other apps, notification bar, screen edges. Only what's inside the story photo or video itself. tones sum to 100. angles array has exactly 4 entries, set recommended:true on the best one and set recommended_angle to its index (0-3). Each angle should be a genuinely different way to react.`
     :`You are an expert at reading Instagram DM conversations and figuring out exactly how to reply. Layout: RIGHT side bubbles = my messages, LEFT side bubbles = their messages. Analyze with extreme detail. Return ONLY a raw JSON object, no markdown. Format:
 {"observations":["specific detail 1","specific detail 2","specific detail 3"],"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended_tone":"tonename","angles":[{"label":"Angle name","icon":"emoji","approach":"exact approach description — what angle to take and why it works","recommended":false},...],"recommended_angle":0}
-Rules: observations must be SPECIFIC — describe what you actually read (their exact words, the energy of the convo, how they're texting, what they said last). tones sum to 100. angles array has exactly 4 entries, set recommended:true on the best one and set recommended_angle to its index (0-3). Each angle should be a genuinely different way to reply.`;
+Rules: observations must be SPECIFIC — describe what you actually read (their exact words, the energy of the convo, how they're texting, what they said last). COMPLETELY IGNORE and never mention: phone/device frame, Instagram UI, browser chrome, desktop/background, notification bar. Only the actual conversation text and content. tones sum to 100. angles array has exactly 4 entries, set recommended:true on the best one and set recommended_angle to its index (0-3). Each angle should be a genuinely different way to reply.`;
 
   const userText=isStory
     ?'Analyze this Instagram story screenshot in extreme detail and return the JSON.'
@@ -632,8 +635,11 @@ function renderImageAnalysis(data,id){
 
   // Angle cards
   if(angles&&angles.length){
-    anglesEl.innerHTML=angles.map((a,i)=>`
-      <div class="angle-card${a.recommended?' recommended-angle':''}" onclick="openAngleSuggestions(${i},'${id}')" id="angle-${id}-${i}">
+    const spicy={label:'Spicy',icon:'🌶️',approach:'No filter — raw, suggestive, NSFW energy. Bold and unapologetic.',recommended:false,spicy:true};
+    imageAngles[id]=[...angles,spicy];
+    const allAngles=imageAngles[id];
+    anglesEl.innerHTML=allAngles.map((a,i)=>`
+      <div class="angle-card${a.recommended?' recommended-angle':''}${a.spicy?' spicy':''}" onclick="openAngleSuggestions(${i},'${id}')" id="angle-${id}-${i}">
         <div class="angle-label">${a.icon||'💬'} ${a.label}${a.recommended?'<span class="angle-rec-badge">best</span>':''}</div>
         <div class="angle-desc">${a.approach}</div>
       </div>`).join('');
@@ -678,23 +684,55 @@ function overlayClick(e){
   if(e.target===document.getElementById('angle-modal-overlay'))closeAngleModal();
 }
 
+const usedSuggestions={dm:{},story:{}};
+
 async function generateAngleSuggestions(angle,id){
   if(!apiKey)return;
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
   const isStory=id==='story';
+  const angleKey=angle.label;
+  const prev=(usedSuggestions[id][angleKey]||[]).slice(-9);
+  const avoidLine=prev.length?`\n\nNEVER repeat or closely paraphrase any of these already-used replies:\n${prev.map((r,i)=>`${i+1}. "${r}"`).join('\n')}`:''
 
-  const system=`You write Instagram DMs for a confident guy in 2026 with natural rizz. Unbothered, confident, texts like he has 5 other conversations going. ZERO exclamation marks. No feminine phrases (omg, bestie, slay, aww). No AI phrases. Lowercase preferred. 1-2 short sentences max. Never over-explain.
+  const system=angle.spicy
+    ?`You write NSFW, sexually suggestive Instagram DMs. Raw, bold, unapologetic. The guy knows what he wants and says it — not creepy, just direct and confident with serious edge.
+${ctx?`Context: ${ctx}`:''}
+
+RULES:
+- ZERO exclamation marks
+- Lowercase like a real guy texting
+- Sexually suggestive or explicitly flirty — leave very little to the imagination
+- Be SPECIFIC to what's in the image — body, outfit, vibe, expression — make it feel personal not generic
+- Each of the 3 replies must hit differently — vary from suggestive to direct to borderline explicit
+- Short and punchy — the less words, the harder it hits
+- No cringe lines, no pickup artist scripts, no "hey gorgeous"${avoidLine}
+
+Generate exactly 3 NSFW reply options. Return ONLY raw JSON, no markdown:
+{"replies":["reply 1","reply 2","reply 3"],"recommended":0}`
+    :`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. He texts like he has options and he knows it. Short, specific, punchy.
+
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
 Approach angle: "${angle.label}" — ${angle.approach}
-Generate exactly 3 different reply options using this angle. Return ONLY raw JSON, no markdown:
-{"replies":["reply 1","reply 2","reply 3"],"recommended":0}
-where recommended is the index (0-2) of the best one.`;
+
+RULES — every single one is mandatory:
+- ZERO exclamation marks, ever
+- No feminine words: omg, bestie, slay, aww, yay, obsessed, love that
+- No AI phrases: "I'd love to", "certainly", "that sounds amazing", "what a"
+- No generic safe openers: "nice", "that's cool", "looks fun", "love this"
+- Lowercase like a real guy texting
+- Be SPECIFIC to what's actually in the image — reference details, don't be vague
+- Each of the 3 replies must feel genuinely different — vary the delivery, the energy, the length
+- Make them feel effortless, not try-hard — like he barely thought about it but it still lands
+- Short is almost always better — if you can say it in 4 words, don't use 10${avoidLine}
+
+Generate exactly 3 reply options. Return ONLY raw JSON, no markdown, no explanation:
+{"replies":["reply 1","reply 2","reply 3"],"recommended":0}`;
 
   const imagePrompt=isStory
-    ?`This is an Instagram story. Generate 3 reply options reacting to it using the specified angle.`
-    :`This is an Instagram DM conversation. RIGHT bubbles = my messages, LEFT = theirs. Generate 3 reply options to their latest message using the specified angle.`;
+    ?`Instagram story screenshot. Generate 3 different replies reacting to it using the angle. Be specific to what you actually see.`
+    :`Instagram DM conversation. RIGHT bubbles = my messages, LEFT = theirs. Generate 3 different replies to their latest message using the angle.`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -702,7 +740,8 @@ where recommended is the index (0-2) of the best one.`;
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify({
         model:'meta-llama/llama-4-scout-17b-16e-instruct',
-        max_tokens:300,
+        max_tokens:350,
+        temperature:0.95,
         messages:[
           {role:'system',content:system},
           {role:'user',content:[{type:'image_url',image_url:{url:`data:${imgs[id].type};base64,${imgs[id].b64}`}},{type:'text',text:imagePrompt}]}
@@ -713,7 +752,10 @@ where recommended is the index (0-2) of the best one.`;
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
     const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    renderSuggestions(parsed.replies||[],parsed.recommended||0);
+    const replies=parsed.replies||[];
+    if(!usedSuggestions[id][angleKey])usedSuggestions[id][angleKey]=[];
+    usedSuggestions[id][angleKey].push(...replies);
+    renderSuggestions(replies,parsed.recommended||0);
   }catch(e){
     document.getElementById('modal-suggestions-body').innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Could not generate suggestions. Try again.</div>';
     console.error(e);
@@ -804,22 +846,22 @@ async function generate(){
   document.getElementById('result-box').innerHTML='<span class="result-placeholder" style="font-style:italic">Crafting the perfect reply...</span>';
   document.getElementById('result-actions').style.display='none';
 
-  const system=`You write Instagram DMs for a confident guy in 2026 with natural rizz. Sound exactly like a popular guy with options texts — not an AI, not a girl, not someone who's pressed.
-
-The vibe: unbothered, confident, a little playful when needed. He texts like he has 5 other conversations going. Never desperate, never over-eager, never trying too hard.
+  const avoidLine=lastReply?`\n- Do NOT repeat or closely paraphrase your last reply: "${lastReply}"`:'';
+  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options and he knows it.
 
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
 
-STRICT RULES — violating any of these makes the reply wrong:
-- ZERO exclamation marks. Not a single one. Ever.
-- No thirsty openers: never lead with "you're beautiful", "you look amazing", "gorgeous" etc
-- No feminine words or phrases: omg, bestie, love that, obsessed, slay, aww, yay, so cute
+STRICT RULES:
+- ZERO exclamation marks, ever
+- No thirsty openers: never lead with "you're beautiful", "you look amazing", "gorgeous"
+- No feminine words: omg, bestie, love that, obsessed, slay, aww, yay, so cute
 - No AI phrases: "I'd love to", "certainly", "that sounds", "what a"
-- Lowercase is natural and preferred — matches how guys actually text
-- Never over-explain. Never over-text. Less is always more.
+- No generic safe openers: "nice", "that's cool", "looks fun"
+- Lowercase like a real guy texting
+- Be SPECIFIC — reference actual details, not vague reactions
 - Don't sound like you're trying to impress her — sound like she's trying to impress you
-- ${tone==='short'?'5 words max, no exceptions':'1-2 short sentences max'}
+- ${tone==='short'?'5 words max, no exceptions':'1-2 short sentences max'}${avoidLine}
 - Output ONLY the reply text. Nothing else.`;
 
   try{
@@ -849,7 +891,7 @@ Write ONLY my reply text. Nothing else.`}];
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model,max_tokens:250,stream:true,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
+      body:JSON.stringify({model,max_tokens:250,stream:true,temperature:0.95,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
 
