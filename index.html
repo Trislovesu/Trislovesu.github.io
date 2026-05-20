@@ -427,10 +427,12 @@ body{background:
 <div class="angle-modal-overlay" id="angle-modal-overlay" onclick="overlayClick(event)">
   <div class="angle-modal">
     <div class="angle-modal-handle"></div>
-    <div class="angle-modal-header">
-      <button class="angle-back-btn" onclick="closeAngleModal()">← Back to angles</button>
-      <div class="angle-modal-name" id="modal-angle-name"></div>
-      <div class="angle-modal-approach" id="modal-angle-approach"></div>
+    <div class="angle-modal-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div style="flex:1">
+        <div class="angle-modal-name" id="modal-angle-name"></div>
+        <div class="angle-modal-approach" id="modal-angle-approach"></div>
+      </div>
+      <button id="modal-refresh-btn" onclick="refreshAngleSuggestions()" style="flex-shrink:0;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap" title="Get fresh suggestions">↻ New</button>
     </div>
     <div class="angle-modal-body" id="modal-suggestions-body"></div>
   </div>
@@ -646,6 +648,8 @@ function renderImageAnalysis(data,id){
     // Pre-select recommended without opening modal
     const recIdx=typeof recommended_angle==='number'?recommended_angle:0;
     selectAngle(recIdx,id);
+    // Batch-preload suggestions for all non-spicy angles in background
+    preloadAngleSuggestions(angles,id);
   }
 }
 
@@ -666,13 +670,30 @@ function openAngleSuggestions(index,id){
 
   document.getElementById('modal-angle-name').innerHTML=`${angle.icon||'💬'} ${angle.label}${angle.recommended?'<span class="angle-rec-badge" style="margin-left:8px">best</span>':''}`;
   document.getElementById('modal-angle-approach').textContent=angle.approach;
-  document.getElementById('modal-suggestions-body').innerHTML=`<div class="sugg-loading"><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div></div>`;
 
   const overlay=document.getElementById('angle-modal-overlay');
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
 
-  generateAngleSuggestions(angle,id);
+  const cached=cachedSuggestions[id][index];
+  if(cached){
+    // Instant — use cache
+    renderSuggestions(cached.replies,cached.recommended);
+  }else{
+    // Not ready yet — show skeleton and fetch
+    document.getElementById('modal-suggestions-body').innerHTML=`<div class="sugg-loading"><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div></div>`;
+    generateAngleSuggestions(angle,id,index);
+  }
+}
+
+function refreshAngleSuggestions(){
+  if(activeModalIndex===null||!activeModalId)return;
+  // Clear cache for this angle so fresh ones are fetched
+  delete cachedSuggestions[activeModalId][activeModalIndex];
+  const angle=imageAngles[activeModalId][activeModalIndex];
+  if(!angle)return;
+  document.getElementById('modal-suggestions-body').innerHTML=`<div class="sugg-loading"><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div></div>`;
+  generateAngleSuggestions(angle,activeModalId,activeModalIndex);
 }
 
 function closeAngleModal(){
@@ -685,8 +706,80 @@ function overlayClick(e){
 }
 
 const usedSuggestions={dm:{},story:{}};
+const cachedSuggestions={dm:{},story:{}};
 
-async function generateAngleSuggestions(angle,id){
+// ── BATCH PRELOAD ────────────────────────────
+async function preloadAngleSuggestions(angles,id){
+  if(!apiKey||!imgs[id]?.b64)return;
+  const tone=getActiveTone();
+  const ctx=document.getElementById('ctx-input').value.trim();
+  const isStory=id==='story';
+
+  const angleList=angles.map((a,i)=>`${i}. "${a.label}" — ${a.approach}`).join('\n');
+  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options.
+
+Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
+${ctx?`Context: ${ctx}`:''}
+
+For each of the following angles, generate exactly 3 different reply options.
+
+Angles:
+${angleList}
+
+RULES (mandatory for every reply):
+- ZERO exclamation marks
+- No feminine words: omg, bestie, slay, aww, obsessed
+- No AI phrases: "I'd love to", "certainly", "that sounds"
+- No generic openers: "nice", "that's cool", "looks fun"
+- Lowercase like a real guy texting
+- Specific to what's in the image — reference real details
+- Each reply within an angle must feel genuinely different in delivery
+- Write the actual message — first person, not describing what to say
+- Short and punchy — less is more
+
+Return ONLY raw JSON, no markdown:
+{"0":{"replies":["r1","r2","r3"],"recommended":0},"1":{"replies":["r1","r2","r3"],"recommended":0},...}`;
+
+  const userText=isStory
+    ?'Instagram story screenshot. Generate 3 replies per angle, specific to what you see.'
+    :'Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Generate 3 replies per angle to their latest message.';
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({
+        model:'meta-llama/llama-4-scout-17b-16e-instruct',
+        max_tokens:700,
+        temperature:0.95,
+        messages:[
+          {role:'system',content:system},
+          {role:'user',content:[{type:'image_url',image_url:{url:`data:${imgs[id].type};base64,${imgs[id].b64}`}},{type:'text',text:userText}]}
+        ]
+      })
+    });
+    if(!res.ok)return;
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    // Store each angle's suggestions in cache
+    for(const[key,val] of Object.entries(parsed)){
+      const idx=parseInt(key);
+      if(!isNaN(idx)&&val.replies){
+        cachedSuggestions[id][idx]=val;
+        const angleKey=angles[idx]?.label||key;
+        if(!usedSuggestions[id][angleKey])usedSuggestions[id][angleKey]=[];
+        usedSuggestions[id][angleKey].push(...val.replies);
+        // If modal is open on this angle, render now
+        if(activeModalId===id&&activeModalIndex===idx){
+          renderSuggestions(val.replies,val.recommended||0);
+        }
+      }
+    }
+  }catch(e){console.error('Preload failed',e);}
+}
+
+async function generateAngleSuggestions(angle,id,cacheIndex=null){
   if(!apiKey)return;
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
@@ -757,6 +850,7 @@ Generate exactly 3 reply options. Return ONLY raw JSON, no markdown, no explanat
     const replies=parsed.replies||[];
     if(!usedSuggestions[id][angleKey])usedSuggestions[id][angleKey]=[];
     usedSuggestions[id][angleKey].push(...replies);
+    if(cacheIndex!==null&&!angle.spicy)cachedSuggestions[id][cacheIndex]={replies,recommended:parsed.recommended||0};
     renderSuggestions(replies,parsed.recommended||0);
   }catch(e){
     document.getElementById('modal-suggestions-body').innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Could not generate suggestions. Try again.</div>';
@@ -800,6 +894,7 @@ function clearIntelPanel(id){
   if(panel)panel.classList.remove('visible');
   selectedAngles[id]=null;
   imageAngles[id]=[];
+  cachedSuggestions[id]={};
   if(id==='dm'){
     document.getElementById('tone-auto-label').style.display='none';
     document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('recommended'));
