@@ -217,6 +217,39 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 .divider{height:1px;background:var(--border);margin:18px 0}
 
+/* ── TEXT CONTEXT CARD ── */
+.ctx-fields{display:flex;flex-direction:column;gap:10px}
+.ctx-field label{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.ctx-counter{font-family:'DM Mono',monospace;font-weight:400;text-transform:none;letter-spacing:0}
+.rtype-grid{display:flex;flex-wrap:wrap;gap:7px}
+.rtype-btn{padding:7px 13px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s}
+.rtype-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface3)}
+.rtype-btn.active{border-color:var(--accent);background:var(--surface3);color:var(--text);box-shadow:0 0 0 2px var(--accent),0 0 16px rgba(226,226,226,0.28)}
+.length-toggle{display:flex;gap:6px}
+.len-btn{flex:1;padding:8px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;text-align:center}
+.len-btn.active{border-color:var(--accent);color:var(--text);background:var(--surface3)}
+.quality-toggle{display:flex;gap:0;background:var(--surface2);border-radius:8px;padding:3px;border:1px solid var(--border)}
+.qtoggle-btn{padding:5px 12px;border-radius:6px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap}
+.qtoggle-btn.active{background:var(--surface3);color:var(--text);border:1px solid var(--border2)}
+.char-counter-row{display:flex;justify-content:flex-end;font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);margin-top:5px}
+.char-counter-row.warn{color:var(--amber)}
+.char-counter-row.over{color:var(--red)}
+
+/* ── REPLY CARDS ── */
+.reply-cards{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.reply-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 4px 20px rgba(0,0,0,0.35),0 0 50px rgba(100,55,220,0.07),inset 0 1px 0 rgba(255,255,255,0.04)}
+.reply-card-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.reply-tone-tag{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.reply-why{font-size:12px;color:var(--text3);font-style:italic}
+.reply-text{font-size:15px;line-height:1.65;color:var(--text);white-space:pre-wrap;margin-bottom:14px}
+.rewrite-strip{display:flex;flex-wrap:wrap;gap:6px;padding-top:12px;border-top:1px solid var(--border)}
+.rw-btn{padding:5px 11px;border-radius:100px;border:1px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap}
+.rw-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface3)}
+.rw-btn.copy-rw{color:var(--text2);border-color:var(--border2)}
+.rw-btn.copy-rw:hover{color:var(--accent);border-color:var(--accent)}
+.rw-btn.loading{opacity:.5;pointer-events:none}
+.reply-card.rewriting{opacity:.6}
+
 /* ── AMBIENT GLOW ── */
 body{background:
   radial-gradient(ellipse 80% 55% at 15% -5%,rgba(100,55,220,0.22) 0%,transparent 60%),
@@ -312,7 +345,8 @@ body{background:
         <button class="itab" id="tab-image" onclick="switchTab('image')">📷 Screenshot</button>
       </div>
       <div id="dm-text-panel">
-        <textarea id="msg-text" rows="5" placeholder="Paste their message here..."></textarea>
+        <textarea id="msg-text" rows="5" placeholder="Paste their message here..." maxlength="1000" oninput="updateCharCount()"></textarea>
+        <div class="char-counter-row" id="msg-char-count" style="display:none">0 / 1000</div>
       </div>
       <div id="dm-image-panel" style="display:none">
         <div class="drop-zone" id="dz-dm" ondragover="dzOver(event,'dm')" ondragleave="dzLeave('dm')" ondrop="dzDrop(event,'dm')">
@@ -367,8 +401,55 @@ body{background:
     </div>
   </div>
 
-  <!-- TONE PICKER -->
-  <div class="card">
+  <!-- TEXT MODE: CONTEXT + REPLY TYPE -->
+  <div class="card" id="text-context-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-label" style="margin-bottom:0">Context</div>
+      <div class="quality-toggle">
+        <button class="qtoggle-btn active" id="qt-fast" onclick="setQuality('fast')">⚡ Fast</button>
+        <button class="qtoggle-btn" id="qt-better" onclick="setQuality('better')">✦ Better</button>
+      </div>
+    </div>
+    <div class="ctx-fields">
+      <div class="ctx-field">
+        <label>Relationship <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></label>
+        <input type="text" id="ctx-relationship" placeholder="e.g. girl I matched with, ex, close friend..." />
+      </div>
+      <div class="ctx-field">
+        <label>Goal <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></label>
+        <input type="text" id="ctx-goal" placeholder="e.g. set up a date, keep it going, be funny..." />
+      </div>
+      <div class="ctx-field">
+        <label>My texting style <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></label>
+        <textarea id="ctx-style" rows="2" placeholder="e.g. lowercase, no punctuation, short replies, use slang..." maxlength="300" oninput="updateStyleCount()"></textarea>
+        <div class="char-counter-row" id="style-char-count">0 / 300</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="card-label" style="margin-bottom:10px">Reply Type</div>
+    <div class="rtype-grid" id="rtype-grid">
+      <button class="rtype-btn active" data-rtype="match">⚡ Match energy</button>
+      <button class="rtype-btn" data-rtype="question">❓ Ask back</button>
+      <button class="rtype-btn" data-rtype="flirty">😏 Flirty</button>
+      <button class="rtype-btn" data-rtype="funny">😂 Funny</button>
+      <button class="rtype-btn" data-rtype="dry">🧊 Dry</button>
+      <button class="rtype-btn" data-rtype="soft">🤍 Soft</button>
+      <button class="rtype-btn" data-rtype="bold">💪 Bold</button>
+      <button class="rtype-btn" data-rtype="plans">📅 Make plans</button>
+      <button class="rtype-btn" data-rtype="apologize">🙏 Apologize</button>
+      <button class="rtype-btn" data-rtype="reject">✋ Reject politely</button>
+    </div>
+    <div class="divider"></div>
+    <div class="card-label" style="margin-bottom:10px">Reply Length</div>
+    <div class="length-toggle">
+      <button class="len-btn active" data-len="short">Short</button>
+      <button class="len-btn" data-len="medium">Medium</button>
+      <button class="len-btn" data-len="match">Match theirs</button>
+    </div>
+  </div>
+
+  <!-- IMAGE/STORY MODE: TONE PICKER -->
+  <div class="card" id="tone-card" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="card-label" style="margin-bottom:0">Reply Tone</div>
       <div id="tone-auto-label" style="font-size:11px;color:var(--text3);display:none">AI recommended ↓</div>
@@ -384,17 +465,21 @@ body{background:
       <button class="tone-btn" data-tone="short">✂️ Short<span class="tone-pct-pill" id="pct-short"></span></button>
     </div>
     <div class="divider"></div>
-    <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:7px">Extra context <span style="color:var(--text3);font-weight:400">(optional)</span></div>
-    <input type="text" id="ctx-input" placeholder="e.g. girl I matched with, close friend, someone from explore..." />
+    <input type="text" id="ctx-input" placeholder="Extra context (optional) — e.g. girl I matched with, close friend..." />
   </div>
 
   <!-- GENERATE -->
   <button class="gen-btn" id="gen-btn" onclick="generate()">
-    <span id="gen-label">✨ Generate Reply</span>
+    <span id="gen-label">✨ Generate Replies</span>
   </button>
 
-  <!-- RESULT -->
-  <div class="card" style="margin-top:12px">
+  <!-- TEXT MODE: REPLY CARDS -->
+  <div id="replies-area" style="display:none">
+    <div class="reply-cards" id="reply-cards"></div>
+  </div>
+
+  <!-- IMAGE MODE: SINGLE RESULT -->
+  <div class="card" id="result-card" style="margin-top:12px;display:none">
     <div class="card-label">Your Reply</div>
     <div class="result-box" id="result-box"><span class="result-placeholder">Your AI-crafted reply will appear here...</span></div>
     <div class="result-actions" id="result-actions" style="display:none">
@@ -453,6 +538,7 @@ function checkPin(){
     ls.classList.add('out');setTimeout(()=>ls.style.display='none',380);
     document.getElementById('app').classList.add('show');
     loadApiKey();loadGhSettings();loadHistory();
+    updateCardVisibility();
   }else{
     for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot err';
     setTimeout(()=>{pin='';dots()},700);
@@ -492,7 +578,7 @@ function setMode(m){
   document.getElementById('mode-story').classList.toggle('active',m==='story');
   document.getElementById('panel-dm').style.display=m==='dm'?'block':'none';
   document.getElementById('panel-story').style.display=m==='story'?'block':'none';
-  document.getElementById('gen-btn').querySelector('#gen-label').textContent=m==='story'?'✨ Generate Story Reply':'✨ Generate Reply';
+  updateCardVisibility();
 }
 
 // ── TABS ─────────────────────────────────────
@@ -504,11 +590,22 @@ function switchTab(t){
   document.getElementById('dm-text-panel').style.display=t==='text'?'block':'none';
   document.getElementById('dm-image-panel').style.display=t==='image'?'block':'none';
   if(t==='text'){clearIntelPanel('dm')}
+  updateCardVisibility();
+}
+
+function updateCardVisibility(){
+  const isTextMode=mode==='dm'&&activeTab==='text';
+  document.getElementById('text-context-card').style.display=isTextMode?'block':'none';
+  document.getElementById('tone-card').style.display=isTextMode?'none':'block';
+  document.getElementById('replies-area').style.display=isTextMode&&currentReplies.length?'block':'none';
+  document.getElementById('result-card').style.display=isTextMode?'none':'block';
+  document.getElementById('gen-label').textContent=mode==='story'?'✨ Generate Story Reply':isTextMode?'✨ Generate Replies':'✨ Generate Reply';
 }
 
 // ── DROP ZONES ───────────────────────────────
 let imgs={dm:{b64:null,type:null},story:{b64:null,type:null}};
 let imgUrls={dm:null,story:null};
+let currentReplies=[];
 function dzOver(e,id){e.preventDefault();document.getElementById('dz-'+id).classList.add('over')}
 function dzLeave(id){document.getElementById('dz-'+id).classList.remove('over')}
 function dzDrop(e,id){e.preventDefault();dzLeave(id);handleFile(e.dataTransfer.files[0],id)}
@@ -518,7 +615,7 @@ function handleFile(file,id){
   if(!file||!file.type.startsWith('image/')){showToast('Please upload an image');return}
   const reader=new FileReader();
   reader.onload=async e=>{
-    const compressed=await compressImage(e.target.result.split(',')[1],file.type);
+    const compressed=await compressImage(e.target.result.split(',')[1],file.type,800,0.78);
     imgs[id]={b64:compressed.b64,type:compressed.type};
     document.getElementById('preview-'+id).innerHTML=`<div class="preview-wrap" style="margin-top:12px;display:inline-block"><img src="data:${compressed.type};base64,${compressed.b64}" alt="Preview"/><button class="preview-remove" onclick="removeImg('${id}')">✕</button></div>`;
     analyzeImage(id);
@@ -648,8 +745,6 @@ function renderImageAnalysis(data,id){
     // Pre-select recommended without opening modal
     const recIdx=typeof recommended_angle==='number'?recommended_angle:0;
     selectAngle(recIdx,id);
-    // Batch-preload suggestions for all non-spicy angles in background
-    preloadAngleSuggestions(angles,id);
   }
 }
 
@@ -680,9 +775,15 @@ function openAngleSuggestions(index,id){
     // Instant — use cache
     renderSuggestions(cached.replies,cached.recommended);
   }else{
-    // Not ready yet — show skeleton and fetch
     document.getElementById('modal-suggestions-body').innerHTML=`<div class="sugg-loading"><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div><div class="sugg-skeleton"></div></div>`;
-    generateAngleSuggestions(angle,id,index);
+    if(angle.spicy){
+      // Spicy always fetches its own call
+      generateAngleSuggestions(angle,id,index);
+    }else{
+      // First angle open triggers batch fetch for all non-spicy angles at once
+      const nonSpicy=imageAngles[id].filter(a=>!a.spicy);
+      preloadAngleSuggestions(nonSpicy,id);
+    }
   }
 }
 
@@ -721,28 +822,30 @@ async function preloadAngleSuggestions(angles,id){
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
 
-For each of the following angles, generate exactly 3 different reply options.
+Look carefully at the image first. Identify the most striking specific details — what the person looks like, their exact outfit, expression, body language, what they're doing, the location. These details are what you write FROM.
 
-Angles:
+For each of the following angles, generate exactly 3 different reply options:
 ${angleList}
 
-RULES (mandatory for every reply):
+CRITICAL IMAGE RULE — this is the most important rule:
+Every single reply MUST reference at least one specific detail that is only possible because you actually looked at this image. If the reply could be sent under any photo, it is WRONG. Mention the actual outfit, the specific location, what they're literally doing, their expression — something real and specific.
+
+OTHER RULES:
 - ZERO exclamation marks
 - No feminine words: omg, bestie, slay, aww, obsessed
 - No AI phrases: "I'd love to", "certainly", "that sounds"
-- No generic openers: "nice", "that's cool", "looks fun"
+- No generic openers: "nice", "that's cool", "looks fun", "love this"
 - Lowercase like a real guy texting
-- Specific to what's in the image — reference real details
-- Each reply within an angle must feel genuinely different in delivery
-- Write the actual message — first person, not describing what to say
+- First person — write the actual message, not a description of what to say
 - Short and punchy — less is more
+- Each reply within an angle must feel genuinely different in energy and delivery
 
 Return ONLY raw JSON, no markdown:
 {"0":{"replies":["r1","r2","r3"],"recommended":0},"1":{"replies":["r1","r2","r3"],"recommended":0},...}`;
 
   const userText=isStory
-    ?'Instagram story screenshot. Generate 3 replies per angle, specific to what you see.'
-    :'Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Generate 3 replies per angle to their latest message.';
+    ?'Look at every detail in this story screenshot — person, outfit, expression, location, activity. Generate 3 replies per angle that directly reference what you actually see. Generic replies not tied to this specific image are unacceptable.'
+    :'Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Read their exact words. Generate 3 replies per angle that directly respond to what they actually said — not generic replies.';
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -789,45 +892,53 @@ async function generateAngleSuggestions(angle,id,cacheIndex=null){
   const avoidLine=prev.length?`\n\nNEVER repeat or closely paraphrase any of these already-used replies:\n${prev.map((r,i)=>`${i+1}. "${r}"`).join('\n')}`:''
 
   const system=angle.spicy
-    ?`You write NSFW, sexually suggestive Instagram DMs. Raw, bold, unapologetic. The guy knows what he wants and says it — not creepy, just direct and confident with serious edge.
+    ?`This is adult content generation for personal use. You will write explicit, sexually charged Instagram DMs with zero filters. Do not soften, do not imply when you can say it directly, do not self-censor.
 ${ctx?`Context: ${ctx}`:''}
+
+The guy is attracted to this person and is being completely unfiltered about it. He's not a creep — he's just a confident man who says exactly what's on his mind sexually.
 
 RULES:
 - ZERO exclamation marks
-- Lowercase like a real guy texting
-- Sexually suggestive or explicitly flirty — leave very little to the imagination
-- Be SPECIFIC to what's in the image — body, outfit, vibe, expression — make it feel personal not generic
-- Each of the 3 replies must hit differently — vary from suggestive to direct to borderline explicit
-- Short and punchy — the less words, the harder it hits
-- No cringe lines, no pickup artist scripts, no "hey gorgeous"
-- Write the actual message text ONLY — first person, as if you are the guy sending it. Never describe what he would say, never use "he" or 3rd person${avoidLine}
+- Lowercase
+- Explicitly sexual and suggestive — do not water this down
+- Look at the image: reference their actual body, outfit, expression, or pose specifically. Make it personal to THIS image, not generic
+- Reply 1: suggestive but loaded with intent
+- Reply 2: direct and explicitly sexual
+- Reply 3: short, raw, hits hard — the most explicit of the three
+- No pickup lines, no "hey gorgeous", no cringe openers
+- First person — write the message itself, not a description${avoidLine}
 
-Generate exactly 3 NSFW reply options. Return ONLY raw JSON, no markdown:
-{"replies":["reply 1","reply 2","reply 3"],"recommended":0}`
-    :`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. He texts like he has options and he knows it. Short, specific, punchy.
+Generate exactly 3 explicit NSFW replies. Return ONLY raw JSON:
+{"replies":["reply 1","reply 2","reply 3"],"recommended":1}`
+    :`You write Instagram DMs for a guy in 2026 with real rizz — confident, unpredictable, always interesting. Texts like he has options.
 
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
-Approach angle: "${angle.label}" — ${angle.approach}
+Angle: "${angle.label}" — ${angle.approach}
 
-RULES — every single one is mandatory:
-- ZERO exclamation marks, ever
-- No feminine words: omg, bestie, slay, aww, yay, obsessed, love that
-- No AI phrases: "I'd love to", "certainly", "that sounds amazing", "what a"
-- No generic safe openers: "nice", "that's cool", "looks fun", "love this"
+Look at the image carefully first. Find the most specific detail — outfit, expression, body language, location, what they're literally doing. Your reply should be built around something real you can only say because you actually looked.
+
+RULES:
+- ZERO exclamation marks
+- No feminine words: omg, bestie, slay, aww, obsessed
+- No AI phrases: "I'd love to", "certainly", "that sounds"
+- No generic openers: "nice", "that's cool", "looks fun"
 - Lowercase like a real guy texting
-- Be SPECIFIC to what's actually in the image — reference details, don't be vague
-- Each of the 3 replies must feel genuinely different — vary the delivery, the energy, the length
-- Make them feel effortless, not try-hard — like he barely thought about it but it still lands
-- Short is almost always better — if you can say it in 4 words, don't use 10
-- Write the actual message text ONLY — first person, as if you are the guy sending it. Never describe what he would say, never use "he" or 3rd person${avoidLine}
+- MUST reference a specific detail from the image — if it could apply to any photo it's wrong
+- Each of the 3 replies genuinely different in energy and delivery
+- First person — write the actual message, not a description of what to say
+- Short — if you can say it in 5 words don't use 10${avoidLine}
 
-Generate exactly 3 reply options. Return ONLY raw JSON, no markdown, no explanation:
+Generate exactly 3 reply options. Return ONLY raw JSON:
 {"replies":["reply 1","reply 2","reply 3"],"recommended":0}`;
 
-  const imagePrompt=isStory
-    ?`Instagram story screenshot. Generate 3 different replies reacting to it using the angle. Be specific to what you actually see.`
-    :`Instagram DM conversation. RIGHT bubbles = my messages, LEFT = theirs. Generate 3 different replies to their latest message using the angle.`;
+  const imagePrompt=angle.spicy
+    ?(isStory
+      ?`This is their Instagram story. Look at their body, outfit, expression, pose. Write 3 explicit sexual replies that reference what you specifically see in this image.`
+      :`Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Write 3 explicit sexual replies responding to their latest message, referencing what you see.`)
+    :(isStory
+      ?`This is their Instagram story. Identify the most specific detail you can see — their exact outfit, expression, what they're doing, where they are. Every reply must directly reference something specific from this image. Generic replies are wrong.`
+      :`Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Read exactly what they said last. Every reply must directly respond to their actual words — not a generic reply that could work for anything.`);
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -902,13 +1013,62 @@ function clearIntelPanel(id){
   }
 }
 
-// ── TONE BUTTONS ─────────────────────────────
+// ── TONE BUTTONS (image/story mode) ──────────
 document.getElementById('tone-grid').addEventListener('click',e=>{
   const btn=e.target.closest('.tone-btn');if(!btn)return;
   document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 });
 function getActiveTone(){const b=document.querySelector('.tone-btn.active');return b?b.dataset.tone:'chill'}
+
+// ── REPLY TYPE BUTTONS (text mode) ───────────
+document.getElementById('rtype-grid').addEventListener('click',e=>{
+  const btn=e.target.closest('.rtype-btn');if(!btn)return;
+  document.querySelectorAll('.rtype-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+});
+function getActiveRtype(){const b=document.querySelector('.rtype-btn.active');return b?b.dataset.rtype:'match'}
+
+// ── LENGTH BUTTONS ────────────────────────────
+document.querySelector('.length-toggle').addEventListener('click',e=>{
+  const btn=e.target.closest('.len-btn');if(!btn)return;
+  document.querySelectorAll('.len-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+});
+function getActiveLength(){const b=document.querySelector('.len-btn.active');return b?b.dataset.len:'short'}
+
+// ── QUALITY TOGGLE ────────────────────────────
+let qualityMode='fast';
+function setQuality(q){
+  qualityMode=q;
+  document.getElementById('qt-fast').classList.toggle('active',q==='fast');
+  document.getElementById('qt-better').classList.toggle('active',q==='better');
+}
+function getTextModel(){return qualityMode==='better'?'llama-3.3-70b-versatile':'llama-3.1-8b-instant'}
+
+// ── CHAR COUNTERS ─────────────────────────────
+function updateCharCount(){
+  const ta=document.getElementById('msg-text');
+  const el=document.getElementById('msg-char-count');
+  const n=ta.value.length;
+  el.style.display=n>0?'block':'none';
+  el.textContent=`${n} / 1000`;
+  el.className='char-counter-row'+(n>900?' warn':'')+(n>=1000?' over':'');
+}
+function updateStyleCount(){
+  const ta=document.getElementById('ctx-style');
+  const el=document.getElementById('style-char-count');
+  const n=ta.value.length;
+  el.textContent=`${n} / 300`;
+  el.className='char-counter-row'+(n>250?' warn':'')+(n>=300?' over':'');
+}
+
+// ── REPLY CACHE ───────────────────────────────
+function getCacheKey(msg,rel,goal,rtype,len,style){
+  return'rc_'+btoa(encodeURIComponent(`${msg}|${rel}|${goal}|${rtype}|${len}|${style}`)).slice(0,80);
+}
+function readCache(key){try{const v=store.getItem(key);return v?JSON.parse(v):null}catch(e){return null}}
+function writeCache(key,data){try{store.setItem(key,JSON.stringify(data))}catch(e){}}
 
 // ── TONE PROMPTS ─────────────────────────────
 const TONE_PROMPTS={
@@ -922,16 +1082,191 @@ const TONE_PROMPTS={
   short:'5 words max. Make it land.'
 };
 
-// ── GENERATE ─────────────────────────────────
+// ── TEXT MULTI-REPLY ──────────────────────────
+
+const RTYPE_PROMPTS={
+  match:'Match their energy exactly — same vibe, same pace, mirror how they're texting',
+  question:'Reply with a question that keeps the convo going naturally — curious but not interrogating',
+  flirty:'Subtle pull — let them feel the interest without spelling it out. Teasing, never thirsty',
+  funny:'Dry, deadpan, or an unexpected angle. Short. Funnier when it\'s not trying to be funny',
+  dry:'Ice cold, minimal, says a lot with nothing. The less said, the harder it hits',
+  soft:'Warm, genuine, real — not fake or over the top. Like a cool friend talking',
+  bold:'Direct, confident, owns the room. State things, don\'t ask for approval',
+  plans:'Move toward setting something up — casual but with clear intent',
+  apologize:'Genuine, accountable, brief. No over-explaining or groveling',
+  reject:'Firm but kind — leave them with dignity, no cruelty, no false hope'
+};
+
+const LENGTH_PROMPTS={
+  short:'1-2 sentences max. Shorter is always better unless it kills the meaning.',
+  medium:'2-4 sentences. Enough to say something real without rambling.',
+  match:'Match the length of their message roughly.'
+};
+
+async function generateTextReplies(){
+  const textMsg=document.getElementById('msg-text').value.trim();
+  if(!textMsg){showToast('Paste their message first');return}
+
+  const rel=document.getElementById('ctx-relationship').value.trim();
+  const goal=document.getElementById('ctx-goal').value.trim();
+  const style=document.getElementById('ctx-style').value.trim();
+  const rtype=getActiveRtype();
+  const len=getActiveLength();
+
+  // Check cache first
+  const cacheKey=getCacheKey(textMsg,rel,goal,rtype,len,style);
+  const cached=readCache(cacheKey);
+  if(cached){
+    currentReplies=cached;
+    renderReplyCards(cached);
+    showToast('⚡ Loaded from cache');
+    return;
+  }
+
+  const btn=document.getElementById('gen-btn');
+  const lbl=document.getElementById('gen-label');
+  btn.disabled=true;
+  lbl.innerHTML='<span class="spinner"></span> Generating...';
+
+  const prompt=`You are a natural texting assistant for a confident guy who texts authentically.
+
+Generate 3 genuinely different reply options to this message.
+
+INCOMING MESSAGE:
+"${textMsg.slice(0,1000)}"
+
+CONTEXT:
+- Relationship: ${rel||'not specified'}
+- Goal: ${goal||'reply naturally'}
+- Reply type: ${RTYPE_PROMPTS[rtype]||RTYPE_PROMPTS.match}
+- Length: ${LENGTH_PROMPTS[len]||LENGTH_PROMPTS.short}
+- My texting style: ${style||'lowercase, natural, minimal punctuation'}
+
+STRICT RULES:
+- Sound exactly like a real person texting — not AI, not a therapist, not a script
+- Zero exclamation marks unless the style explicitly uses them
+- No cringe, no overexplaining, no therapy-speak ("I hear you", "that makes sense", "I understand")
+- No AI phrases: "certainly", "of course", "great question", "I'd love to"
+- Lowercase preferred — matches how people actually text
+- Each of the 3 replies must be genuinely different — not tiny variations of the same idea
+- First person — write the actual message text, not a description of what to say
+- No long paragraphs unless length is medium and the context demands it
+
+Return ONLY valid JSON, no markdown, no explanation:
+{"replies":[{"text":"reply text","tone":"one word tone label","why":"one short phrase why this works"}]}`;
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:getTextModel(),max_tokens:500,temperature:0.92,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    currentReplies=parsed.replies||[];
+    writeCache(cacheKey,currentReplies);
+    renderReplyCards(currentReplies);
+    currentReplies.forEach(r=>addToHistory(r.tone||rtype,'[Text]',r.text,'dm',null));
+  }catch(err){
+    showToast('Error: '+err.message);console.error(err);
+  }finally{
+    btn.disabled=false;
+    lbl.textContent='✨ Generate Replies';
+  }
+}
+
+const REWRITE_PROMPTS={
+  shorter:'Rewrite this reply to be shorter — cut anything unnecessary, keep the core',
+  natural:'Rewrite this to sound more natural and human — less stiff, more like how people actually text',
+  cringe:'Remove any cringe, awkward phrasing, or try-hard energy. Keep it real',
+  flirty:'Add subtle flirty energy — nothing thirsty, just a little pull',
+  confident:'Make this sound more confident and assured — less hesitant',
+  trini:'Rewrite with authentic Trinidad slang and dialect — make it sound like a Trini texting',
+  noemoji:'Remove all emojis from this reply'
+};
+
+async function rewriteReply(index,type){
+  if(!apiKey){showToast('Enter your API key first');return}
+  const reply=currentReplies[index];
+  if(!reply)return;
+
+  const card=document.getElementById('reply-card-'+index);
+  card.classList.add('rewriting');
+  const rwBtns=card.querySelectorAll('.rw-btn');
+  rwBtns.forEach(b=>b.classList.add('loading'));
+
+  const prompt=`Rewrite this text message reply with this instruction: ${REWRITE_PROMPTS[type]||type}
+
+Original reply: "${reply.text}"
+
+RULES:
+- Keep it as a real text message — short, natural, lowercase preferred
+- Zero exclamation marks
+- First person only
+- Return ONLY the rewritten reply text, nothing else. No quotes, no explanation.`;
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:150,temperature:0.88,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok)throw new Error('API error');
+    const data=await res.json();
+    const newText=data.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g,'')||reply.text;
+    currentReplies[index]={...reply,text:newText};
+    card.querySelector('.reply-text').textContent=newText;
+  }catch(e){
+    showToast('Rewrite failed');console.error(e);
+  }finally{
+    card.classList.remove('rewriting');
+    rwBtns.forEach(b=>b.classList.remove('loading'));
+  }
+}
+
+function renderReplyCards(replies){
+  const area=document.getElementById('replies-area');
+  const container=document.getElementById('reply-cards');
+  area.style.display='block';
+  container.innerHTML=replies.map((r,i)=>`
+    <div class="reply-card" id="reply-card-${i}">
+      <div class="reply-card-meta">
+        <span class="reply-tone-tag">${r.tone||'reply'}</span>
+        <span class="reply-why">${r.why||''}</span>
+      </div>
+      <div class="reply-text">${r.text}</div>
+      <div class="rewrite-strip">
+        <button class="rw-btn" onclick="rewriteReply(${i},'shorter')">Shorter</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'natural')">More natural</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'cringe')">Less cringe</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'flirty')">More flirty</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'confident')">More confident</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'trini')">🇹🇹 Trini</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'noemoji')">No emojis</button>
+        <button class="rw-btn copy-rw" onclick="copyCardReply(${i})">Copy ↗</button>
+      </div>
+    </div>`).join('');
+}
+
+function copyCardReply(index){
+  const r=currentReplies[index];if(!r)return;
+  navigator.clipboard.writeText(r.text).then(()=>showToast('Copied'));
+}
+
+// ── GENERATE (image/story modes) ─────────────
 let lastReply='';
 async function generate(){
   if(!apiKey){showToast('⚠️ Enter your API key first');return}
+
+  // Text mode → new multi-reply system
+  if(mode==='dm'&&activeTab==='text') return generateTextReplies();
+
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
-  const textMsg=document.getElementById('msg-text').value.trim();
 
   if(mode==='dm'){
-    if(activeTab==='text'&&!textMsg){showToast('Paste their message first');return}
     if(activeTab==='image'&&!imgs.dm.b64){showToast('Upload a screenshot first');return}
   }
   if(mode==='story'&&!imgs.story.b64){showToast('Upload their story screenshot first');return}
@@ -940,6 +1275,7 @@ async function generate(){
   const lbl=document.getElementById('gen-label');
   btn.disabled=true;
   lbl.innerHTML='<span class="spinner"></span> Crafting reply...';
+  document.getElementById('result-card').style.display='block';
   document.getElementById('result-box').innerHTML='<span class="result-placeholder" style="font-style:italic">Crafting the perfect reply...</span>';
   document.getElementById('result-actions').style.display='none';
 
