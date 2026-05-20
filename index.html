@@ -362,7 +362,7 @@ function checkPin(){
 }
 
 // ── API KEY ──────────────────────────────────
-let apiKey='';
+let apiKey='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';
 function saveApiKey(){
   const k=document.getElementById('api-key-input').value.trim();
   if(!k.startsWith('gsk_')){document.getElementById('key-status').textContent='⚠️ Should start with gsk_';return}
@@ -372,7 +372,9 @@ function saveApiKey(){
 }
 function loadApiKey(){
   const k=store.getItem('ig_api_key');
-  if(k){apiKey=k;document.getElementById('api-key-input').value=k.slice(0,14)+'••••••••••••';document.getElementById('key-status').textContent='✅ API key loaded.'}
+  if(k)apiKey=k;
+  document.getElementById('api-key-input').value=apiKey.slice(0,14)+'••••••••••••';
+  document.getElementById('key-status').textContent='✅ API key loaded.';
 }
 
 // ── MODE ─────────────────────────────────────
@@ -580,18 +582,33 @@ Rules:
       userMsg=`They sent me this Instagram DM:\n\n"${textMsg}"\n\nWrite my reply:`;
     }
 
+    const needsVision=mode==='story'||activeTab==='image';
+    const model=needsVision?'meta-llama/llama-4-scout-17b-16e-instruct':'llama-3.1-8b-instant';
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:250,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
+      body:JSON.stringify({model,max_tokens:250,stream:true,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
-    const data=await res.json();
-    const reply=data.choices?.[0]?.message?.content?.trim();
+
+    const resultBox=document.getElementById('result-box');
+    resultBox.textContent='';
+    lbl.textContent='';
+    let reply='';
+    const reader=res.body.getReader();const decoder=new TextDecoder();
+    outer:while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      for(const line of decoder.decode(value).split('\n')){
+        if(!line.startsWith('data: '))continue;
+        const d=line.slice(6).trim();
+        if(d==='[DONE]')break outer;
+        try{const delta=JSON.parse(d).choices?.[0]?.delta?.content||'';reply+=delta;resultBox.textContent=reply;}catch(e){}
+      }
+    }
     if(!reply)throw new Error('Empty response');
 
     lastReply=reply;
-    document.getElementById('result-box').textContent=reply;
     document.getElementById('result-actions').style.display='flex';
     const cpBtn=document.getElementById('copy-btn');
     cpBtn.className='action-btn';cpBtn.textContent='📋 Copy Reply';
