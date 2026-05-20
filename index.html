@@ -250,6 +250,40 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
 
+/* ── TRAINING MODAL ── */
+.train-overlay{position:fixed;inset:0;background:var(--bg);z-index:950;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto}
+.train-overlay.open{opacity:1;pointer-events:all}
+.train-header{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 0;flex-shrink:0}
+.train-title{font-size:18px;font-weight:700;color:var(--text)}
+.train-close{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.train-close:hover{color:var(--text);background:var(--surface3)}
+.train-body{flex:1;padding:22px;max-width:720px;width:100%;margin:0 auto}
+.train-progress{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.train-prog-chip{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text3);transition:all .3s}
+.train-prog-chip.done{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.train-prog-chip.active{background:var(--surface3);border-color:var(--accent);color:var(--text)}
+.train-scenario-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:14px;box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 8px 40px rgba(0,0,0,0.5),0 0 80px rgba(100,55,220,0.09)}
+.train-tone-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px;border:1.5px solid}
+.train-context{font-size:12px;color:var(--text3);margin-bottom:10px;font-style:italic}
+.train-message{font-size:16px;color:var(--text);line-height:1.6;background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;border:1px solid var(--border);margin-bottom:14px}
+.train-hint{font-size:12px;color:var(--text2);line-height:1.6;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--accent);margin-bottom:16px}
+.train-reply-area{display:flex;flex-direction:column;gap:10px}
+.train-reply-area textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);outline:none;resize:none;transition:border-color .15s;min-height:80px}
+.train-reply-area textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(226,226,226,0.08)}
+.train-submit-btn{width:100%;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s}
+.train-submit-btn:hover{opacity:.9}
+.train-submit-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed}
+.train-skip{background:none;border:none;font-size:13px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;padding:8px 0;transition:color .12s;width:100%;text-align:center}
+.train-skip:hover{color:var(--text2)}
+.train-count{font-size:12px;color:var(--text3);text-align:center;margin-bottom:16px}
+.train-icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0;position:relative}
+.train-icon-btn:hover{background:var(--surface3);border-color:var(--border2)}
+.train-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--green);border:2px solid var(--bg)}
+.train-empty-badge{position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--amber);border:2px solid var(--bg)}
+.login-train-prompt{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-top:20px;text-align:left}
+.login-train-prompt p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+.login-train-btn{width:100%;padding:11px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+
 /* ── PROFILE REVIEW ── */
 .profile-suggestion-grid{display:flex;flex-direction:column;gap:10px;margin-top:4px}
 .ps-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px}
@@ -299,6 +333,10 @@ body{background:
     </div>
     <h1>DM Assistant</h1>
     <p class="sub">Enter your PIN to continue</p>
+    <div class="login-train-prompt" id="login-train-prompt" style="display:none">
+      <p>🎯 <strong style="color:var(--text)">Train the Rizzer</strong> — teach the AI how YOU text so replies actually sound like you, not a chatbot.</p>
+      <button class="login-train-btn" onclick="openTraining()">Start Training →</button>
+    </div>
     <div class="pin-row" id="pin-dots">
       <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
       <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -318,10 +356,13 @@ body{background:
     <div class="app-logo">
       <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
     </div>
-    <div>
+    <div style="flex:1">
       <h1>DM Assistant</h1>
       <p>AI-powered replies — your voice, your vibe</p>
     </div>
+    <button class="train-icon-btn" onclick="openTraining()" title="Train the Rizzer" id="train-icon-btn">
+      🎯<span class="train-empty-badge" id="train-badge"></span>
+    </button>
   </div>
 
   <!-- API KEY SETUP -->
@@ -560,6 +601,36 @@ body{background:
   </div>
 </div>
 
+<!-- TRAINING MODAL -->
+<div class="train-overlay" id="train-overlay">
+  <div class="train-header">
+    <div>
+      <div class="train-title">🎯 Train the Rizzer</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px">Reply naturally — the AI learns your exact style</div>
+    </div>
+    <button class="train-close" onclick="closeTraining()">Done</button>
+  </div>
+  <div class="train-body" id="train-body-inner">
+    <!-- TRAINER CODE BAR -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Trainer code</div>
+          <input type="text" id="trainer-code-input" placeholder="your name or initials (e.g. tris, mike)" maxlength="20" oninput="saveTrainerCode()" style="font-size:13px;padding:8px 12px" />
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="action-btn" style="padding:8px 14px;font-size:12px;flex:none" onclick="exportTraining()">📤 Export</button>
+          <button class="action-btn" style="padding:8px 14px;font-size:12px;flex:none" onclick="importTraining()">📥 Import</button>
+        </div>
+      </div>
+      <div id="trainer-contributors" style="font-size:11px;color:var(--text3);margin-top:8px;display:none"></div>
+    </div>
+    <div class="train-progress" id="train-progress"></div>
+    <div class="train-count" id="train-count"></div>
+    <div id="train-scenario-wrap"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- ANGLE SUGGESTIONS MODAL -->
@@ -591,8 +662,12 @@ function checkPin(){
     const ls=document.getElementById('login-screen');
     ls.classList.add('out');setTimeout(()=>ls.style.display='none',380);
     document.getElementById('app').classList.add('show');
-    loadApiKey();loadGhSettings();loadHistory();
+    loadApiKey();loadGhSettings();loadHistory();loadTrainingData();
     updateCardVisibility();
+    // Show train prompt on login if fewer than 5 examples saved
+    if(trainingData.length<5){
+      document.getElementById('login-train-prompt').style.display='block';
+    }
   }else{
     for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot err';
     setTimeout(()=>{pin='';dots()},700);
@@ -732,13 +807,38 @@ async function analyzeImage(id='dm'){
     ?`You are an expert at reading Instagram stories and figuring out exactly how to reply to them. Analyze the story screenshot with extreme detail. Return ONLY a raw JSON object, no markdown. Format:
 {"observations":["specific detail 1","specific detail 2","specific detail 3"],"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended_tone":"tonename","angles":[{"label":"Angle name","icon":"emoji","approach":"exact approach description — what angle to take and why it works","recommended":false},...],"recommended_angle":0}
 Rules: observations must be SPECIFIC to the actual story content only — describe the person's appearance, expression, outfit, body language, location, mood, activity, what's happening. COMPLETELY IGNORE and never mention: phone/device frame, Instagram UI (time, battery bar, signal, username bar, story ring, progress dots), browser chrome, desktop wallpaper, other apps, notification bar, screen edges. Only what's inside the story photo or video itself. tones sum to 100. angles array has exactly 4 entries, set recommended:true on the best one and set recommended_angle to its index (0-3). Each angle should be a genuinely different way to react.`
-    :`You are an expert at reading Instagram DM conversations and figuring out exactly how to reply. Layout: RIGHT side bubbles = my messages, LEFT side bubbles = their messages. Analyze with extreme detail. Return ONLY a raw JSON object, no markdown. Format:
-{"observations":["specific detail 1","specific detail 2","specific detail 3"],"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended_tone":"tonename","angles":[{"label":"Angle name","icon":"emoji","approach":"exact approach description — what angle to take and why it works","recommended":false},...],"recommended_angle":0}
-Rules: observations must be SPECIFIC — describe what you actually read (their exact words, the energy of the convo, how they're texting, what they said last). COMPLETELY IGNORE and never mention: phone/device frame, Instagram UI, browser chrome, desktop/background, notification bar. Only the actual conversation text and content. tones sum to 100. angles array has exactly 4 entries, set recommended:true on the best one and set recommended_angle to its index (0-3). Each angle should be a genuinely different way to reply.`;
+    :`You are reading an Instagram DM conversation screenshot. Your ONLY job is to read the actual text messages and figure out how to reply.
+
+CRITICAL LAYOUT RULES — get this right or everything else fails:
+- Messages on the RIGHT side of the screen = MY messages (the user's outgoing messages, usually in a darker/coloured bubble)
+- Messages on the LEFT side of the screen = HER messages (the other person, usually in a lighter/grey bubble)
+- The most recent message at the BOTTOM of the screen on the LEFT side is what I need to reply to
+- READ the actual text in each bubble carefully. Do not skim. Do not assume.
+
+WHAT TO IGNORE COMPLETELY (never mention any of this):
+- The username/header at the top
+- Profile pictures, avatars
+- Timestamps, "Active now", "Seen"
+- Typing indicators, voice/video call icons, reaction emojis attached to bubbles
+- Phone status bar (time, battery, signal)
+- Keyboard, send button, message input box
+- Browser/device frame, notification bar, desktop wallpaper
+- Story rings or any other Instagram UI element
+
+WHAT MATTERS:
+- The actual text inside the message bubbles
+- The order of messages (top = older, bottom = newer)
+- Who said what (LEFT = them, RIGHT = me)
+- The conversation flow and dynamic between us
+
+Return ONLY a raw JSON object, no markdown:
+{"observations":["what they literally said in their most recent message","what I said before that","the overall conversation dynamic"],"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended_tone":"tonename","angles":[{"label":"Angle name","icon":"emoji","approach":"what to say and why it works for THIS specific conversation","recommended":false},...],"recommended_angle":0}
+
+Rules: observations must quote or paraphrase the ACTUAL words from the messages. tones sum to 100. angles array has exactly 4 entries, each a genuinely different way to reply to the LAST message on the LEFT. set recommended:true on the best one.`;
 
   const userText=isStory
     ?'Analyze this Instagram story screenshot in extreme detail and return the JSON.'
-    :'This is an Instagram DM conversation screenshot. RIGHT = my messages, LEFT = their messages. Analyze it and return the JSON.';
+    :'Instagram DM conversation screenshot. ONLY read the actual text inside the message bubbles. RIGHT bubbles = my messages, LEFT bubbles = hers. The bottom-most LEFT bubble is the most recent message from her that I need to reply to. Ignore everything else (header, status bar, icons, timestamps). Return the JSON.';
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -919,7 +1019,7 @@ Return ONLY raw JSON, no markdown:
 
   const userText=isStory
     ?'Look at every detail in this story screenshot — person, outfit, expression, location, activity. Generate 3 replies per angle that directly reference what you actually see. Generic replies not tied to this specific image are unacceptable.'
-    :'Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Read their exact words. Generate 3 replies per angle that directly respond to what they actually said — not generic replies.';
+    :'Instagram DM screenshot. ONLY read the actual message bubbles. RIGHT = my messages, LEFT = hers. The bottom-most LEFT bubble is what I need to reply to. Read those exact words. Generate 3 replies per angle that directly respond to what she literally said — quote-level relevance. Ignore the username, status bar, icons, timestamps, all UI.';
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -1009,10 +1109,10 @@ Generate exactly 3 reply options. Return ONLY raw JSON:
   const imagePrompt=angle.spicy
     ?(isStory
       ?`This is their Instagram story. Look at their body, outfit, expression, pose. Write 3 explicit sexual replies that reference what you specifically see in this image.`
-      :`Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Write 3 explicit sexual replies responding to their latest message, referencing what you see.`)
+      :`Instagram DM screenshot. ONLY read the text inside the message bubbles. RIGHT = my messages, LEFT = hers. The bottom-most LEFT bubble is her latest message. Write 3 explicit sexual replies responding to exactly what she said. Ignore all UI, username, icons.`)
     :(isStory
       ?`This is their Instagram story. Identify the most specific detail you can see — their exact outfit, expression, what they're doing, where they are. Every reply must directly reference something specific from this image. Generic replies are wrong.`
-      :`Instagram DM conversation. RIGHT = my messages, LEFT = theirs. Read exactly what they said last. Every reply must directly respond to their actual words — not a generic reply that could work for anything.`);
+      :`Instagram DM screenshot. ONLY read the text inside the message bubbles. RIGHT = my messages, LEFT = hers. Read the bottom-most LEFT bubble — that's her latest message. Every reply must directly respond to those exact words. Ignore the username, status bar, icons, timestamps, all UI.`);
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -1087,6 +1187,295 @@ function clearIntelPanel(id){
   }
 }
 
+// ── TRAINING SYSTEM ──────────────────────────
+const TRAIN_TONES=[
+  {id:'flirty',    label:'Flirty',     emoji:'😏', color:'#e05580'},
+  {id:'funny',     label:'Funny',      emoji:'😂', color:'#e0a847'},
+  {id:'chill',     label:'Chill',      emoji:'😎', color:'#5b9ef5'},
+  {id:'savage',    label:'Savage',     emoji:'🔥', color:'#e05555'},
+  {id:'mysterious',label:'Mysterious', emoji:'🎭', color:'#9b6ee0'},
+  {id:'bold',      label:'Bold',       emoji:'💪', color:'#5bcfe0'},
+  {id:'wholesome', label:'Wholesome',  emoji:'🤍', color:'#4db37a'},
+  {id:'spicy',     label:'Spicy',      emoji:'🌶️', color:'#ff6b6b'},
+  {id:'plans',     label:'Make Plans', emoji:'📅', color:'#e0a847'},
+  {id:'dry',       label:'Dry',        emoji:'🧊', color:'#a09e96'},
+];
+
+// Pre-written scenario bank — NO API calls needed
+const SCENARIO_BANK=[
+  // FLIRTY
+  {tone:'flirty',context:'Girl from explore, she keeps appearing on your feed',message:"you're literally everywhere on my explore page 😭",hint:'Acknowledge it but flip it — sound amused, not pressed'},
+  {tone:'flirty',context:'She matched you and just gave in after your joke',message:"okay you're actually funny I'll give you that",hint:'Accept the compliment briefly and keep the tension going'},
+  {tone:'flirty',context:'She noticed all your pics look serious',message:"why do you look so serious in all your pics",hint:'Be playful about it — don\'t over-explain'},
+  {tone:'flirty',context:'She\'s using her friend as cover to tell you she\'s interested',message:"my friend thinks you\'re cute btw",hint:'Make it about her, not the friend'},
+  {tone:'flirty',context:'Been texting back and forth, she\'s enjoying it',message:"stop making me laugh at work",hint:'Light and effortless — show you enjoy it too without being eager'},
+  {tone:'flirty',context:'She checked your profile and is sliding in softly',message:"okay I looked at your profile... you seem interesting",hint:'Short, confident, turn it around on her'},
+  {tone:'flirty',context:'She can\'t figure your vibe out yet',message:"you give me a vibe I can\'t figure out yet",hint:'Stay mysterious — don\'t explain yourself'},
+  {tone:'flirty',context:'She texted first after debating it',message:"I was gonna wait for you to text but here we are",hint:'Reward her for doing it — but keep your cool'},
+  {tone:'flirty',context:'Playfully complaining you\'re too good at conversation',message:"talking to you is actually too easy which is annoying",hint:'Agree without being smug about it'},
+  {tone:'flirty',context:'She\'s noticed you\'re different from other guys she talks to',message:"you\'re not like what I expected tbh",hint:'Ask what she expected — but casually'},
+  // FUNNY
+  {tone:'funny',context:'Random opener, she saw something wild',message:"I just saw the most unhinged thing at the mall",hint:'Match the chaotic energy — be curious and weird about it'},
+  {tone:'funny',context:'She\'s jabbing at you playfully',message:"be honest, were you always this weird or is it just with me",hint:'Lean into it — own the weird'},
+  {tone:'funny',context:'She burned her food again and is being helpless about it',message:"I burned my food AGAIN send help",hint:'Roast her a little, then offer something useless as help'},
+  {tone:'funny',context:'Reacting to something random you said',message:"you\'re actually so random lol",hint:'Double down on whatever made her say that'},
+  {tone:'funny',context:'She embarrassed herself in public',message:"I just fell in front of like 20 people I want to disappear",hint:'Make her laugh at it — don\'t be too sympathetic'},
+  {tone:'funny',context:'Jabbing at your taste in music',message:"why does your taste in music make absolutely no sense",hint:'Defend it confidently or admit it absurdly'},
+  {tone:'funny',context:'She\'s being dramatic about something small',message:"this is literally the worst day of my entire life",hint:'Match the drama — out-dramatize her'},
+  {tone:'funny',context:'She saw your story and it was odd',message:"what was that story you just posted 😭",hint:'Explain it in an even weirder way'},
+  {tone:'funny',context:'She\'s asking what you\'re doing and you can make it funny',message:"what are you actually doing right now be honest",hint:'Say something truthful but frame it hilariously'},
+  // CHILL
+  {tone:'chill',context:'Casual check-in, nothing specific',message:"what you up to",hint:'One line, low key — don\'t over-answer'},
+  {tone:'chill',context:'Simple opener to start the day',message:"how was your day",hint:'Brief and real — not a full report'},
+  {tone:'chill',context:'She noticed you don\'t text first often',message:"you never text first 🙄",hint:'Don\'t defend it — acknowledge it smoothly'},
+  {tone:'chill',context:'She\'s reappearing after some time away',message:"been a while",hint:'Keep it simple — two can play that game'},
+  {tone:'chill',context:'She noticed you\'re quieter today',message:"you\'re quiet today",hint:'Short response — don\'t explain your whole mood'},
+  {tone:'chill',context:'She\'s bored and reaching out with no real reason',message:"I\'m bored",hint:'Give her something to do — don\'t just sympathize'},
+  {tone:'chill',context:'Random thought, she thought of you out of nowhere',message:"randomly thought about you",hint:'Keep it cool — don\'t make it a big deal'},
+  {tone:'chill',context:'She\'s testing if you\'ll make plans',message:"we never do anything fun anymore",hint:'Agree and suggest something — casually'},
+  {tone:'chill',context:'She just woke up and opened her phone',message:"morning",hint:'Simple. Don\'t overthink a one-word message'},
+  // SAVAGE
+  {tone:'savage',context:'She\'s testing you to see how you handle a jab',message:"you think you\'re that guy huh",hint:'Yes. Don\'t flinch. Don\'t argue. Just confirm it'},
+  {tone:'savage',context:'Calling you out for leaving her on read',message:"you left me on read for 3 days and NOW you text",hint:'Don\'t apologize excessively — acknowledge it simply'},
+  {tone:'savage',context:'Direct confrontation on how you\'ve been acting',message:"do you treat everyone like this or just me",hint:'Answer honestly but don\'t grovel'},
+  {tone:'savage',context:'She\'s trying to box you in as a type',message:"I\'ve seen your type before",hint:'Don\'t take the bait. Be calm and unbothered'},
+  {tone:'savage',context:'General shot at guys, wants to see if you react',message:"boys like you are all the same",hint:'Stay ice cold — don\'t prove her right by reacting'},
+  {tone:'savage',context:'Establishing she won\'t wait around',message:"I\'m not one of those girls who waits around fyi",hint:'Good. Pressure\'s off. Say that'},
+  {tone:'savage',context:'Testing if you\'ll fold under pressure',message:"I don\'t really see this going anywhere",hint:'Shrug it off — don\'t beg or argue'},
+  {tone:'savage',context:'Came in with attitude for no reason',message:"you\'re honestly so annoying sometimes",hint:'Agree — unbothered energy kills the argument'},
+  // MYSTERIOUS
+  {tone:'mysterious',context:'She senses you\'re hiding something or have layers',message:"I feel like you\'re hiding something",hint:'Don\'t deny or confirm — make her more curious'},
+  {tone:'mysterious',context:'Deep conversation starter',message:"tell me something nobody else knows about you",hint:'Give something real but brief — not your entire life story'},
+  {tone:'mysterious',context:'Late night, philosophical mood',message:"what do you think about at 3am",hint:'Actually answer this interestingly — show some depth'},
+  {tone:'mysterious',context:'She thinks you\'re complex',message:"you seem like you have layers",hint:'Acknowledge it with intrigue — don\'t explain the layers'},
+  {tone:'mysterious',context:'Intrigued but frustrated she can\'t read you',message:"I can\'t figure you out and it\'s lowkey annoying",hint:'Good. Keep it that way. Say something that adds to the mystery'},
+  {tone:'mysterious',context:'Late night, she\'s in a reflective mood',message:"do you ever feel like you\'re supposed to be somewhere else",hint:'Engage with it genuinely — this is a real moment'},
+  {tone:'mysterious',context:'She wants to know what goes on in your head',message:"what\'s actually going on in your head right now",hint:'Half-answer. Make her want the other half'},
+  {tone:'mysterious',context:'She\'s asking how you really are — genuinely',message:"no but how are you actually",hint:'Be real but brief — don\'t dump everything'},
+  // BOLD
+  {tone:'bold',context:'She wants clarity — are you interested or playing games',message:"are you actually interested or just bored",hint:'Be direct. No games. Say what you mean'},
+  {tone:'bold',context:'She\'s setting terms upfront',message:"I don\'t do the back and forth thing just so you know",hint:'Respect it and match the directness'},
+  {tone:'bold',context:'She wants to know what you actually want',message:"what do you actually want from me",hint:'Answer honestly — this isn\'t a trap if you\'re real'},
+  {tone:'bold',context:'She\'s cutting through the tension',message:"if you like me just say it",hint:'Say it. Confidence is the whole reply'},
+  {tone:'bold',context:'She\'s not going to chase',message:"I\'m not gonna chase you",hint:'Good. You wouldn\'t want her to. Say that'},
+  {tone:'bold',context:'She\'s asking if you\'re serious about her',message:"do you actually see a future with me or nah",hint:'Be honest either way — bold means no sugarcoating'},
+  // WHOLESOME
+  {tone:'wholesome',context:'She had a rough day and you helped',message:"you genuinely made my day better today",hint:'Accept it warmly — don\'t deflect'},
+  {tone:'wholesome',context:'She told her mom, she\'s comfortable around you',message:"I told my mum about you lol",hint:'Be warm and a little curious — ask what she said'},
+  {tone:'wholesome',context:'Genuine compliment on your character',message:"you\'re actually one of the good ones I think",hint:'Receive it without being awkward about it'},
+  {tone:'wholesome',context:'She trusts you to talk about real things',message:"I feel like I can talk to you about anything",hint:'Honor that — show it means something to you'},
+  {tone:'wholesome',context:'Thanking you for actually listening',message:"thanks for actually listening earlier",hint:'Make her feel like it was nothing — because it wasn\'t a big deal, it was just real'},
+  {tone:'wholesome',context:'You surprised her in a good way',message:"you\'re different from who I thought you were (in a good way)",hint:'Ask what she thought before — show curiosity'},
+  {tone:'wholesome',context:'She misses you genuinely',message:"I miss talking to you",hint:'Real and warm — not desperate'},
+  // SPICY
+  {tone:'spicy',context:'She\'s confessing she keeps thinking about you',message:"I literally cannot stop thinking about you",hint:'Direct and confident — reciprocate without being desperate'},
+  {tone:'spicy',context:'Loaded opener, she had a dream',message:"I had a dream about you last night 👀",hint:'Be curious and a little bold — ask the right question'},
+  {tone:'spicy',context:'She\'s saying you have a dangerous energy',message:"you\'re dangerous and I think you know it",hint:'Own it — don\'t downplay it'},
+  {tone:'spicy',context:'Late night, she shouldn\'t be texting you but is',message:"I should not be texting you right now",hint:'Make her glad she did anyway'},
+  {tone:'spicy',context:'She\'s building tension and hinting at wanting to be there',message:"what would you do if I was there right now",hint:'Answer it. Don\'t dodge. Be specific'},
+  {tone:'spicy',context:'She\'s been replaying a conversation',message:"I\'ve been thinking about that conversation we had...",hint:'Ask what part — drag it out'},
+  {tone:'spicy',context:'She admitted she finds you attractive',message:"okay I\'ll admit you\'re actually fine fine",hint:'Say something that makes her regret saying it (in a good way)'},
+  {tone:'spicy',context:'She\'s being forward about wanting to see you',message:"I need to see you soon",hint:'Set it up. Be direct about when'},
+  // PLANS
+  {tone:'plans',context:'She\'s putting the idea out there softly',message:"we should actually hang out one day",hint:'Lock it in — turn \'one day\' into a specific plan'},
+  {tone:'plans',context:'She found a place she thinks you\'d like',message:"there\'s this place I think you\'d actually like",hint:'Ask what it is and pivot to making it happen'},
+  {tone:'plans',context:'She left a window open — she\'s free',message:"I\'m free this weekend randomly",hint:'Fill that window. Suggest something specific'},
+  {tone:'plans',context:'Playful complaint you\'ve never taken her anywhere',message:"you\'ve never actually taken me anywhere 😒",hint:'Acknowledge it and fix it right now — suggest something'},
+  {tone:'plans',context:'She\'s getting direct about actually meeting',message:"okay so when are we actually doing something",hint:'Give a day and a plan — don\'t be vague'},
+  {tone:'plans',context:'She wants to do something but won\'t say what',message:"I want to do something but idk what",hint:'Decide for her. Confidence in making a plan is attractive'},
+  // DRY
+  {tone:'dry',context:'One word response — could mean anything',message:"k",hint:'Match the energy. Short is better than long'},
+  {tone:'dry',context:'Noncommittal and minimal',message:"sure",hint:'Don\'t over-respond to a one-word message'},
+  {tone:'dry',context:'She\'s being vague',message:"maybe",hint:'Nail it down without pressure'},
+  {tone:'dry',context:'Lukewarm agreement',message:"I guess",hint:'Leave room — don\'t chase a half-hearted response'},
+  {tone:'dry',context:'She\'s commenting on you deadpan',message:"you\'re so much",hint:'Agree simply — dry energy matches dry energy'},
+  {tone:'dry',context:'Minimal engagement but she still replied',message:"lol",hint:'Say something that makes the next reply harder to be dry'},
+  {tone:'dry',context:'She\'s being short because she\'s testing your reaction',message:"whatever",hint:'Don\'t react to the attitude — stay unbothered'},
+];
+
+let trainingData=[];
+let shownScenarioIds=new Set();
+let trainerCode='';
+
+function loadTrainingData(){
+  try{trainingData=JSON.parse(store.getItem('rizz_training')||'[]')}catch(e){trainingData=[]}
+  try{shownScenarioIds=new Set(JSON.parse(store.getItem('rizz_shown')||'[]'))}catch(e){shownScenarioIds=new Set()}
+  trainerCode=store.getItem('trainer_code')||'';
+  const input=document.getElementById('trainer-code-input');
+  if(input)input.value=trainerCode;
+  updateTrainBadge();
+}
+function saveTrainingData(){
+  store.setItem('rizz_training',JSON.stringify(trainingData.slice(-300)));
+  store.setItem('rizz_shown',JSON.stringify([...shownScenarioIds].slice(-200)));
+  updateTrainBadge();
+}
+function saveTrainerCode(){
+  const v=document.getElementById('trainer-code-input').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  trainerCode=v;
+  store.setItem('trainer_code',v);
+}
+function getTrainerCode(){return trainerCode||'anon'}
+
+function renderContributors(){
+  const counts={};
+  trainingData.forEach(d=>{const t=d.trainer||'anon';counts[t]=(counts[t]||0)+1});
+  const el=document.getElementById('trainer-contributors');
+  if(!el)return;
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){el.style.display='none';return}
+  el.style.display='block';
+  el.innerHTML='Contributors: '+entries.map(([n,c])=>`<span style="color:var(--text2)">${n}</span> <span style="color:var(--text3)">(${c})</span>`).join(' · ');
+}
+
+function exportTraining(){
+  const myData=trainingData.filter(d=>(d.trainer||'anon')===getTrainerCode());
+  if(!myData.length){showToast('Nothing to export yet — train a few first');return}
+  const payload={trainer:getTrainerCode(),exportedAt:Date.now(),entries:myData};
+  const json=JSON.stringify(payload);
+  navigator.clipboard.writeText(json).then(()=>{
+    showToast(`📤 ${myData.length} entries copied — share the text with the owner`);
+  }).catch(()=>{
+    // Fallback: show in a prompt
+    prompt('Copy this JSON and share it:',json);
+  });
+}
+
+function importTraining(){
+  const raw=prompt('Paste the training JSON from a friend:');
+  if(!raw)return;
+  try{
+    const payload=JSON.parse(raw);
+    if(!payload.entries||!Array.isArray(payload.entries))throw new Error('Invalid format');
+    // Dedupe: skip entries with same trainer+message+reply
+    const existing=new Set(trainingData.map(d=>`${d.trainer||'anon'}|${d.message}|${d.userReply}`));
+    let added=0;
+    payload.entries.forEach(e=>{
+      const key=`${e.trainer||payload.trainer||'anon'}|${e.message}|${e.userReply}`;
+      if(!existing.has(key)){
+        trainingData.push({...e,trainer:e.trainer||payload.trainer||'anon'});
+        existing.add(key);
+        added++;
+      }
+    });
+    saveTrainingData();
+    showToast(`📥 Imported ${added} new entries from ${payload.trainer||'friend'}`);
+    if(document.getElementById('train-overlay').classList.contains('open'))renderTrainingBatch();
+  }catch(e){
+    showToast('Invalid JSON — could not import');
+    console.error(e);
+  }
+}
+function updateTrainBadge(){
+  const badge=document.getElementById('train-badge');if(!badge)return;
+  const trained=new Set(trainingData.map(d=>d.tone));
+  badge.className=TRAIN_TONES.every(t=>trained.has(t.id))?'train-badge':'train-empty-badge';
+}
+
+function openTraining(){
+  const ls=document.getElementById('login-screen');
+  if(ls&&!ls.classList.contains('out')){
+    ls.classList.add('out');setTimeout(()=>ls.style.display='none',380);
+    document.getElementById('app').classList.add('show');
+    loadApiKey();loadGhSettings();loadHistory();updateCardVisibility();
+  }
+  document.getElementById('train-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  const input=document.getElementById('trainer-code-input');
+  if(input)input.value=trainerCode;
+  renderContributors();
+  renderTrainingBatch();
+}
+function closeTraining(){
+  document.getElementById('train-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function pickBatch(size=6){
+  // Prioritise tones with fewest saved replies, never repeat shown scenarios
+  const counts={};
+  trainingData.forEach(d=>{counts[d.tone]=(counts[d.tone]||0)+1});
+  const pool=SCENARIO_BANK.filter(s=>{
+    const key=s.tone+'|'+s.message;
+    return!shownScenarioIds.has(key);
+  });
+  // If pool exhausted, reset
+  if(pool.length<size){shownScenarioIds.clear();return pickBatch(size)}
+  // Sort by tone scarcity then shuffle
+  pool.sort((a,b)=>(counts[a.tone]||0)-(counts[b.tone]||0));
+  const weighted=pool.slice(0,Math.min(pool.length,size*3));
+  const shuffled=weighted.sort(()=>Math.random()-.5);
+  return shuffled.slice(0,size);
+}
+
+function renderTrainingBatch(){
+  const trained=new Set(trainingData.map(d=>d.tone));
+  const prog=document.getElementById('train-progress');
+  prog.innerHTML=TRAIN_TONES.map(t=>`<span class="train-prog-chip${trained.has(t.id)?' done':''}">${t.emoji} ${t.label}</span>`).join('');
+  const total=trainingData.length;
+  document.getElementById('train-count').textContent=total?`${total} repl${total===1?'y':'ies'} saved — keep going, more = better`:'No replies yet — just text back naturally';
+
+  const batch=pickBatch(6);
+  batch.forEach(s=>{shownScenarioIds.add(s.tone+'|'+s.message)});
+
+  const wrap=document.getElementById('train-scenario-wrap');
+  wrap.innerHTML=batch.map((s,i)=>{
+    const t=TRAIN_TONES.find(x=>x.id===s.tone)||TRAIN_TONES[0];
+    return`<div class="train-scenario-card" id="tsc-${i}" style="margin-bottom:12px">
+      <div class="train-tone-badge" style="background:${t.color}18;border-color:${t.color};color:${t.color}">${t.emoji} Reply ${t.label}</div>
+      <div class="train-context">${s.context}</div>
+      <div class="train-message">"${s.message}"</div>
+      <div class="train-hint">💡 ${s.hint}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <textarea class="train-input-${i}" placeholder="Your reply..." rows="2" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <button onclick="saveOneReply(${i},'${s.tone.replace(/'/g,"\\'")}','${s.message.replace(/'/g,"\\'").replace(/"/g,'\\"')}','${s.context.replace(/'/g,"\\'")}')" style="flex-shrink:0;align-self:flex-end;padding:10px 14px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--accent)';this.style.color='var(--accent-fg)'" onmouseout="this.style.background='var(--surface3)';this.style.color='var(--text2)'">Save ↵</button>
+      </div>
+      <div class="train-saved-indicator-${i}" style="display:none;font-size:12px;color:var(--green);margin-top:6px">✅ Saved</div>
+    </div>`;
+  }).join('');
+
+  // Remove old load-more button and add fresh one
+  const old=document.getElementById('load-more-btn');if(old)old.remove();
+  const btn=document.createElement('button');
+  btn.id='load-more-btn';
+  btn.textContent='Load more scenarios →';
+  btn.style.cssText='width:100%;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;margin-top:4px;transition:all .15s';
+  btn.onmouseover=()=>{btn.style.background='var(--surface3)';btn.style.color='var(--text)'};
+  btn.onmouseout=()=>{btn.style.background='var(--surface2)';btn.style.color='var(--text2)'};
+  btn.onclick=renderTrainingBatch;
+  document.getElementById('train-body-inner').appendChild(btn);
+}
+
+function saveOneReply(i,tone,message,context){
+  const ta=document.querySelector(`.train-input-${i}`);
+  const reply=ta?ta.value.trim():'';
+  if(!reply){showToast('Type your reply first');return}
+  trainingData.push({tone,message,context,userReply:reply,trainer:getTrainerCode(),ts:Date.now()});
+  saveTrainingData();
+  renderContributors();
+  // Show saved indicator
+  const ind=document.querySelector(`.train-saved-indicator-${i}`);
+  if(ind){ind.style.display='block'}
+  ta.disabled=true;ta.style.opacity='.5';
+  // Update progress chips
+  const trained=new Set(trainingData.map(d=>d.tone));
+  document.querySelectorAll('.train-prog-chip').forEach((el,idx)=>{
+    if(trained.has(TRAIN_TONES[idx]?.id))el.classList.add('done');
+  });
+  document.getElementById('train-count').textContent=`${trainingData.length} repl${trainingData.length===1?'y':'ies'} saved — keep going, more = better`;
+}
+
+// Get relevant training examples to inject into prompts (style hint, not override)
+function getTrainingExamples(tone='',limit=5){
+  if(!trainingData.length)return'';
+  const matching=trainingData.filter(d=>d.tone===tone).sort(()=>Math.random()-.5);
+  const others=trainingData.filter(d=>d.tone!==tone).sort(()=>Math.random()-.5);
+  const picked=[...matching.slice(0,3),...others].slice(0,limit);
+  if(!picked.length)return'';
+  return`\n\nSTYLE REFERENCE — Real reply examples from this user and their trusted friends. Use these as a style guide to match the vocabulary, length and energy (don't copy verbatim — just inform the vibe):\n`+
+    picked.map(d=>`[${d.tone}${d.trainer?' · '+d.trainer:''}] received: "${d.message}" → replied: "${d.userReply}"`).join('\n');
+}
+
 // ── PROFILE ANALYSIS ─────────────────────────
 async function analyzeProfile(){
   if(!apiKey){showToast('Enter your API key first');return}
@@ -1099,31 +1488,35 @@ async function analyzeProfile(){
   document.getElementById('profile-fixes').innerHTML='';
   document.getElementById('profile-post-ideas').innerHTML='';
 
-  const system=`You are an expert Instagram growth consultant who reviews profiles with brutal honesty and gives actionable advice. You have a sharp eye for what makes profiles attractive, what kills engagement, and what content strategies actually work.
+  const system=`You are a girl scrolling through a guy's Instagram profile, deciding whether he's interesting or not. You're attractive, have options, and your standards are high. You're not a marketing consultant — you're judging this the way any girl actually would when she lands on a guy's page.
 
-Analyze this Instagram profile screenshot carefully. Look at: the bio (text, links, emojis), profile photo, highlights (names, count, covers), post grid (aesthetic, consistency, content types, quality), follower/following ratio if visible, username if visible.
+You're looking at this profile from a female perspective: is he attractive? does he look like he actually has a life? does he come across as confident or try-hard? does his profile make you want to follow him or message him? or does something feel off?
 
 The username is: ${username||'not provided'}
+
+Analyze the profile screenshot — look at his photos, bio, highlights, the vibe of his grid, what kind of life it shows, how he presents himself.
 
 Return ONLY raw JSON, no markdown:
 {
   "vibe_score": <number 1-10>,
-  "vibe_label": "<short label like 'Inconsistent' or 'Clean and on-brand'>",
-  "working": ["specific thing that's already good 1", "specific thing 2"],
+  "vibe_label": "<short honest label from a girl's POV — e.g. 'Lowkey interesting', 'Giving gym bro', 'Actually intriguing', 'Too try-hard', 'No personality', 'Could be cute'>",
+  "working": ["specific thing that reads well to a girl 1", "specific thing 2"],
   "fixes": [
-    {"area": "Bio", "priority": "urgent|normal|minor", "issue": "specific problem", "fix": "exact actionable fix"},
+    {"area": "Photos|Bio|Grid|Vibe|Red flag|Energy", "priority": "urgent|normal|minor", "issue": "what a girl actually notices and thinks about this", "fix": "what he should change and why it would land better"},
     ...
   ],
-  "post_ideas": ["specific post idea tailored to this profile 1", "idea 2", "idea 3", "idea 4", "idea 5"],
-  "summary": "one punchy sentence about the overall profile"
+  "post_ideas": ["specific post idea that would genuinely make a girl more interested — based on what she sees in this profile"],
+  "summary": "one honest sentence like a girl texting her friend about his profile"
 }
 
 Rules:
-- Be specific — reference what you actually see, not generic advice
-- fixes should have 4-7 entries covering different areas (bio, grid, highlights, engagement, branding, etc.)
-- post_ideas must be specific to this person's apparent niche/vibe — not generic like "post a selfie"
-- priority "urgent" = big impact, fix first. "normal" = should fix. "minor" = nice to have
-- Be direct and honest — don't sugarcoat issues`;
+- Think like a girl with options, not a marketing agency
+- fixes should call out real things girls notice: too many solo mirror selfies, no social life visible, flexing too hard, looks like he has no friends, try-hard captions, following way more than followers, looks boring, no personality coming through
+- Green flags to highlight: looks social, candid shots with friends, doing interesting things, natural confidence, clear hobbies, traveling, looks like he's living life not performing for instagram
+- Red flags to flag: gym selfie overload, obvious thirst traps, flexing money/cars looks insecure not impressive, zero personality in the grid, every photo is posed, captions that try too hard
+- post_ideas should be stuff that would make a girl genuinely curious or attracted — not "post more reels for the algorithm"
+- Be direct and a little brutal — girls are honest with each other about this stuff
+- priority "urgent" = she'd probably close the page because of this`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -1305,7 +1698,8 @@ async function generateTextReplies(){
   btn.disabled=true;
   lbl.innerHTML='<span class="spinner"></span> Generating...';
 
-  const prompt=`You are a natural texting assistant for a confident guy who texts authentically.
+  const trainingCtx=getTrainingExamples(rtype);
+  const prompt=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}
 
 Generate 3 genuinely different reply options to this message.
 
@@ -1457,7 +1851,8 @@ async function generate(){
   document.getElementById('result-actions').style.display='none';
 
   const avoidLine=lastReply?`\n- Do NOT repeat or closely paraphrase your last reply: "${lastReply}"`:'';
-  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options and he knows it.
+  const trainingCtx=getTrainingExamples(tone);
+  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options and he knows it.${trainingCtx}
 
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
@@ -1490,7 +1885,16 @@ Write ONLY the DM reply text. Nothing else.`}];
     }else if(activeTab==='image'){
       const angle=selectedAngles.dm;
       const angleText=angle?`\n\nApproach angle to use: "${angle.label}" — ${angle.approach}`:'';
-      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`This is an Instagram DM conversation screenshot. MY messages are on the RIGHT (darker bubbles), THEIR messages are on the LEFT. Read the most recent LEFT bubble — that is what they sent me.${angleText}
+      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`Instagram DM screenshot. ONLY read the text inside the message bubbles.
+
+LAYOUT (this is critical):
+- RIGHT side bubbles (darker/coloured) = MY messages
+- LEFT side bubbles (lighter/grey) = HER messages
+- The bottom-most LEFT bubble is her most recent message — THAT is what I need to reply to
+
+IGNORE completely: the username at the top, profile picture, "Active now" / "Seen", phone status bar, time, battery, message input box, reaction emojis on bubbles, all icons and UI chrome.
+
+Read her latest message word-for-word and respond directly to what she actually said.${angleText}
 
 Write ONLY my reply text. Nothing else.`}];
     }else{
