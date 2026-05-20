@@ -102,11 +102,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 .tone-grid{display:flex;flex-wrap:wrap;gap:8px}
 .tone-btn{padding:7px 15px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;position:relative}
 .tone-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface3)}
-.tone-btn.active{border-color:var(--accent);background:var(--surface3);color:var(--text);box-shadow:0 0 16px rgba(226,226,226,0.13)}
-.tone-btn.active::after{content:'';position:absolute;inset:-1.5px;border-radius:100px;border:1.5px solid var(--accent);pointer-events:none}
-.tone-btn.recommended{border-color:var(--green);color:var(--text);box-shadow:0 0 16px rgba(77,179,122,0.28)}
-.tone-btn.recommended::after{content:'';position:absolute;inset:-1.5px;border-radius:100px;border:1.5px solid var(--green);pointer-events:none}
-.tone-btn.recommended.active{border-color:var(--green);box-shadow:0 0 24px rgba(77,179,122,0.45)}
+.tone-btn.active{border-color:var(--accent);background:var(--surface3);color:var(--text);box-shadow:0 0 0 2px var(--accent),0 0 18px rgba(226,226,226,0.35)}
+.tone-btn.recommended{border-color:var(--green);color:var(--text);box-shadow:0 0 0 2px var(--green),0 0 20px rgba(77,179,122,0.55)}
+.tone-btn.recommended.active{border-color:var(--green);background:var(--surface3);color:var(--text);box-shadow:0 0 0 2px var(--green),0 0 28px rgba(77,179,122,0.7)}
 .tone-pct-pill{font-size:10px;font-weight:700;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:4px;background:var(--surface3);color:var(--text3);margin-left:2px;transition:all .3s}
 .tone-btn.recommended .tone-pct-pill{background:var(--green-bg);color:var(--green)}
 
@@ -168,6 +166,24 @@ input[type="text"]::placeholder{color:var(--text3)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 .divider{height:1px;background:var(--border);margin:18px 0}
+
+/* ── AMBIENT GLOW ── */
+body{background:
+  radial-gradient(ellipse 80% 55% at 15% -5%,rgba(100,55,220,0.22) 0%,transparent 60%),
+  radial-gradient(ellipse 55% 35% at 88% 8%,rgba(55,95,230,0.14) 0%,transparent 60%),
+  var(--bg)}
+.login-card{box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 24px 80px rgba(0,0,0,0.8),0 0 140px rgba(100,55,220,0.22),inset 0 1px 0 rgba(255,255,255,0.07)}
+.app-logo{box-shadow:0 0 28px rgba(226,226,226,0.28),0 0 60px rgba(226,226,226,0.1)}
+.card{box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 8px 40px rgba(0,0,0,0.5),0 0 80px rgba(100,55,220,0.09),inset 0 1px 0 rgba(255,255,255,0.05)}
+.gen-btn{box-shadow:0 0 0 1px rgba(200,200,200,0.1),0 0 32px rgba(226,226,226,0.15)}
+.gen-btn:hover{opacity:.92;box-shadow:0 0 0 1px rgba(200,200,200,0.18),0 0 60px rgba(226,226,226,0.35)}
+.result-box{box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 0 50px rgba(100,55,220,0.09)}
+.drop-zone:hover,.drop-zone.over{border-color:rgba(160,130,255,0.55);background:var(--surface3);box-shadow:0 0 40px rgba(100,55,220,0.18),inset 0 0 24px rgba(100,55,220,0.07)}
+.tone-analysis.visible{box-shadow:0 0 40px rgba(100,55,220,0.12),inset 0 0 20px rgba(100,55,220,0.04)}
+.history-toggle{box-shadow:0 0 0 1px rgba(255,255,255,0.02),0 0 40px rgba(100,55,220,0.06)}
+.history-panel.open{box-shadow:0 0 60px rgba(100,55,220,0.08)}
+.mode-btn.active{box-shadow:0 0 14px rgba(226,226,226,0.1)}
+.preview-wrap img{box-shadow:0 0 30px rgba(100,55,220,0.2)}
 </style>
 </head>
 <body>
@@ -458,7 +474,7 @@ async function analyzeTone(id='dm'){
   const sysPrompt=id==='story'
     ?`You are a social media vibe analyst. Look at an Instagram story screenshot and determine what reply tones would work best. Return ONLY a raw JSON object, no markdown, no explanation. Format: {"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended":"tonename","summary":"one short sentence about the story vibe"} where N are integers that sum to 100. Only include tones with value > 0.`
     :`You are a social media conversation tone analyst. Look at an Instagram DM screenshot and determine the tone percentages of the conversation. Return ONLY a raw JSON object, no markdown, no explanation. Format: {"tones":{"flirty":N,"funny":N,"chill":N,"mysterious":N,"savage":N,"wholesome":N,"confident":N,"short":N},"recommended":"tonename","summary":"one short sentence about the vibe"} where N are integers that sum to 100. Only include tones with value > 0. The "recommended" field should be the best tone to reply with.`;
-  const userText=id==='story'?'Analyze the vibe of this Instagram story and return the JSON.':'Analyze the tone of this Instagram DM conversation and return the JSON.';
+  const userText=id==='story'?'Analyze the vibe of this Instagram story and return the JSON.':'This is an Instagram DM screenshot. Layout: messages on the RIGHT are mine, messages on the LEFT are the other person. Analyze the tone of the overall conversation and return the JSON.';
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -603,7 +619,7 @@ If it's scenery, food, a place, activity, or no people: react to what's actually
 
 Write the DM reply I'm going to send reacting to their story.`}];
     }else if(activeTab==='image'){
-      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`This is a screenshot of an Instagram DM I received. Read the most recent message they sent and write my reply.`}];
+      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`This is a screenshot of an Instagram DM conversation. Instagram layout: MY messages are on the RIGHT side (darker bubbles), the OTHER PERSON's messages are on the LEFT side. Read the most recent message on the LEFT — that is what they sent me. Write my reply to that.`}];
     }else{
       userMsg=`They sent me this Instagram DM:\n\n"${textMsg}"\n\nWrite my reply:`;
     }
