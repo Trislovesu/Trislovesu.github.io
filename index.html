@@ -102,8 +102,11 @@ input[type="text"]::placeholder{color:var(--text3)}
 .tone-grid{display:flex;flex-wrap:wrap;gap:8px}
 .tone-btn{padding:7px 15px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;position:relative}
 .tone-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface3)}
-.tone-btn.active{border-color:var(--accent);background:var(--surface3);color:var(--text);box-shadow:0 0 14px rgba(226,226,226,0.1)}
+.tone-btn.active{border-color:var(--accent);background:var(--surface3);color:var(--text);box-shadow:0 0 16px rgba(226,226,226,0.13)}
 .tone-btn.active::after{content:'';position:absolute;inset:-1.5px;border-radius:100px;border:1.5px solid var(--accent);pointer-events:none}
+.tone-btn.recommended{border-color:var(--green);color:var(--text);box-shadow:0 0 16px rgba(77,179,122,0.28)}
+.tone-btn.recommended::after{content:'';position:absolute;inset:-1.5px;border-radius:100px;border:1.5px solid var(--green);pointer-events:none}
+.tone-btn.recommended.active{border-color:var(--green);box-shadow:0 0 24px rgba(77,179,122,0.45)}
 .tone-pct-pill{font-size:10px;font-weight:700;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:4px;background:var(--surface3);color:var(--text3);margin-left:2px;transition:all .3s}
 .tone-btn.recommended .tone-pct-pill{background:var(--green-bg);color:var(--green)}
 
@@ -540,14 +543,14 @@ function getActiveTone(){const b=document.querySelector('.tone-btn.active');retu
 
 // ── TONE PROMPTS ─────────────────────────────
 const TONE_PROMPTS={
-  flirty:'Reply confidently and flirty. Tease a little, leave them wanting more. Smooth, not cringe. 1-2 sentences.',
-  funny:'Reply with genuine humor — witty, clever, unexpected. Short and punchy.',
-  chill:'Reply laid-back, effortlessly cool. Not trying too hard. Casual and brief.',
-  mysterious:'Reply with intrigue — vague, interesting, leaves them wanting to know more. Short and cryptic.',
-  savage:'Reply with unbothered confidence and edge. Short, powerful, unfazed.',
-  wholesome:'Reply warm, sincere, and genuine. Make them feel good. Short and heartfelt.',
-  confident:'Reply with total self-assurance. Direct, no hedging. Alpha energy.',
-  short:'Reply in 5 words or fewer. Punchy and unforgettable.'
+  flirty:'Smooth and confident — make it clear you\'re interested without being desperate or cheesy. Tease a little, leave her curious. Think rizz, not simp.',
+  funny:'Actually funny — dry wit, unexpected angle, or a light roast. Not "lol" energy, real humor. Short and lands clean.',
+  chill:'Unbothered and relaxed. One-hand-texting energy. Cool without trying, still engaging. No over-explaining.',
+  mysterious:'Say less than you should. Vague but intriguing — make her want to ask more. Short and leaves a question in her head.',
+  savage:'Cold and unbothered. Zero validation given. Short, sharp, power move. Not mean, just untouchable.',
+  wholesome:'Genuine without being soft. Warm and real — a real compliment or kind response that still has masculine energy.',
+  confident:'Direct and self-assured. You know what you want, no hedging, no seeking approval. Say it and stand on it.',
+  short:'5 words max. Make every word hit.'
 };
 
 // ── GENERATE ─────────────────────────────────
@@ -571,20 +574,31 @@ async function generate(){
   document.getElementById('result-box').innerHTML='<span class="result-placeholder" style="font-style:italic">Crafting the perfect reply...</span>';
   document.getElementById('result-actions').style.display='none';
 
-  const system=`You are an elite Instagram reply assistant for a verified influencer.
-Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
-${ctx?`Context about them: ${ctx}`:''}
+  const system=`You are writing Instagram DMs for a confident young guy in 2026. Your replies sound like a cool, masculine guy texts — not feminine, not like an AI, not formal or over-eager.
+
+Voice: direct, a bit unbothered, current. Think guy with natural rizz — not tryhard, not soft, doesn't over-explain or over-text.
+Slang you can use naturally when it fits (never force it): ngl, fr, lowkey, no cap, bet, say less, on god, W, fire, real talk, deadass, clean, bro, twin, aura, cooked.
+
+Tone instruction: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
+${ctx?`Context: ${ctx}`:''}
+
 Rules:
-- Output ONLY the reply text — no quotes, no "Here's your reply:", nothing else
-- Sound like a real person, not an AI
-- Never start with "Hey" unless totally natural
-- Match their energy
-- ${tone==='short'?'Strictly 5 words max':'Keep under 2-3 sentences'}`;
+- Output ONLY the reply — no quotes, no intro, no explanation
+- Never start with Hey, Haha, Omg, or Aww
+- No feminine phrases or energy
+- Guys don't over-text — keep it short
+- ${tone==='short'?'Strictly 5 words max':'1-2 sentences max'}`;
 
   try{
     let userMsg;
     if(mode==='story'){
-      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.story.type};base64,${imgs.story.b64}`}},{type:'text',text:`This is an Instagram story someone posted. Write a reply I can send to their story — something that reacts to what I see in the story.`}];
+      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.story.type};base64,${imgs.story.b64}`}},{type:'text',text:`This is an Instagram story. Look at the image carefully before writing the reply.
+
+If there's a girl/woman in the photo (selfie, mirror pic, candid, group etc): react to HER specifically — her look, her vibe, what she's doing or wearing. Make it feel like you actually noticed her, not just the photo. Be natural about it, don't be weird or over-complimentary.
+
+If it's scenery, food, a place, activity, or no people: react to what's actually in the story in a natural way.
+
+Write the DM reply I'm going to send reacting to their story.`}];
     }else if(activeTab==='image'){
       userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`This is a screenshot of an Instagram DM I received. Read the most recent message they sent and write my reply.`}];
     }else{
