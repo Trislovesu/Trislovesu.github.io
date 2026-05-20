@@ -1266,25 +1266,38 @@ async function generateAngleSuggestions(angle,id,cacheIndex=null){
   const ctx=document.getElementById('ctx-input').value.trim();
   const isStory=id==='story';
   const angleKey=angle.label;
-  const prev=(usedSuggestions[id][angleKey]||[]).slice(-9);
-  const avoidLine=prev.length?`\n\nNEVER repeat or closely paraphrase any of these already-used replies:\n${prev.map((r,i)=>`${i+1}. "${r}"`).join('\n')}`:''
+  const prev=(usedSuggestions[id][angleKey]||[]).slice(-12);
+  // Build a stronger avoid block for spicy — also list banned opening words to force structural variation
+  let avoidLine='';
+  if(prev.length){
+    const openers=[...new Set(prev.map(r=>r.split(/\s+/).slice(0,2).join(' ').toLowerCase()))].slice(0,8);
+    avoidLine=`\n\nALREADY-USED REPLIES (you MUST NOT repeat, paraphrase, mirror the structure, or echo the same imagery):\n${prev.map((r,i)=>`${i+1}. "${r}"`).join('\n')}\n\nBANNED OPENINGS — do not start any new reply with these word combos: ${openers.map(o=>`"${o}"`).join(', ')}.\n\nThe new replies must be COMPLETELY fresh — different vocabulary, different sentence shapes, different angles of approach, different escalation levels.`;
+  }
+  const isSpicy=!!angle.spicy;
 
-  const system=angle.spicy
+  const system=isSpicy
     ?`This is adult content generation for personal use. You will write explicit, sexually charged Instagram DMs with zero filters. Do not soften, do not imply when you can say it directly, do not self-censor.
 ${ctx?`Context: ${ctx}`:''}
 
 The guy is attracted to this person and is being completely unfiltered about it. He's not a creep — he's just a confident man who says exactly what's on his mind sexually.
+
+GENERATION ROUND: ${Math.floor(prev.length/3)+1} (round 2+ MUST feel completely fresh — pretend you've never written a spicy reply before)
+RANDOM SEED: ${Date.now()%100000}
 
 RULES:
 - ZERO exclamation marks
 - Lowercase
 - Explicitly sexual and suggestive — do not water this down
 - Look at the image: reference their actual body, outfit, expression, or pose specifically. Make it personal to THIS image, not generic
-- Reply 1: suggestive but loaded with intent
-- Reply 2: direct and explicitly sexual
+- Each reply must take a DIFFERENT angle from the others — vary which body part / outfit detail / pose / energy you reference, vary the dominant verb (want / need / can't stop / would / show / make / let / let me etc)
+- Reply 1: suggestive with loaded intent — sets the tone
+- Reply 2: direct and explicitly sexual — names what you want
 - Reply 3: short, raw, hits hard — the most explicit of the three
-- No pickup lines, no "hey gorgeous", no cringe openers
+- Vary length: one short (4-6 words), one medium (one sentence), one a bit longer
+- No pickup lines, no "hey gorgeous", no cringe openers, no recycled phrasings
 - First person — write the message itself, not a description${avoidLine}
+
+CRITICAL: If avoided replies are listed above, the new ones MUST start with different opening words, use different verbs, reference different details from the image, and follow different sentence structures. Lazy variations of the same idea are unacceptable.
 
 Generate exactly 3 explicit NSFW replies. Return ONLY raw JSON:
 {"replies":["reply 1","reply 2","reply 3"],"recommended":1}`
@@ -1324,8 +1337,11 @@ Generate exactly 3 reply options. Return ONLY raw JSON:
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify({
         model:'meta-llama/llama-4-scout-17b-16e-instruct',
-        max_tokens:350,
-        temperature:0.95,
+        max_tokens:400,
+        temperature:isSpicy?1.1:0.95,
+        top_p:isSpicy?0.95:1.0,
+        frequency_penalty:isSpicy?0.6:0,
+        presence_penalty:isSpicy?0.5:0,
         messages:[
           {role:'system',content:system},
           {role:'user',content:[{type:'image_url',image_url:{url:`data:${imgs[id].type};base64,${imgs[id].b64}`}},{type:'text',text:imagePrompt}]}
@@ -1339,7 +1355,7 @@ Generate exactly 3 reply options. Return ONLY raw JSON:
     const replies=parsed.replies||[];
     if(!usedSuggestions[id][angleKey])usedSuggestions[id][angleKey]=[];
     usedSuggestions[id][angleKey].push(...replies);
-    if(cacheIndex!==null&&!angle.spicy)cachedSuggestions[id][cacheIndex]={replies,recommended:parsed.recommended||0};
+    if(cacheIndex!==null&&!isSpicy)cachedSuggestions[id][cacheIndex]={replies,recommended:parsed.recommended||0};
     renderSuggestions(replies,parsed.recommended||0);
   }catch(e){
     document.getElementById('modal-suggestions-body').innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Could not generate suggestions. Try again.</div>';
@@ -1419,6 +1435,16 @@ const SCENARIO_BANK=[
   {tone:'flirty',context:'She debated for a while before texting you first and is half-admitting it',message:"I was gonna wait for you to text but here we are",hint:'Reward her for doing it — but keep your cool'},
   {tone:'flirty',context:'She\'s playfully complaining that conversation flows too easily between you two',message:"talking to you is actually too easy which is annoying",hint:'Agree without being smug about it'},
   {tone:'flirty',context:'She\'s pleasantly surprised you\'re different from the other guys in her DMs',message:"you\'re not like what I expected tbh",hint:'Ask what she expected — but casually'},
+  {tone:'flirty',context:'She realized you both know the same person and the world feels small',message:"wait you know [mutual] too? small world",hint:'Lean into the connection — be a little intrigued'},
+  {tone:'flirty',context:'She saw your latest post and is letting you know it landed',message:"okay that last post was actually a vibe",hint:'Play it cool — don\'t fish for more compliments'},
+  {tone:'flirty',context:'She wants to know what made you reach out to her in the first place',message:"what made you actually text me",hint:'Honest answer with one specific thing about her'},
+  {tone:'flirty',context:'She\'s sized up your friend group from your photos',message:"your friends seem fun lol",hint:'Agree without bragging — open a door for her to meet them'},
+  {tone:'flirty',context:'She matched you a while ago and is finally breaking the silence',message:"okay I know it\'s been a minute but hi",hint:'Don\'t guilt-trip her — match her low-key energy'},
+  {tone:'flirty',context:'She can see you\'re active on Instagram and not texting her back',message:"I can literally see you\'re online btw",hint:'Playful response — don\'t get defensive about it'},
+  {tone:'flirty',context:'She\'s dropping that you came up in conversation with her friends',message:"btw you came up in conversation today",hint:'Be curious about what was said, not eager'},
+  {tone:'flirty',context:'She\'s pretending to be unimpressed by your last smooth line',message:"wow that was lowkey smooth I\'ll give it to you",hint:'Accept the win and raise the stakes a little'},
+  {tone:'flirty',context:'She\'s noticed you posted with a girl and is fishing for info',message:"who\'s that in your story btw 👀",hint:'Be honest and casual — don\'t make it weird'},
+  {tone:'flirty',context:'She\'s flirting through what looks like a complaint',message:"you\'re distracting me from actual work stop",hint:'Lean into being the distraction'},
   // FUNNY
   {tone:'funny',context:'She just witnessed something chaotic and her first instinct was to tell you',message:"I just saw the most unhinged thing at the mall",hint:'Match the chaotic energy — be curious and weird about it'},
   {tone:'funny',context:'You said something out of pocket and she\'s playfully jabbing at you for it',message:"be honest, were you always this weird or is it just with me",hint:'Lean into it — own the weird'},
@@ -1429,6 +1455,16 @@ const SCENARIO_BANK=[
   {tone:'funny',context:'Something small went wrong and she\'s being deliberately over-dramatic about it',message:"this is literally the worst day of my entire life",hint:'Match the drama — out-dramatize her'},
   {tone:'funny',context:'You posted something weird on your story and she had to ask what it was',message:"what was that story you just posted 😭",hint:'Explain it in an even weirder way'},
   {tone:'funny',context:'She\'s checking in on what you\'re doing and asking for the unfiltered version',message:"what are you actually doing right now be honest",hint:'Say something truthful but frame it hilariously'},
+  {tone:'funny',context:'She had a strange interaction with a stranger and needs to tell someone',message:"this man just tried to sell me crystals at the train station",hint:'Ask follow-ups like it\'s legitimate news'},
+  {tone:'funny',context:'She did something dumb and is admitting it for the laugh',message:"I just put my phone in the fridge for some reason",hint:'Validate with a worse story or roast her gently'},
+  {tone:'funny',context:'Her group chat is unhinged today and she\'s sharing the chaos',message:"my group chat is genuinely unwell today",hint:'Ask what\'s happening — be in on the chaos'},
+  {tone:'funny',context:'She\'s being dramatic because she\'s tired and one tiny thing went wrong',message:"I cannot do today I need a redo",hint:'Make her laugh — don\'t over-sympathize'},
+  {tone:'funny',context:'She just saw your handwriting and is roasting it',message:"no offense but your handwriting is criminal",hint:'Agree absurdly — own the slander'},
+  {tone:'funny',context:'You said something Gen Z and she\'s mock-offended',message:"did you really just say \'on god\' unironically",hint:'Double down on the unironic energy'},
+  {tone:'funny',context:'She made a typo that turned into something wild',message:"I literally meant to say cinnamon NOT cannibal",hint:'Pretend to be alarmed by the typo — play it up'},
+  {tone:'funny',context:'You posted a chaotic story and she\'s commenting on it',message:"I\'m not even gonna ask what\'s happening in your story",hint:'Explain it in the most concerning way possible'},
+  {tone:'funny',context:'She\'s being aggressively descriptive about a small inconvenience',message:"the wind almost claimed my life today",hint:'Match the over-the-top energy'},
+  {tone:'funny',context:'She sent you a meme she thinks is funny and is daring you to disagree',message:"if you don\'t laugh at this we have a problem",hint:'Reply in a way that proves you got it without explaining'},
   // CHILL
   {tone:'chill',context:'Casual mid-day check-in, no real agenda',message:"what you up to",hint:'One line, low key — don\'t over-answer'},
   {tone:'chill',context:'She\'s opening the conversation with a simple end-of-day question',message:"how was your day",hint:'Brief and real — not a full report'},
@@ -1439,6 +1475,14 @@ const SCENARIO_BANK=[
   {tone:'chill',context:'You popped into her head out of nowhere and she decided to tell you',message:"randomly thought about you",hint:'Keep it cool — don\'t make it a big deal'},
   {tone:'chill',context:'She\'s nudging you about not making plans together lately',message:"we never do anything fun anymore",hint:'Agree and suggest something — casually'},
   {tone:'chill',context:'She just woke up and opened her phone',message:"morning",hint:'Simple. Don\'t overthink a one-word message'},
+  {tone:'chill',context:'She\'s heading home and letting you know in passing',message:"headed home now finally",hint:'Small acknowledgment — don\'t open a deep conversation'},
+  {tone:'chill',context:'She\'s eating and casually messaging at the same time',message:"eating and texting you what do you want",hint:'Match the casualness — don\'t make it deep'},
+  {tone:'chill',context:'She\'s decompressing from a long day',message:"today was so long but I\'m home now",hint:'Short empathy or shift to something easy'},
+  {tone:'chill',context:'She\'s at a boring event and wants distraction',message:"tell me something interesting I\'m bored at this thing",hint:'Something light and easy to react to'},
+  {tone:'chill',context:'She saw your story and is asking about the location',message:"wait where are you in that story",hint:'Answer simply, maybe loop her in'},
+  {tone:'chill',context:'She\'s ending her day and asking about yours',message:"ok what\'d you get up to today",hint:'Give one real thing — not a full report'},
+  {tone:'chill',context:'It\'s a weekend night and her plans fell through',message:"everyone\'s busy and I\'m just here",hint:'Engage but don\'t try too hard to fix it'},
+  {tone:'chill',context:'She woke up at noon and is mildly self-aware about it',message:"just woke up. don\'t judge",hint:'Don\'t judge. Maybe agree it\'s the right move'},
   // SAVAGE
   {tone:'savage',context:'She\'s testing you with a jab to see if you\'ll get defensive or roll with it',message:"you think you\'re that guy huh",hint:'Yes. Don\'t flinch. Don\'t argue. Just confirm it'},
   {tone:'savage',context:'You left her on read for days and she\'s calling you out on it now that you\'re back',message:"you left me on read for 3 days and NOW you text",hint:'Don\'t apologize excessively — acknowledge it simply'},
@@ -1448,6 +1492,14 @@ const SCENARIO_BANK=[
   {tone:'savage',context:'She\'s establishing upfront that she won\'t wait around for you',message:"I\'m not one of those girls who waits around fyi",hint:'Good. Pressure\'s off. Say that'},
   {tone:'savage',context:'She\'s threatening to walk away to see how hard you push back',message:"I don\'t really see this going anywhere",hint:'Shrug it off — don\'t beg or argue'},
   {tone:'savage',context:'She\'s in a mood and coming in hot with attitude for no real reason',message:"you\'re honestly so annoying sometimes",hint:'Agree — unbothered energy kills the argument'},
+  {tone:'savage',context:'She\'s being passive-aggressive about how long you took to reply',message:"wow finally a reply",hint:'Don\'t apologize — just continue normally like nothing happened'},
+  {tone:'savage',context:'She heard a rumor about you talking to other girls',message:"so I heard you\'ve been talking to other girls",hint:'Neither deny defensively nor confirm — be unbothered'},
+  {tone:'savage',context:'She thinks you\'re too proud to admit you were wrong',message:"you\'re literally never gonna admit you were wrong huh",hint:'Either admit it cleanly or hold the position firmly — no dancing'},
+  {tone:'savage',context:'She\'s holding onto something small you said',message:"still mad about what you said btw",hint:'Light but accountable — don\'t grovel'},
+  {tone:'savage',context:'She\'s challenging an opinion of yours that she thinks is crazy',message:"your opinions are honestly insane",hint:'Stand by it confidently — don\'t fold under the pressure'},
+  {tone:'savage',context:'She wants you to prove you care instead of just saying it',message:"prove it then if you supposedly care so much",hint:'Show, don\'t tell — do something instead of explaining'},
+  {tone:'savage',context:'She\'s catching you in a contradiction',message:"didn\'t you say the opposite last week though",hint:'Acknowledge the shift without making excuses'},
+  {tone:'savage',context:'She\'s being short because she\'s upset about something specific',message:"if you don\'t know what you did I\'m not telling you",hint:'Press once gently — don\'t play guessing games'},
   // MYSTERIOUS
   {tone:'mysterious',context:'She senses there\'s more to you than you\'re showing and wants to dig',message:"I feel like you\'re hiding something",hint:'Don\'t deny or confirm — make her more curious'},
   {tone:'mysterious',context:'She\'s trying to go deeper into the conversation by asking for a real secret',message:"tell me something nobody else knows about you",hint:'Give something real but brief — not your entire life story'},
@@ -1457,6 +1509,13 @@ const SCENARIO_BANK=[
   {tone:'mysterious',context:'Late night, she\'s in a reflective and philosophical mood',message:"do you ever feel like you\'re supposed to be somewhere else",hint:'Engage with it genuinely — this is a real moment'},
   {tone:'mysterious',context:'She wants to know what you\'re actually thinking in this exact moment',message:"what\'s actually going on in your head right now",hint:'Half-answer. Make her want the other half'},
   {tone:'mysterious',context:'She\'s pressing past the surface answer to get a real one from you',message:"no but how are you actually",hint:'Be real but brief — don\'t dump everything'},
+  {tone:'mysterious',context:'She\'s curious about who you were dating before her',message:"what\'s your dating history actually like",hint:'Give just enough — don\'t dump your whole past'},
+  {tone:'mysterious',context:'She\'s asking about your core beliefs',message:"what do you actually believe in like deep down",hint:'Engage with it for real — be honest but mysterious'},
+  {tone:'mysterious',context:'She wants to know the unseen version of you',message:"what are you like when nobody\'s watching",hint:'Give one honest fragment — don\'t reveal everything'},
+  {tone:'mysterious',context:'She picked up that something\'s on your mind',message:"you\'ve been quiet what\'s on your mind",hint:'Share something small and real — leave more unsaid'},
+  {tone:'mysterious',context:'She wants the trusted-circle version of you',message:"tell me something you only tell people you trust",hint:'Be intentionally vulnerable — but not oversharing'},
+  {tone:'mysterious',context:'She\'s asking about your long-term ambitions',message:"what do you actually want from your life like end goal",hint:'Be honest, ambitious, brief'},
+  {tone:'mysterious',context:'She wants to know what scares you',message:"what actually scares you for real",hint:'Honest answer — vulnerability is powerful here'},
   // BOLD
   {tone:'bold',context:'She wants a clear answer about whether you\'re actually into her',message:"are you actually interested or just bored",hint:'Be direct. No games. Say what you mean'},
   {tone:'bold',context:'She\'s setting her terms upfront so you know where she stands',message:"I don\'t do the back and forth thing just so you know",hint:'Respect it and match the directness'},
@@ -1464,6 +1523,12 @@ const SCENARIO_BANK=[
   {tone:'bold',context:'She\'s done dancing around the tension and wants you to be straightforward',message:"if you like me just say it",hint:'Say it. Confidence is the whole reply'},
   {tone:'bold',context:'She\'s laying down a boundary that she won\'t chase after you',message:"I\'m not gonna chase you",hint:'Good. You wouldn\'t want her to. Say that'},
   {tone:'bold',context:'She\'s asking the hard question about where this is actually going',message:"do you actually see a future with me or nah",hint:'Be honest either way — bold means no sugarcoating'},
+  {tone:'bold',context:'She wants you to stop being vague about your interest in her',message:"stop being weird about it just tell me",hint:'Tell her exactly what\'s on your mind'},
+  {tone:'bold',context:'She wants you to commit to a position on an argument',message:"pick a side already this is annoying",hint:'Pick one and own it'},
+  {tone:'bold',context:'She\'s asking what\'s a dealbreaker for you',message:"what\'s a dealbreaker for you actually",hint:'Answer with conviction — no soft-pedalling'},
+  {tone:'bold',context:'She wants to know if you\'d actually be loyal to her',message:"would you actually be loyal or nah",hint:'Be honest — not what she wants to hear, what\'s true'},
+  {tone:'bold',context:'She\'s asking if you\'d back her in a confrontation',message:"would you stand up for me if it came to it",hint:'Yes or no — no qualifiers'},
+  {tone:'bold',context:'She\'s pushing for clarity on where the situation is going',message:"are we doing this or are we not",hint:'Give a clear answer — yes or no'},
   // WHOLESOME
   {tone:'wholesome',context:'You said something earlier that genuinely lifted her mood',message:"you genuinely made my day better today",hint:'Accept it warmly — don\'t deflect'},
   {tone:'wholesome',context:'She\'s comfortable enough with you to mention you to her mom',message:"I told my mum about you lol",hint:'Be warm and a little curious — ask what she said'},
@@ -1472,6 +1537,13 @@ const SCENARIO_BANK=[
   {tone:'wholesome',context:'You actually listened to her vent earlier and she\'s appreciating it now',message:"thanks for actually listening earlier",hint:'Make her feel like it was nothing — because it wasn\'t a big deal, it was just real'},
   {tone:'wholesome',context:'You turned out to be different from her first impression of you',message:"you\'re different from who I thought you were (in a good way)",hint:'Ask what she thought before — show curiosity'},
   {tone:'wholesome',context:'It\'s been a while since you talked and she\'s genuinely missing the conversations',message:"I miss talking to you",hint:'Real and warm — not desperate'},
+  {tone:'wholesome',context:'She just got good news and you\'re one of the first people she\'s telling',message:"I got the job btw 🥹",hint:'Celebrate it genuinely — don\'t downplay her win'},
+  {tone:'wholesome',context:'She\'s having a rough day and just needs to talk',message:"I\'m having a rough day can we just talk",hint:'Be present — don\'t try to fix it right away'},
+  {tone:'wholesome',context:'She had fun hanging out earlier and is letting you know',message:"I had so much fun with you today",hint:'Agree warmly without going overboard'},
+  {tone:'wholesome',context:'She\'s acknowledging your patience with her in a tough moment',message:"you\'re so patient with me I don\'t deserve it",hint:'Tell her she does — short and real'},
+  {tone:'wholesome',context:'She\'s remembering a moment between you two',message:"I keep thinking about that time we [shared moment]",hint:'Be present in the memory — share what you remember about it'},
+  {tone:'wholesome',context:'She\'s touched that you remembered something small she said',message:"you remembered that?? you\'re sweet",hint:'Minimize it — like remembering her was obvious'},
+  {tone:'wholesome',context:'She had a small breakthrough or moment of growth and is sharing it',message:"I\'m actually really proud of myself today",hint:'Be the friend who hypes that up — genuine and brief'},
   // SPICY
   {tone:'spicy',context:'She\'s admitting that you\'ve been on her mind constantly',message:"I literally cannot stop thinking about you",hint:'Direct and confident — reciprocate without being desperate'},
   {tone:'spicy',context:'She had a dream about you and is teasing you with it',message:"I had a dream about you last night 👀",hint:'Be curious and a little bold — ask the right question'},
@@ -1481,6 +1553,12 @@ const SCENARIO_BANK=[
   {tone:'spicy',context:'She\'s been replaying a charged conversation you two had and brought it back up',message:"I\'ve been thinking about that conversation we had...",hint:'Ask what part — drag it out'},
   {tone:'spicy',context:'She\'s breaking and finally admitting she finds you attractive',message:"okay I\'ll admit you\'re actually fine fine",hint:'Say something that makes her regret saying it (in a good way)'},
   {tone:'spicy',context:'She\'s being forward about wanting to see you in person soon',message:"I need to see you soon",hint:'Set it up. Be direct about when'},
+  {tone:'spicy',context:'She\'s wearing what you once said you liked on her',message:"I\'m wearing what you said you liked btw",hint:'Tell her you noticed — make her feel it'},
+  {tone:'spicy',context:'She\'s recalling something physical that left an impression',message:"I keep thinking about your hands tbh",hint:'Engage with the specific — don\'t deflect'},
+  {tone:'spicy',context:'She just got out the shower and wants you to know',message:"just got out the shower 👀",hint:'Lean in but with control — don\'t be desperate'},
+  {tone:'spicy',context:'She\'s opening a window for you to come over',message:"my roommate\'s out till late btw",hint:'Read the room — make a clear move'},
+  {tone:'spicy',context:'She\'s drunk-texting and being unfiltered about missing you',message:"I\'m a little drunk and I miss you",hint:'Warm but don\'t take advantage — make plans for when she\'s sober'},
+  {tone:'spicy',context:'She\'s recalling something intimate that happened between you',message:"I can\'t stop thinking about last time",hint:'Match the energy and bring something new to the table'},
   // PLANS
   {tone:'plans',context:'She\'s softly putting the idea of hanging out into the conversation',message:"we should actually hang out one day",hint:'Lock it in — turn \'one day\' into a specific plan'},
   {tone:'plans',context:'She found a spot she genuinely thinks would match your vibe',message:"there\'s this place I think you\'d actually like",hint:'Ask what it is and pivot to making it happen'},
@@ -1488,6 +1566,12 @@ const SCENARIO_BANK=[
   {tone:'plans',context:'She\'s playfully complaining you haven\'t made real plans together yet',message:"you\'ve never actually taken me anywhere 😒",hint:'Acknowledge it and fix it right now — suggest something'},
   {tone:'plans',context:'She\'s done waiting and wants you to commit to actual plans',message:"okay so when are we actually doing something",hint:'Give a day and a plan — don\'t be vague'},
   {tone:'plans',context:'She wants to do something but is hoping you\'ll decide what',message:"I want to do something but idk what",hint:'Decide for her. Confidence in making a plan is attractive'},
+  {tone:'plans',context:'She\'s suggesting a specific day and time to hang',message:"what about friday at 8",hint:'Lock it in if you can — be decisive'},
+  {tone:'plans',context:'She can\'t do the day you suggested and is proposing another',message:"I can\'t friday but how about saturday",hint:'Be flexible, confirm quickly'},
+  {tone:'plans',context:'She\'s suggesting a low-key stay-in date',message:"we could just stay in and watch something",hint:'Agree if into it — suggest specifics for snacks/show'},
+  {tone:'plans',context:'She\'s asking what you\'re tryna do tonight',message:"what are you tryna do tonight",hint:'Have an answer — confidence is the whole reply'},
+  {tone:'plans',context:'She has a specific activity in mind she wants to do this week',message:"I really wanna go [place/activity] this week",hint:'Make it happen — be the one who plans it'},
+  {tone:'plans',context:'She wants you to cook for her at some point',message:"okay you\'re cooking for me when",hint:'Set a day and own it'},
   // DRY
   {tone:'dry',context:'She\'s replying with just one letter — could be busy, could be distant',message:"k",hint:'Match the energy. Short is better than long'},
   {tone:'dry',context:'She\'s giving you a noncommittal one-word reply',message:"sure",hint:'Don\'t over-respond to a one-word message'},
@@ -1496,23 +1580,60 @@ const SCENARIO_BANK=[
   {tone:'dry',context:'You said something extra and she\'s commenting on it deadpan',message:"you\'re so much",hint:'Agree simply — dry energy matches dry energy'},
   {tone:'dry',context:'You sent something funny and she gave the minimum acknowledgment',message:"lol",hint:'Say something that makes the next reply harder to be dry'},
   {tone:'dry',context:'She\'s being short on purpose to see how you react to the cold energy',message:"whatever",hint:'Don\'t react to the attitude — stay unbothered'},
+  {tone:'dry',context:'She\'s giving the dryest possible reaction to a story you told',message:"wow.",hint:'Match the energy with one word'},
+  {tone:'dry',context:'She\'s barely engaging because she\'s busy or distracted',message:"mmm okay",hint:'Don\'t push — let her come back when ready'},
+  {tone:'dry',context:'She replied with just an emoji and nothing else',message:"💀",hint:'Match with one of your own — words are too much here'},
+  {tone:'dry',context:'She\'s asking a deadpan one-word follow-up',message:"and?",hint:'Deliver the punchline with confidence'},
+  {tone:'dry',context:'She\'s giving the bare minimum acknowledgment',message:"yeah no I see it",hint:'Low-effort acknowledgment back — keep the rhythm'},
+  {tone:'dry',context:'She\'s asking why to something with no enthusiasm',message:"why though",hint:'Answer briefly and confidently'},
 ];
 
 let trainingData=[];
-let shownScenarioIds=new Set();
+let shownScenariosByTrainer={};
 let trainerCode='';
+
+// Per-trainer shown tracker — each user has independent progress
+function getShownSet(){
+  const t=getTrainerCode();
+  if(!shownScenariosByTrainer[t])shownScenariosByTrainer[t]=new Set();
+  return shownScenariosByTrainer[t];
+}
 
 function loadTrainingData(){
   try{trainingData=JSON.parse(store.getItem('rizz_training')||'[]')}catch(e){trainingData=[]}
-  try{shownScenarioIds=new Set(JSON.parse(store.getItem('rizz_shown')||'[]'))}catch(e){shownScenarioIds=new Set()}
   trainerCode=store.getItem('trainer_code')||'';
+  // Load per-trainer shown tracker
+  try{
+    const raw=store.getItem('rizz_shown_by_trainer');
+    if(raw){
+      const obj=JSON.parse(raw);
+      shownScenariosByTrainer={};
+      for(const[t,arr]of Object.entries(obj)){
+        shownScenariosByTrainer[t]=new Set(arr);
+      }
+    }else{
+      // Migration from old global shown set
+      const oldRaw=store.getItem('rizz_shown');
+      if(oldRaw){
+        try{
+          const arr=JSON.parse(oldRaw);
+          shownScenariosByTrainer[trainerCode||'anon']=new Set(arr);
+          store.removeItem('rizz_shown');
+        }catch(e){}
+      }
+    }
+  }catch(e){shownScenariosByTrainer={}}
   const input=document.getElementById('trainer-code-input');
   if(input)input.value=trainerCode;
   updateTrainBadge();
 }
 function saveTrainingData(){
   store.setItem('rizz_training',JSON.stringify(trainingData.slice(-300)));
-  store.setItem('rizz_shown',JSON.stringify([...shownScenarioIds].slice(-200)));
+  const obj={};
+  for(const[t,set]of Object.entries(shownScenariosByTrainer)){
+    obj[t]=[...set].slice(-500);
+  }
+  store.setItem('rizz_shown_by_trainer',JSON.stringify(obj));
   updateTrainBadge();
 }
 function saveTrainerCode(){
@@ -1600,6 +1721,25 @@ function updateTrainBadge(){
   badge.className=TRAIN_TONES.every(t=>trained.has(t.id))?'train-badge':'train-empty-badge';
 }
 
+function resetTrainingModalToOwner(){
+  // Remove friend banner if present
+  const banner=document.getElementById('friend-banner');
+  if(banner)banner.remove();
+  // Re-enable trainer code input
+  const input=document.getElementById('trainer-code-input');
+  if(input){input.disabled=false;input.style.opacity=''}
+  // Restore the close button
+  const closeBtn=document.querySelector('.train-close');
+  if(closeBtn){closeBtn.textContent='Done';closeBtn.onclick=closeTraining}
+  // Re-show import button
+  document.querySelectorAll('.train-body button.action-btn').forEach(b=>{
+    if(b.textContent.includes('Import'))b.style.display='';
+  });
+  // Reset session counter so reminders don't carry over
+  sessionSaveCount=0;
+  hideExportReminder();
+}
+
 function openTraining(){
   const ls=document.getElementById('login-screen');
   if(ls&&!ls.classList.contains('out')){
@@ -1607,6 +1747,7 @@ function openTraining(){
     document.getElementById('app').classList.add('show');
     loadApiKey();loadGhSettings();loadHistory();updateCardVisibility();
   }
+  resetTrainingModalToOwner();
   document.getElementById('train-overlay').classList.add('open');
   document.body.style.overflow='hidden';
   const input=document.getElementById('trainer-code-input');
@@ -1623,9 +1764,12 @@ let currentScenario=null;
 let isAnimating=false;
 
 function pickOneScenario(){
+  const shown=getShownSet();
+  // Count how many saves THIS trainer has per tone, prioritise scarce tones
+  const t=getTrainerCode();
   const counts={};
-  trainingData.forEach(d=>{counts[d.tone]=(counts[d.tone]||0)+1});
-  const pool=SCENARIO_BANK.filter(s=>!shownScenarioIds.has(s.tone+'|'+s.message));
+  trainingData.filter(d=>(d.trainer||'anon')===t).forEach(d=>{counts[d.tone]=(counts[d.tone]||0)+1});
+  const pool=SCENARIO_BANK.filter(s=>!shown.has(s.tone+'|'+s.message));
   if(!pool.length)return null;
   pool.sort((a,b)=>(counts[a.tone]||0)-(counts[b.tone]||0));
   const top=pool.slice(0,Math.min(5,pool.length));
@@ -1635,11 +1779,12 @@ function pickOneScenario(){
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
 function isPoolExhausted(){
-  return SCENARIO_BANK.every(s=>shownScenarioIds.has(s.tone+'|'+s.message));
+  const shown=getShownSet();
+  return SCENARIO_BANK.every(s=>shown.has(s.tone+'|'+s.message));
 }
 
 function resetScenarioPool(){
-  shownScenarioIds.clear();
+  getShownSet().clear();
   saveTrainingData();
   renderTrainingBatch();
 }
@@ -1660,17 +1805,18 @@ function notifyTris(){
 }
 
 function renderTrainingBatch(){
-  // Update header bits
-  const trained=new Set(trainingData.map(d=>d.tone));
+  // Update header bits — progress chips reflect tones this trainer has covered
+  const myEntries=trainingData.filter(d=>(d.trainer||'anon')===getTrainerCode());
+  const trained=new Set(myEntries.map(d=>d.tone));
   const prog=document.getElementById('train-progress');
   prog.innerHTML=TRAIN_TONES.map(t=>`<span class="train-prog-chip${trained.has(t.id)?' done':''}">${t.emoji} ${t.label}</span>`).join('');
-  const total=trainingData.length;
-  document.getElementById('train-count').textContent=total?`${total} repl${total===1?'y':'ies'} saved — keep going, more = better`:'No replies yet — just text back naturally';
+  const mine=myEntries.length;
+  document.getElementById('train-count').textContent=mine?`${mine} repl${mine===1?'y':'ies'} saved — keep going, more = better`:'No replies yet — just text back naturally';
   showNextScenario();
 }
 
 function updateStepIndicator(){
-  const done=shownScenarioIds.size;
+  const done=getShownSet().size;
   const total=SCENARIO_BANK.length;
   document.getElementById('train-step').textContent=`SCENARIO ${Math.min(done+1,total)} OF ${total}`;
 }
@@ -1695,8 +1841,9 @@ function showNextScenario(){
     return;
   }
 
-  // Mark as shown so we don't repeat
-  shownScenarioIds.add(currentScenario.tone+'|'+currentScenario.message);
+  // Mark as shown for THIS trainer so we don't repeat for them
+  getShownSet().add(currentScenario.tone+'|'+currentScenario.message);
+  saveTrainingData();
   updateStepIndicator();
   renderCurrentScenario();
 }
@@ -1760,12 +1907,13 @@ async function saveAndAdvance(){
   if(btn){btn.disabled=true;btn.textContent='✓ Saved';btn.classList.add('saved')}
   card.classList.add('success');
 
-  // Update progress + counter live
-  const trained=new Set(trainingData.map(d=>d.tone));
+  // Update progress + counter live (per-trainer)
+  const myEntries=trainingData.filter(d=>(d.trainer||'anon')===getTrainerCode());
+  const trained=new Set(myEntries.map(d=>d.tone));
   document.querySelectorAll('.train-prog-chip').forEach((el,idx)=>{
     if(trained.has(TRAIN_TONES[idx]?.id))el.classList.add('done');
   });
-  document.getElementById('train-count').textContent=`${trainingData.length} repl${trainingData.length===1?'y':'ies'} saved — keep going, more = better`;
+  document.getElementById('train-count').textContent=`${myEntries.length} repl${myEntries.length===1?'y':'ies'} saved — keep going, more = better`;
 
   // Friend-only export reminder every 6 saves this session
   sessionSaveCount++;
