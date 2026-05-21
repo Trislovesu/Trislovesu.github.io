@@ -241,7 +241,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 .reply-card-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .reply-tone-tag{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
 .reply-why{font-size:12px;color:var(--text3);font-style:italic}
-.reply-text{font-size:15px;line-height:1.65;color:var(--text);white-space:pre-wrap;margin-bottom:14px}
+.reply-text{font-size:15px;line-height:1.65;color:var(--text);white-space:pre-wrap;margin-bottom:14px;border-radius:8px;padding:6px 8px;margin-left:-8px;margin-right:-8px;transition:background .15s,box-shadow .15s;outline:none;cursor:text}
+.reply-text:hover{background:rgba(255,255,255,0.025)}
+.reply-text:focus{background:rgba(255,255,255,0.04);box-shadow:0 0 0 1.5px rgba(160,130,255,0.4),0 0 18px rgba(100,55,220,0.12)}
 .rewrite-strip{display:flex;flex-wrap:wrap;gap:6px;padding-top:12px;border-top:1px solid var(--border)}
 .rw-btn{padding:5px 11px;border-radius:100px;border:1px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap}
 .rw-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface3)}
@@ -567,7 +569,14 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 .tone-analysis.visible{box-shadow:0 0 40px rgba(100,55,220,0.12),inset 0 0 20px rgba(100,55,220,0.04)}
 .history-toggle{box-shadow:0 0 0 1px rgba(255,255,255,0.02),0 0 40px rgba(100,55,220,0.06)}
 .history-panel.open{box-shadow:0 0 60px rgba(100,55,220,0.08)}
-.mode-btn.active{box-shadow:0 0 14px rgba(226,226,226,0.1)}
+/* ── LIVING MODE TABS ── */
+.mode-btn{transition:all .18s,box-shadow .25s}
+.mode-btn:hover:not(.active){box-shadow:0 0 18px rgba(160,130,255,0.16)}
+.mode-btn.active{animation:tabPulse 2.8s ease-in-out infinite}
+@keyframes tabPulse{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 0 14px var(--tab-glow,rgba(226,226,226,0.3))}50%{box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 0 28px var(--tab-glow,rgba(226,226,226,0.5))}}
+#mode-quick.active{--tab-glow:rgba(255,120,55,0.55)}
+#mode-dm.active{--tab-glow:rgba(91,158,245,0.5)}
+#mode-story.active{--tab-glow:rgba(224,168,71,0.5)}
 .preview-wrap img{box-shadow:0 0 30px rgba(100,55,220,0.2)}
 </style>
 </head>
@@ -646,9 +655,9 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       <p>AI-powered replies — your voice, your vibe</p>
     </div>
     <div class="header-actions">
+      <div class="baymax-badge" title="Powered by BayMax — your wholesome AI companion"><span class="bx-check">✓</span>BayMax powered</div>
       <button class="hdr-icon" onclick="openApiPanel()" title="API key & gallery" id="api-icon">🔑</button>
       <button class="hdr-icon" onclick="openHistoryPanel()" title="Reply history">🕑<span class="history-count" id="history-count" style="position:absolute;top:-6px;right:-6px;min-width:18px;font-size:10px;padding:0 4px">0</span></button>
-      <div class="baymax-badge" title="Powered by BayMax — your wholesome AI companion"><span class="bx-check">✓</span>BayMax powered</div>
       <button class="hdr-icon" onclick="openSettingsPanel()" title="Settings">⚙️</button>
       <button class="hdr-icon" onclick="openTraining()" title="Train the Rizzer" id="train-icon-btn">🎯<span class="train-empty-badge" id="train-badge"></span></button>
     </div>
@@ -1468,7 +1477,7 @@ Rules: observations must quote or paraphrase the ACTUAL words from the messages.
         ]
       })
     });
-    if(!res.ok)throw new Error('API error '+res.status);
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
     const parsed=parseJsonLoose(raw);if(!parsed)throw new Error('Bad JSON');
@@ -1776,7 +1785,7 @@ Generate exactly 3 distinct reply options. Return ONLY raw JSON:
         ]
       })
     });
-    if(!res.ok)throw new Error('API error '+res.status);
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
     const parsed=parseJsonLoose(raw);if(!parsed)throw new Error('Bad JSON');
@@ -2443,9 +2452,193 @@ const SEED_TRAINING=[
   {trainer:"Nikolai",tone:"bold",message:"stop being weird about it just tell me",userReply:"Can I tell you over dinner tonight?"},
 ];
 
+// Refined library (Grok-generated, hand-edited for realism) — baked in permanently
+const GROK_SEED=[
+  {tone:"spicy",message:"im so wet rn",userReply:"you can't just drop that and expect me to focus"},
+  {tone:"spicy",message:"I had the filthiest dream about you last night",userReply:"now i need to hear all of it"},
+  {tone:"spicy",message:"my parents are gone for the weekend",userReply:"dangerous thing to tell me"},
+  {tone:"spicy",message:"I need you here right now",userReply:"say less, give me twenty"},
+  {tone:"spicy",message:"fresh out the shower and thinking about you",userReply:"bad timing, i can't unsee that now"},
+  {tone:"spicy",message:"bet you can't make me blush",userReply:"give me five minutes alone with you"},
+  {tone:"spicy",message:"wearing that little thing you like rn",userReply:"you're doing that on purpose"},
+  {tone:"spicy",message:"what would you do to me if you were here",userReply:"more than you'd be ready for"},
+  {tone:"spicy",message:"you couldn't handle me anyway",userReply:"cute that you think that"},
+  {tone:"spicy",message:"I can't stop thinking about your hands",userReply:"they've got ideas about you too"},
+  {tone:"spicy",message:"in bed and bored entertain me",userReply:"what are you wearing"},
+  {tone:"spicy",message:"prove you're as good as you act",userReply:"come find out then"},
+  {tone:"spicy",message:"rate this 1-10 be honest",userReply:"10 and now i'm distracted"},
+  {tone:"spicy",message:"stop being a tease and come get me",userReply:"keep that energy for when i'm there"},
+  {tone:"spicy",message:"I keep imagining you pinning me down",userReply:"you've clearly thought about this"},
+  {tone:"spicy",message:"say something that'll make me weak",userReply:"you already are, look at you texting me"},
+  {tone:"spicy",message:"wish you were next to me rn",userReply:"i'd make it real hard to sleep"},
+  {tone:"spicy",message:"what if I said I want to be in charge tonight",userReply:"you can try that"},
+  {tone:"spicy",message:"talk is cheap show me",userReply:"say when"},
+  {tone:"spicy",message:"nobody makes me feel the way you do",userReply:"keep talking like that"},
+  {tone:"spicy",message:"clear your schedule saturday night",userReply:"already did, you sure you're ready"},
+  {tone:"spicy",message:"this dress is barely staying on",userReply:"then don't fight it"},
+  {tone:"spicy",message:"tell me exactly what you want from me",userReply:"you, no distractions, all night"},
+  {tone:"spicy",message:"I look way too good to be home alone tonight",userReply:"then don't be"},
+  {tone:"spicy",message:"make me",userReply:"you'd enjoy that too much"},
+  {tone:"spicy",message:"still can't walk straight from last time",userReply:"and yet here you are again"},
+  {tone:"spicy",message:"I want you and I want you now",userReply:"patience looks good on you"},
+  {tone:"spicy",message:"please just come over",userReply:"give me twenty, leave it unlocked"},
+  {tone:"spicy",message:"the things I'd let you do to me",userReply:"careful, i'll hold you to that"},
+  {tone:"spicy",message:"maybe I'll let you find out",userReply:"you will"},
+  {tone:"spicy",message:"what's the dirtiest thing on your mind rn",userReply:"mostly you, it's becoming a problem"},
+  {tone:"spicy",message:"I just need to be held down and kissed",userReply:"that's the bare minimum"},
+  {tone:"spicy",message:"I'm not as innocent as I look",userReply:"had a feeling"},
+  {tone:"spicy",message:"candles lit wine poured you're missing",userReply:"starting without me, bold"},
+  {tone:"spicy",message:"entertain me or I'm finding someone who will",userReply:"you won't"},
+  {tone:"spicy",message:"my bed feels way too empty",userReply:"easily fixed"},
+  {tone:"spicy",message:"I already know you want me",userReply:"never said i didn't"},
+  {tone:"spicy",message:"tell me what to do",userReply:"start by telling me what you've got on"},
+  {tone:"spicy",message:"keep thinking about that kiss against the wall",userReply:"that was just the warm up"},
+  {tone:"spicy",message:"how long can you actually behave",userReply:"not when you text me like this"},
+  {tone:"spicy",message:"I want your hands all over me",userReply:"patience, you'll get it"},
+  {tone:"spicy",message:"come ruin my sleep schedule",userReply:"you started this"},
+  {tone:"spicy",message:"okay fine I miss your touch",userReply:"knew you'd cave"},
+  {tone:"spicy",message:"you always stop right when it gets good",userReply:"not tonight"},
+  {tone:"spicy",message:"I don't want soft tonight",userReply:"good, wasn't planning on it"},
+  {tone:"spicy",message:"you left a mark and now everyone's asking",userReply:"let them ask"},
+  {tone:"spicy",message:"do you even think about me like that",userReply:"more than i'd admit over text"},
+  {tone:"spicy",message:"I'd let you do anything to me rn",userReply:"careful what you offer"},
+  {tone:"spicy",message:"one word make it count",userReply:"closer"},
+  {tone:"spicy",message:"chase me a little I like it rough",userReply:"i don't chase, you come to me"},
+  {tone:"spicy",message:"you're not leaving once you get here",userReply:"wasn't planning to"},
+  {tone:"spicy",message:"you're all I think about when I touch myself",userReply:"now i won't get anything done"},
+  {tone:"spicy",message:"drop everything and get to me",userReply:"demanding, i like it"},
+  {tone:"spicy",message:"good things come to those who wait or do they",userReply:"you won't be waiting long"},
+  {tone:"spicy",message:"this is just a preview",userReply:"now i need the rest"},
+  {tone:"spicy",message:"I want it to hurt so good",userReply:"noted"},
+  {tone:"spicy",message:"I can't believe I'm even saying this to you",userReply:"keep going, i like this side"},
+  {tone:"spicy",message:"you're mine tonight no arguments",userReply:"we'll see who ends up whose"},
+  {tone:"spicy",message:"describe what you'd do every detail",userReply:"not over text, in person"},
+  {tone:"spicy",message:"forget I said that unless",userReply:"unless what, finish it"},
+  {tone:"spicy",message:"door's unlocked you know where I am",userReply:"don't fall asleep on me"},
+  {tone:"spicy",message:"good thing my walls are thick",userReply:"you'll need them"},
+  {tone:"spicy",message:"what are you gonna do about it then",userReply:"come see"},
+  {tone:"spicy",message:"you have way too much power over me",userReply:"i'll use it responsibly"},
+  {tone:"spicy",message:"either you come over or I'm going to bed mad",userReply:"can't have that"},
+  {tone:"spicy",message:"you think you're that good huh prove it",userReply:"give me the chance"},
+  {tone:"spicy",message:"I just want your weight on top of me",userReply:"that can be arranged"},
+  {tone:"spicy",message:"say the thing that always gets me",userReply:"you already know what it is"},
+  {tone:"spicy",message:"can't sleep need you",userReply:"give me twenty"},
+  {tone:"spicy",message:"bet you fold before I do",userReply:"you'll break first"},
+  {tone:"spicy",message:"stay the night leave me wrecked",userReply:"that's the plan"},
+  {tone:"spicy",message:"I might've said your name out loud last night",userReply:"say it to my face next time"},
+  {tone:"spicy",message:"I hate how bad I want you rn",userReply:"then stop fighting it"},
+  {tone:"spicy",message:"thinking about you while I'm alone oops",userReply:"no oops about it"},
+  {tone:"spicy",message:"catch me if you think you can handle it",userReply:"already did"},
+  {tone:"spicy",message:"whisper something you shouldn't",userReply:"later, when you're closer"},
+  {tone:"spicy",message:"lights off you on my mind",userReply:"keep me there"},
+  {tone:"spicy",message:"hope you didn't have plans to sleep",userReply:"sleep's overrated"},
+  {tone:"spicy",message:"nobody else gets to have you tonight",userReply:"wasn't offering"},
+  {tone:"spicy",message:"be mean to me a little I like it",userReply:"you sure you can take it"},
+  {tone:"spicy",message:"stole your hoodie and that's all I'm wearing",userReply:"keep it on"},
+  {tone:"spicy",message:"stop asking and just do it",userReply:"done"},
+  {tone:"spicy",message:"my body misses yours",userReply:"it'll remember soon enough"},
+  {tone:"spicy",message:"tell me the filthiest thought you've had about me",userReply:"not safe for text, ask me in person"},
+  {tone:"spicy",message:"I want to be all yours tonight no holding back",userReply:"then i'm not holding back either"},
+  {tone:"spicy",message:"leave me something to remember you by",userReply:"you won't forget"},
+  {tone:"spicy",message:"the anticipation is killing me end it",userReply:"almost there"},
+  {tone:"spicy",message:"come here and shut me up",userReply:"gladly"},
+  {tone:"spicy",message:"I've never wanted someone this bad",userReply:"then show me, don't tell me"},
+  {tone:"spicy",message:"if you really wanted me you'd be here already",userReply:"give me twenty"},
+  {tone:"spicy",message:"tell me how you'd start",userReply:"slow, then not slow at all"},
+  {tone:"spicy",message:"tonight you're mine and I'm not sharing",userReply:"prove it"},
+  {tone:"flirty",message:"you're everywhere on my fyp lately",userReply:"can't stay away from me huh"},
+  {tone:"flirty",message:"okay you're kind of growing on me",userReply:"kind of, just say it"},
+  {tone:"flirty",message:"why do you look like trouble in every pic",userReply:"because i am, come find out"},
+  {tone:"flirty",message:"look at me texting first don't get used to it",userReply:"too late, already am"},
+  {tone:"flirty",message:"be honest what's your first impression of me",userReply:"trouble, the good kind"},
+  {tone:"flirty",message:"you're so annoying why do I like talking to you",userReply:"because you can't help it"},
+  {tone:"flirty",message:"go on hit me with your best line",userReply:"i'd rather save it for in person"},
+  {tone:"flirty",message:"saw you watched my story twice",userReply:"caught me"},
+  {tone:"flirty",message:"guys usually try harder than this you know",userReply:"i don't really need to"},
+  {tone:"flirty",message:"funny how I'm somehow still single",userReply:"not for much longer if i'm right"},
+  {tone:"flirty",message:"I MIGHT say yes if you actually asked",userReply:"friday then, eight"},
+  {tone:"flirty",message:"you're cute but you already know that",userReply:"you're a problem and you know it"},
+  {tone:"flirty",message:"entertain me I'm bored at work",userReply:"what kind of entertainment we talking"},
+  {tone:"flirty",message:"I don't fall for just anyone fyi",userReply:"good thing i'm not just anyone"},
+  {tone:"flirty",message:"looked way too good today for no one to see",userReply:"so show me"},
+  {tone:"flirty",message:"stop showing up in my thoughts uninvited",userReply:"i'll start charging rent"},
+  {tone:"funny",message:"just watched a grown man fight a seagull and lose",userReply:"seagulls are built different"},
+  {tone:"funny",message:"this is officially the worst day of my life",userReply:"a bit dramatic but go on"},
+  {tone:"funny",message:"I just walked into a glass door in public",userReply:"genuinely iconic"},
+  {tone:"funny",message:"your music taste is a genuine red flag",userReply:"and yet you keep asking what i'm listening to"},
+  {tone:"funny",message:"did you just use a semicolon in a text",userReply:"i contain multitudes"},
+  {tone:"funny",message:"if you were a kitchen appliance what would you be",userReply:"the one you can't stop using"},
+  {tone:"funny",message:"my coffee spilled and I almost cried ngl",userReply:"rip to a real one"},
+  {tone:"funny",message:"make me laugh and I'll consider liking you",userReply:"low bar, i'll clear it easy"},
+  {tone:"funny",message:"found the ugliest shoes known to man",userReply:"who hurt the designer"},
+  {tone:"funny",message:"they were OUT of my order I'm devastated",userReply:"stay strong out there"},
+  {tone:"funny",message:"I have the attention span of a goldfish",userReply:"explains why you keep coming back to my texts"},
+  {tone:"funny",message:"you take forever to reply busy texting other girls",userReply:"only one worth replying to"},
+  {tone:"chill",message:"what you up to",userReply:"nothing much, you"},
+  {tone:"chill",message:"how was your day",userReply:"decent, better now"},
+  {tone:"chill",message:"been a minute how you been",userReply:"good, you finally remembered me"},
+  {tone:"chill",message:"you're lowkey quiet today all good",userReply:"yeah just a slow one"},
+  {tone:"chill",message:"I'm so bored someone save me",userReply:"what are you tryna get into"},
+  {tone:"chill",message:"randomly thought of you just now",userReply:"good thoughts i hope"},
+  {tone:"chill",message:"just woke up what'd I miss",userReply:"not much, slept half the day huh"},
+  {tone:"chill",message:"long day finally home",userReply:"go relax, you earned it"},
+  {tone:"chill",message:"we should do something this week",userReply:"i'm down, what day"},
+  {tone:"chill",message:"what are you getting into tonight",userReply:"nothing locked in yet, you"},
+  {tone:"savage",message:"you think you're that guy huh",userReply:"i am"},
+  {tone:"savage",message:"you left me on read for two days lol",userReply:"was busy"},
+  {tone:"savage",message:"you're just like every other guy",userReply:"and you're still texting me"},
+  {tone:"savage",message:"I don't think this is going anywhere",userReply:"then don't let me keep you"},
+  {tone:"savage",message:"maybe I'll reply maybe I won't",userReply:"your call"},
+  {tone:"savage",message:"you're not even that interesting tbh",userReply:"yet here you are"},
+  {tone:"savage",message:"heard you've been talking to other girls",userReply:"and you heard wrong, but go off"},
+  {tone:"savage",message:"plenty of guys in my dms rn you know",userReply:"then text them"},
+  {tone:"savage",message:"wow he finally responds",userReply:"here now aren't i"},
+  {tone:"savage",message:"you wouldn't even miss me if I left",userReply:"try me"},
+  {tone:"mysterious",message:"I feel like there's more to you",userReply:"there is"},
+  {tone:"mysterious",message:"what do you actually think about at 3am",userReply:"things i don't usually say out loud"},
+  {tone:"mysterious",message:"tell me something no one else knows",userReply:"not over text"},
+  {tone:"mysterious",message:"I can't figure you out and it bugs me",userReply:"keep trying"},
+  {tone:"mysterious",message:"do you ever feel like you don't belong here",userReply:"more than i'd like to"},
+  {tone:"mysterious",message:"what's something you never tell people",userReply:"you'd have to earn that one"},
+  {tone:"mysterious",message:"drop the act who are you really",userReply:"you'll figure it out in time"},
+  {tone:"mysterious",message:"what's your story actually",userReply:"long one, save it for a real conversation"},
+  {tone:"bold",message:"are you actually into me or nah",userReply:"yeah, i am"},
+  {tone:"bold",message:"I don't do situationships just so you know",userReply:"good, neither do i"},
+  {tone:"bold",message:"if you like me just say it",userReply:"i like you, there"},
+  {tone:"bold",message:"I'm not gonna chase you",userReply:"you won't have to"},
+  {tone:"bold",message:"what do you actually want from me",userReply:"you, properly, not halfway"},
+  {tone:"bold",message:"do you see this going somewhere or not",userReply:"yeah i do"},
+  {tone:"bold",message:"stop being vague and just tell me",userReply:"i want you, plain as that"},
+  {tone:"bold",message:"are you serious about me or just bored",userReply:"serious"},
+  {tone:"wholesome",message:"you genuinely made my day better",userReply:"that's all i wanted"},
+  {tone:"wholesome",message:"I feel like I can tell you anything",userReply:"you can, always"},
+  {tone:"wholesome",message:"thanks for actually listening earlier",userReply:"didn't do much, just listened"},
+  {tone:"wholesome",message:"I missed talking to you honestly",userReply:"missed you too, more than i'd say"},
+  {tone:"wholesome",message:"you're one of the good ones I think",userReply:"you make it easy"},
+  {tone:"wholesome",message:"I got the job had to tell you first",userReply:"knew you would, proud of you"},
+  {tone:"wholesome",message:"having a rough night can we just talk",userReply:"course, i'm here"},
+  {tone:"wholesome",message:"you're different from who I expected in a good way",userReply:"what'd you expect"},
+  {tone:"plans",message:"I'm free this weekend randomly",userReply:"then let's do something"},
+  {tone:"plans",message:"there's this place I think you'd like",userReply:"take me, this weekend"},
+  {tone:"plans",message:"okay so when are we actually hanging out",userReply:"friday, i'll plan it"},
+  {tone:"plans",message:"you never actually take me anywhere",userReply:"changing that saturday"},
+  {tone:"plans",message:"what about friday night",userReply:"friday works, i'll sort it"},
+  {tone:"plans",message:"I want to do something but you pick",userReply:"dinner then that spot you mentioned"},
+  {tone:"plans",message:"or we could just chill at mine",userReply:"even better, i'll bring something"},
+  {tone:"plans",message:"you owe me dinner btw",userReply:"name the night"},
+  {tone:"dry",message:"k",userReply:"that's all i get"},
+  {tone:"dry",message:"sure",userReply:"convincing"},
+  {tone:"dry",message:"maybe",userReply:"that a yes"},
+  {tone:"dry",message:"I guess",userReply:"don't strain yourself"},
+  {tone:"dry",message:"lol",userReply:"riveting"},
+  {tone:"dry",message:"you're so much",userReply:"you'll manage"},
+  {tone:"dry",message:"whatever",userReply:"whatever back"},
+  {tone:"dry",message:"ok and",userReply:"and nothing, just saying"},
+];
+
 function getTrainingExamples(tone='',limit=3){
-  // Combine the user's own saved data with the baked-in crew seed set
-  const pool=[...trainingData,...SEED_TRAINING];
+  // Combine the user's own saved data with the baked-in crew seed + refined library
+  const pool=[...trainingData,...SEED_TRAINING,...GROK_SEED];
   if(!pool.length)return'';
   const matching=pool.filter(d=>d.tone===tone).sort(()=>Math.random()-.5);
   const others=pool.filter(d=>d.tone!==tone).sort(()=>Math.random()-.5);
@@ -2583,15 +2776,29 @@ function exportReports(){
 }
 
 // Inject relevant reports as negative examples
+// Baked-in flagged mistakes — permanent "never do this" examples (from real reports)
+const BAKED_REPORTS=[
+  {message:"I love your eyes",reply:"they notice me",reason:"confusing — 'they' refers to nothing; ignores the compliment instead of flipping it"},
+  {message:"I love your eyes",reply:"they make me feel things too",reason:"makes no sense as a reply to a compliment about HIS eyes"},
+  {message:"I love your eyes",reply:"they're pretty nice of you to notice",reason:"broken grammar — should acknowledge the compliment, not mangle it"},
+  {message:"I love your eyes",reply:"so do you think they notice me",reason:"doesn't fit — turns a compliment into a confusing question"},
+  {message:"nice abs",reply:"id rather just say i'm alright with you like me",reason:"incoherent, doesn't respond to the compliment at all"},
+  {message:"oh so we're showing off tonight?",reply:"sounds like a good time",reason:"too generic, doesn't engage her playful energy"},
+  {message:"you look like bad decisions and good stories",reply:"keep it in mind for next time",reason:"generic, ignores her clever line instead of matching the wit"},
+  {message:"nah because why are you kinda fine for no reason",reply:"guess that's the idea",reason:"flat, doesn't match her playful flirty energy"},
+];
+
 function getReportsContext(userMsg,limit=4){
-  if(!reportedReplies.length)return'';
+  const all=[...BAKED_REPORTS,...reportedReplies];
+  if(!all.length)return'';
   // prefer reports whose source message resembles the current one, else most recent
-  const scored=reportedReplies.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})}));
-  scored.sort((a,b)=>(b.s-a.s)||(b.r.ts-a.r.ts));
+  const scored=all.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})+(r.ts?0:0.5)}));
+  scored.sort((a,b)=>(b.s-a.s)||((b.r.ts||0)-(a.r.ts||0)));
   const picked=scored.slice(0,limit).map(x=>x.r);
   if(!picked.length)return'';
-  return`\n\nUSER-FLAGGED MISTAKES — the user explicitly reported these exact replies as bad. NEVER produce anything like them again:\n`+
-    picked.map(r=>`✗ "${r.reply}" — problem: ${r.reason}`).join('\n');
+  return`\n\nFLAGGED MISTAKES — these exact replies were marked WRONG. NEVER produce anything like them, and learn the lesson behind each:\n`+
+    picked.map(r=>`✗ she said "${r.message}" → "${r.reply}" — WRONG: ${r.reason}`).join('\n')+
+    `\n\nThe core lesson: every reply MUST directly answer what she actually said. If she compliments you, acknowledge it and flip it back with confidence — never deflect into a vague tangent or use pronouns ("they", "it") that don't clearly point to something.`;
 }
 
 // ── GOOD REPLIES (positive feedback loop) ────
@@ -2642,14 +2849,46 @@ function exportGoods(){
   showToast('📤 Exported '+savedGoodReplies.length+' saved replies');
 }
 // Inject saved good replies as positive examples
+// Baked-in user-approved replies — permanent "do more of this" examples (from real ⭐ exports)
+const BAKED_GOODS=[
+  {message:"I love your eyes",reply:"they're looking for something in yours",tone:"spicy"},
+  {message:"I love your eyes",reply:"what else do you think you love",tone:"teasing"},
+  {message:"I love your eyes",reply:"glad you like them",tone:"nonchalant"},
+  {message:"nice abs",reply:"you were checking out my abs",tone:"teasing"},
+  {message:"nice abs",reply:"thanks i've been working on it",tone:"polite"},
+  {message:"nice abs",reply:"im a whole package",tone:"bold"},
+  {message:"you post this knowing damn well I'm tryna behave",reply:"don't need you to behave for me",tone:"confident"},
+  {message:"you post this knowing damn well I'm tryna behave",reply:"you're just now tryna behave lol",tone:"playful"},
+  {message:"delete this before I start acting up in your replies",reply:"guess you think you're pretty funny now huh",tone:"teasing"},
+  {message:"respectfully I'd climb you like a tree",reply:"careful what you wish for",tone:"bold"},
+  {message:"respectfully I'd climb you like a tree",reply:"sounds like you're having some fun ideas",tone:"playful"},
+  {message:"you look like bad decisions and good stories",reply:"sounds like you've seen some fun nights",tone:"playful"},
+  {message:"nah because why are you kinda fine for no reason",reply:"maybe i'm just that charming",tone:"teasing"},
+  {message:"nah because why are you kinda fine for no reason",reply:"not my fault i'm worth it",tone:"playful"},
+  {message:"HI love",reply:"how's your day going",tone:"casual"},
+];
+
 function getGoodsContext(userMsg,limit=4){
-  if(!savedGoodReplies.length)return'';
-  const scored=savedGoodReplies.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})}));
-  scored.sort((a,b)=>(b.s-a.s)||(b.r.ts-a.r.ts));
+  const all=[...BAKED_GOODS,...savedGoodReplies];
+  if(!all.length)return'';
+  const scored=all.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})+(r.ts?0:0.4)}));
+  scored.sort((a,b)=>(b.s-a.s)||((b.r.ts||0)-(a.r.ts||0)));
   const picked=scored.slice(0,limit).map(x=>x.r);
   if(!picked.length)return'';
-  return`\n\nUSER-APPROVED REPLIES — the user loved these exact replies. Lean into this exact style, energy and length:\n`+
+  return`\n\nUSER-APPROVED REPLIES — the user loved these exact replies. Lean hard into this style: confident, flips the compliment back, a little cheeky, never thirsty or eager:\n`+
     picked.map(r=>`✓ "${r.reply}"${r.tone?` [${r.tone}]`:''}`).join('\n');
+}
+
+// Friendly error message from an API response (esp. rate limits)
+async function apiErrorMessage(res){
+  if(res.status===429){
+    let wait='';
+    try{const e=await res.json();const m=(e.error?.message||'').match(/try again in ([\d.]+)s/i);if(m)wait=` (about ${Math.ceil(parseFloat(m[1])/60)||1} min)`;}catch(_){}
+    return `⏳ Free daily limit reached${wait}. It resets at midnight UTC — switch to ⚡ Fast mode or come back later.`;
+  }
+  if(res.status===401||res.status===403)return '🔑 API key issue — open the key panel (top right) and re-check it.';
+  if(res.status>=500)return '⚠️ Groq is having a moment — try again in a sec.';
+  try{const e=await res.json();return e.error?.message||('API error '+res.status)}catch(_){return 'API error '+res.status}
 }
 
 // Remove duplicate / near-identical replies (keeps order, keeps at least one)
@@ -2819,6 +3058,8 @@ async function generateDmReplies(){
   const trainingCtx=getTrainingExamples(rtype);
   const baseRules=`PERSPECTIVE — you are ALWAYS the GUY replying to HER. Every reply is what HE sends back. Never write from her point of view, never echo her words back as if you're in her position. If she says something sexual, HE responds as a confident man reacting to her — not speaking as her.
 
+FIT THE MESSAGE — every reply must directly answer what she actually said. If she compliments you, acknowledge it and flip it back with confidence (never ignore it or go off on a tangent). Never use vague pronouns ("they", "it") that don't clearly refer to something. A reply that doesn't obviously fit her message is wrong.
+
 STRICT RULES:
 - Sound exactly like a real person texting — not AI, not a therapist, not a script
 - Zero exclamation marks unless the style explicitly uses them
@@ -2863,7 +3104,7 @@ Return ONLY valid JSON, no markdown:
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify(body)
     });
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
     const parsed=parseRepliesResponse(rawTxt);
@@ -2902,19 +3143,32 @@ async function quickGenerate(forcedTone){
   if(isImage&&!imgs.quick.b64){showToast('Upload a screenshot first');return}
   if(!isImage&&!textMsg){showToast('Paste their message first');return}
 
-  const btn=document.getElementById('gen-btn');
-  const lbl=document.getElementById('gen-label');
-  btn.disabled=true;
-  lbl.innerHTML='<span class="spinner"></span> Scanning...';
-  document.getElementById('quick-tone-prompt').style.display='none';
-  document.getElementById('quick-tone-picker').style.display='none';
-
   // Detect a forced tone: from arg, the picker, or the context box (e.g. "flirty")
   let toneHint=forcedTone||quickDetectedTone||'';
   if(!toneHint&&ctx){
     const m=ctx.toLowerCase().match(/\b(flirty|funny|chill|savage|mysterious|bold|wholesome|spicy|dry|confident|short)\b/);
     if(m)toneHint=m[1];
   }
+
+  // Cache (text only, and not when vibe is "random" so surprises stay fresh)
+  let qCacheKey=null;
+  if(!isImage&&tonePref!=='random'){
+    qCacheKey=getCacheKey(textMsg,ctx,'',toneHint,'quick',tonePref);
+    const cached=readCache(qCacheKey);
+    if(cached&&cached.length){
+      currentReplies=cached;lastGenMessage=textMsg;
+      renderReplyCards(currentReplies);
+      showToast('⚡ From cache');
+      return;
+    }
+  }
+
+  const btn=document.getElementById('gen-btn');
+  const lbl=document.getElementById('gen-label');
+  btn.disabled=true;
+  lbl.innerHTML='<span class="spinner"></span> Scanning...';
+  document.getElementById('quick-tone-prompt').style.display='none';
+  document.getElementById('quick-tone-picker').style.display='none';
 
   // Preferred vibe — always force at least one reply in this tone (settings)
   let prefTone='';
@@ -2940,6 +3194,7 @@ CRITICAL PERSPECTIVE RULE:
 - If she's sexual, HE responds as a dominant, confident man — reacting TO her, never speaking as her.
 
 RULES:
+- EVERY reply must DIRECTLY respond to her exact message — read what she actually said and answer THAT. If she compliments you, take it and flip it back confidently (never ignore it or change the subject). Never use vague pronouns like "they"/"it" that don't clearly point to something. A reply that doesn't obviously fit her message is WRONG.
 - Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
 - Lowercase preferred, short and punchy
@@ -2964,7 +3219,7 @@ Return ONLY valid JSON, no markdown. The "replies" array MUST contain exactly 3 
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify(body)
     });
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
     const parsed=parseRepliesResponse(rawTxt);
@@ -2980,6 +3235,7 @@ Return ONLY valid JSON, no markdown. The "replies" array MUST contain exactly 3 
 
     currentReplies=dedupeReplies(parsed.replies);
     lastGenMessage=isImage?'[Quick screenshot]':textMsg;
+    if(qCacheKey&&currentReplies.length)writeCache(qCacheKey,currentReplies);
     renderReplyCards(currentReplies);
     const detected=parsed.detected_tone||toneHint||'reply';
     const src=isImage?'[Quick · Screenshot]':textMsg;
@@ -3034,13 +3290,13 @@ CRITICAL:
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:120,temperature:0.8,messages:[{role:'user',content:prompt}]})
     });
-    if(!res.ok)throw new Error('API error');
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const newText=data.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g,'')||reply.text;
     currentReplies[index]={...reply,text:newText};
     card.querySelector('.reply-text').textContent=newText;
   }catch(e){
-    showToast('Rewrite failed');console.error(e);
+    showToast(e.message&&e.message.length<80?e.message:'Rewrite failed');console.error(e);
   }finally{
     card.classList.remove('rewriting');
     rwBtns.forEach(b=>b.classList.remove('loading'));
@@ -3057,7 +3313,7 @@ function renderReplyCards(replies){
         <span class="reply-tone-tag">${r.tone||'reply'}</span>
         <span class="reply-why">${r.why||''}</span>
       </div>
-      <div class="reply-text">${r.text}</div>
+      <div class="reply-text" contenteditable="true" spellcheck="false" data-i="${i}" oninput="editReply(${i},this)" title="Tap to edit before copying">${r.text}</div>
       <div class="rewrite-strip">
         <button class="rw-btn" onclick="rewriteReply(${i},'shorter')">Shorter</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'flirty')">More flirty</button>
@@ -3073,6 +3329,9 @@ function renderReplyCards(replies){
     </div>`).join('');
 }
 
+function editReply(index,el){
+  if(currentReplies[index])currentReplies[index].text=el.textContent;
+}
 function copyCardReply(index){
   const r=currentReplies[index];if(!r)return;
   navigator.clipboard.writeText(r.text).then(()=>showToast('Copied'));
@@ -3137,7 +3396,7 @@ Write ONLY the DM reply text. Nothing else.`}];
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
       body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:250,stream:true,temperature:0.95,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
     });
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
 
     const resultBox=document.getElementById('result-box');
     resultBox.textContent='';
