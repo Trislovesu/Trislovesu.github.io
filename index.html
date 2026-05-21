@@ -364,8 +364,8 @@ input[type="text"]::placeholder{color:var(--text3)}
   0%{opacity:1;transform:translateY(0)}
   100%{opacity:0;transform:translateY(-10px)}
 }
-.reveal-in{animation:revealGlow .6s cubic-bezier(.22,1,.36,1)}
-.reveal-out{animation:revealOut .32s ease forwards}
+.reveal-in{animation:revealGlow 1.05s cubic-bezier(.22,1,.36,1)}
+.reveal-out{animation:revealOut .5s ease forwards}
 
 /* ── QUICK RESPONSE ── */
 .quick-ctx-box{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;transition:border-color .2s,box-shadow .2s}
@@ -440,11 +440,48 @@ input[type="text"]::placeholder{color:var(--text3)}
   .mode-btn{font-size:12px;padding:9px 8px;flex:1 1 30%;min-height:42px}
 }
 
-/* ── AMBIENT GLOW ── */
-body{background:
-  radial-gradient(ellipse 80% 55% at 15% -5%,rgba(100,55,220,0.22) 0%,transparent 60%),
-  radial-gradient(ellipse 55% 35% at 88% 8%,rgba(55,95,230,0.14) 0%,transparent 60%),
-  var(--bg)}
+/* ── HEADER ICON BUTTONS ── */
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.hdr-icon{width:38px;height:38px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0;position:relative;-webkit-tap-highlight-color:transparent}
+.hdr-icon:hover{background:var(--surface3);border-color:var(--border2)}
+.hdr-icon:active{transform:scale(.94)}
+
+/* ── GENERIC PANEL MODAL ── */
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:920;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(6px)}
+.panel-overlay.open{opacity:1;pointer-events:all}
+.panel-sheet{background:var(--surface);border:1px solid var(--border);border-radius:22px 22px 0 0;width:100%;max-width:720px;max-height:85vh;overflow-y:auto;transform:translateY(40px);transition:transform .3s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 80px rgba(0,0,0,0.7),0 0 120px rgba(100,55,220,0.15),inset 0 1px 0 rgba(255,255,255,0.06)}
+.panel-overlay.open .panel-sheet{transform:translateY(0)}
+.panel-handle{width:36px;height:4px;background:var(--border2);border-radius:100px;margin:14px auto 0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 12px}
+.panel-head h2{font-size:17px;font-weight:600}
+.panel-close{background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;transition:background .15s,transform .12s}
+.panel-close:active{transform:scale(.95)}
+.panel-body{padding:0 22px 30px}
+
+/* ── STICKER NOTE ── */
+.sticker-note{position:fixed;left:24px;top:50%;transform:translateY(-50%) rotate(-4deg);width:210px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:4px;padding:20px 18px 22px;z-index:5;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 50px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;animation:stickerFloat 6s ease-in-out infinite}
+.sticker-note::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(3deg);width:62px;height:20px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.12);border-radius:2px;backdrop-filter:blur(2px)}
+.sticker-note h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sticker-note p{font-size:12px;line-height:1.6;color:var(--text2)}
+.sticker-note .crew{font-size:11px;color:rgba(160,130,255,0.85);margin-top:10px;font-weight:600}
+@keyframes stickerFloat{0%,100%{transform:translateY(-50%) rotate(-4deg)}50%{transform:translateY(calc(-50% - 8px)) rotate(-3deg)}}
+@media (max-width:880px){.sticker-note{display:none}}
+
+/* ── TONE PREF / SETTINGS OPTIONS ── */
+.pref-grid{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.pref-btn{padding:15px 18px;border:1.5px solid var(--border);background:var(--surface2);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;-webkit-tap-highlight-color:transparent}
+.pref-btn:hover{background:var(--surface3);border-color:var(--border2)}
+.pref-btn.selected{border-color:var(--accent);background:var(--surface3);box-shadow:0 0 0 2px var(--accent),0 0 22px rgba(226,226,226,0.18)}
+.pref-btn .pref-sub{font-size:11px;color:var(--text3);font-weight:400;margin-top:2px}
+
+/* ── AMBIENT GLOW + BREATHING ── */
+body{background:var(--bg)}
+body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 55% at 15% -5%,rgba(100,55,220,0.22) 0%,transparent 60%),
+    radial-gradient(ellipse 55% 35% at 88% 8%,rgba(55,95,230,0.14) 0%,transparent 60%);
+  animation:bgBreathe 11s ease-in-out infinite}
+@keyframes bgBreathe{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
 .login-card{box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 24px 80px rgba(0,0,0,0.8),0 0 140px rgba(100,55,220,0.22),inset 0 1px 0 rgba(255,255,255,0.07)}
 .app-logo{box-shadow:0 0 28px rgba(226,226,226,0.28),0 0 60px rgba(226,226,226,0.1)}
 .card{box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 8px 40px rgba(0,0,0,0.5),0 0 80px rgba(100,55,220,0.09),inset 0 1px 0 rgba(255,255,255,0.05)}
@@ -463,6 +500,12 @@ body{background:
 
 <!-- LOGIN -->
 <div id="login-screen">
+  <!-- STICKER NOTE for the crew -->
+  <div class="sticker-note">
+    <h3>📌 To the crew</h3>
+    <p>Thank you for your efforts and contribution training the Rizzer — it genuinely made it better. Check back soon, more coming.</p>
+    <div class="crew">— Nikolai · Ismaaeel · Jayden</div>
+  </div>
   <div class="login-card">
     <div class="logo-wrap">
       <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -486,33 +529,17 @@ body{background:
   </div>
 </div>
 
-<!-- USER SELECT SCREEN -->
+<!-- TONE PREFERENCE SCREEN (first login) -->
 <div id="user-select-screen">
   <div class="user-select-card">
     <div class="logo-wrap"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4z"/></svg></div>
-    <h1 id="user-select-title">Who's training?</h1>
-    <p class="sub" id="user-select-sub">Select your name to continue</p>
-    <div class="user-grid" id="user-list">
-      <button class="user-btn" onclick="selectUser('Nikolai')"><span>Nikolai</span><span class="arrow">→</span></button>
-      <button class="user-btn" onclick="selectUser('Ismaaeel')"><span>Ismaaeel</span><span class="arrow">→</span></button>
-      <button class="user-btn" onclick="selectUser('Jayden')"><span>Jayden</span><span class="arrow">→</span></button>
-      <button class="user-btn owner" onclick="selectUser('Tris👑')"><span>Tris 👑</span><span class="arrow">→</span></button>
-    </div>
-    <!-- Tris secondary pin -->
-    <div id="tris-pin-area" style="display:none;margin-top:24px">
-      <p class="sub" style="margin-bottom:20px">Owner passcode required</p>
-      <div class="pin-row" id="tris-pin-dots">
-        <div class="pin-dot" id="tpd0"></div><div class="pin-dot" id="tpd1"></div>
-        <div class="pin-dot" id="tpd2"></div><div class="pin-dot" id="tpd3"></div>
-        <div class="pin-dot" id="tpd4"></div><div class="pin-dot" id="tpd5"></div>
-      </div>
-      <div class="numpad">
-        <button class="nk" onclick="tkp('1')">1</button><button class="nk" onclick="tkp('2')">2</button><button class="nk" onclick="tkp('3')">3</button>
-        <button class="nk" onclick="tkp('4')">4</button><button class="nk" onclick="tkp('5')">5</button><button class="nk" onclick="tkp('6')">6</button>
-        <button class="nk" onclick="tkp('7')">7</button><button class="nk" onclick="tkp('8')">8</button><button class="nk" onclick="tkp('9')">9</button>
-        <button class="nk sm" onclick="tkc()">Clear</button><button class="nk" onclick="tkp('0')">0</button><button class="nk sm" onclick="tkd()">⌫</button>
-      </div>
-      <button class="train-skip" onclick="cancelTrisPin()" style="margin-top:10px">← Back</button>
+    <h1>Your go-to vibe?</h1>
+    <p class="sub">Whatever you pick, Quick Response will always include at least one reply in that tone. Change it anytime in settings.</p>
+    <div class="pref-grid">
+      <button class="pref-btn" onclick="choosePref('spicy')"><span>🌶️ Spicy<div class="pref-sub">flirty, suggestive, bold</div></span><span class="arrow">→</span></button>
+      <button class="pref-btn" onclick="choosePref('funny')"><span>😂 Funny<div class="pref-sub">dry humour, witty</div></span><span class="arrow">→</span></button>
+      <button class="pref-btn" onclick="choosePref('flirty')"><span>😏 Playful<div class="pref-sub">teasing, light, fun</div></span><span class="arrow">→</span></button>
+      <button class="pref-btn" onclick="choosePref('random')"><span>🎲 Random<div class="pref-sub">surprise me each time</div></span><span class="arrow">→</span></button>
     </div>
   </div>
 </div>
@@ -527,34 +554,11 @@ body{background:
       <h1>DM Assistant</h1>
       <p>AI-powered replies — your voice, your vibe</p>
     </div>
-    <button class="train-icon-btn" onclick="openTraining()" title="Train the Rizzer" id="train-icon-btn">
-      🎯<span class="train-empty-badge" id="train-badge"></span>
-    </button>
-  </div>
-
-  <!-- API KEY SETUP -->
-  <div class="card" id="api-card">
-    <div class="card-label">Setup — One Time</div>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Enter your Groq API key to power replies. Get one free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--text);font-weight:500;">console.groq.com</a>. Stored only in your browser.</p>
-    <div class="setup-row">
-      <input type="text" id="api-key-input" placeholder="gsk_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
-      <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveApiKey()">Save Key</button>
-    </div>
-    <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
-    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
-      <div class="card-label" style="margin-bottom:8px">Image Gallery — GitHub</div>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6">Automatically saves every uploaded image to your GitHub repo so you can view them later. <a href="https://github.com/settings/tokens/new?scopes=repo&description=DM+Assistant" target="_blank" style="color:var(--text2)">Create a token here</a> (check the <strong style="color:var(--text2)">repo</strong> scope).</p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;gap:8px">
-          <input type="text" id="gh-user" placeholder="GitHub username" style="flex:1" />
-          <input type="text" id="gh-repo" placeholder="Repo (e.g. yourusername.github.io)" style="flex:2" />
-        </div>
-        <div class="setup-row">
-          <input type="text" id="gh-token" placeholder="ghp_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
-          <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveGhSettings()">Connect</button>
-        </div>
-        <div id="gh-status" style="font-size:12px;color:var(--text3)"></div>
-      </div>
+    <div class="header-actions">
+      <button class="hdr-icon" onclick="openApiPanel()" title="API key & gallery" id="api-icon">🔑</button>
+      <button class="hdr-icon" onclick="openHistoryPanel()" title="Reply history">🕑<span class="history-count" id="history-count" style="position:absolute;top:-6px;right:-6px;min-width:18px;font-size:10px;padding:0 4px">0</span></button>
+      <button class="hdr-icon" onclick="openSettingsPanel()" title="Settings">⚙️</button>
+      <button class="hdr-icon" onclick="openTraining()" title="Train the Rizzer" id="train-icon-btn">🎯<span class="train-empty-badge" id="train-badge"></span></button>
     </div>
   </div>
 
@@ -731,20 +735,69 @@ body{background:
     </div>
   </div>
 
-  <!-- HISTORY DROPDOWN -->
-  <button class="history-toggle" id="history-toggle" onclick="toggleHistory()">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span>Reply History</span>
-      <span class="history-count" id="history-count">0</span>
+</div>
+
+<!-- API / GALLERY PANEL -->
+<div class="panel-overlay" id="api-overlay" onclick="if(event.target===this)closePanel('api')">
+  <div class="panel-sheet">
+    <div class="panel-handle"></div>
+    <div class="panel-head"><h2>🔑 API & Gallery</h2><button class="panel-close" onclick="closePanel('api')">Done</button></div>
+    <div class="panel-body">
+      <div class="card-label">Groq API key</div>
+      <p style="font-size:13px;color:var(--text2);margin:6px 0 12px;">Powers all replies. Get one free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--text);font-weight:500;">console.groq.com</a>. Stored only on your device.</p>
+      <div class="setup-row">
+        <input type="text" id="api-key-input" placeholder="gsk_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
+        <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveApiKey()">Save</button>
+      </div>
+      <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
+      <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border)">
+        <div class="card-label" style="margin-bottom:8px">Image Gallery — GitHub <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6">Auto-saves uploaded images to your GitHub repo. <a href="https://github.com/settings/tokens/new?scopes=repo&description=DM+Assistant" target="_blank" style="color:var(--text2)">Create a token</a> (check the <strong style="color:var(--text2)">repo</strong> scope).</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px">
+            <input type="text" id="gh-user" placeholder="GitHub username" style="flex:1" />
+            <input type="text" id="gh-repo" placeholder="Repo (e.g. you.github.io)" style="flex:2" />
+          </div>
+          <div class="setup-row">
+            <input type="text" id="gh-token" placeholder="ghp_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
+            <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveGhSettings()">Connect</button>
+          </div>
+          <div id="gh-status" style="font-size:12px;color:var(--text3)"></div>
+        </div>
+      </div>
     </div>
-    <span class="history-chevron">▼</span>
-  </button>
-  <div class="history-panel" id="history-panel">
-    <div class="history-inner">
-      <div class="history-actions-row">
+  </div>
+</div>
+
+<!-- HISTORY PANEL -->
+<div class="panel-overlay" id="history-overlay" onclick="if(event.target===this)closePanel('history')">
+  <div class="panel-sheet">
+    <div class="panel-handle"></div>
+    <div class="panel-head"><h2>🕑 Reply History</h2><button class="panel-close" onclick="closePanel('history')">Done</button></div>
+    <div class="panel-body">
+      <div class="history-actions-row" style="display:flex;justify-content:flex-end;margin-bottom:8px">
         <button class="history-clear-btn" onclick="clearHistory()">Clear all</button>
       </div>
       <div id="history-list"><div class="empty">No replies yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="panel-overlay" id="settings-overlay" onclick="if(event.target===this)closePanel('settings')">
+  <div class="panel-sheet">
+    <div class="panel-handle"></div>
+    <div class="panel-head"><h2>⚙️ Settings</h2><button class="panel-close" onclick="closePanel('settings')">Done</button></div>
+    <div class="panel-body">
+      <div class="card-label" style="margin-bottom:4px">Your go-to vibe</div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6">Quick Response always includes at least one reply in this tone.</p>
+      <div class="pref-grid" id="settings-pref-grid">
+        <button class="pref-btn" data-pref="spicy" onclick="setPref('spicy')"><span>🌶️ Spicy<div class="pref-sub">flirty, suggestive, bold</div></span><span class="arrow">✓</span></button>
+        <button class="pref-btn" data-pref="funny" onclick="setPref('funny')"><span>😂 Funny<div class="pref-sub">dry humour, witty</div></span><span class="arrow">✓</span></button>
+        <button class="pref-btn" data-pref="flirty" onclick="setPref('flirty')"><span>😏 Playful<div class="pref-sub">teasing, light, fun</div></span><span class="arrow">✓</span></button>
+        <button class="pref-btn" data-pref="random" onclick="setPref('random')"><span>🎲 Random<div class="pref-sub">surprise me each time</div></span><span class="arrow">✓</span></button>
+        <button class="pref-btn" data-pref="none" onclick="setPref('none')"><span>🚫 None<div class="pref-sub">no forced tone</div></span><span class="arrow">✓</span></button>
+      </div>
     </div>
   </div>
 </div>
@@ -823,7 +876,7 @@ document.addEventListener('animationend',e=>{
   if(e.animationName==='tapFlash')e.target.classList.remove('tap-flash');
 },true);
 // ── PIN ──────────────────────────────────────
-const PIN='9999';let pin='';
+const PIN='1010';let pin='';
 function kp(d){if(pin.length>=4)return;pin+=d;dots();if(pin.length===4)setTimeout(checkPin,120)}
 function kd(){pin=pin.slice(0,-1);dots()}
 function kc(){pin='';dots()}
@@ -834,7 +887,12 @@ function checkPin(){
     ls.classList.add('out');
     setTimeout(()=>{
       ls.style.display='none';
-      document.getElementById('user-select-screen').classList.add('show');
+      // First login → ask tone preference; otherwise straight in
+      if(store.getItem('tone_pref')){
+        enterApp();
+      }else{
+        document.getElementById('user-select-screen').classList.add('show');
+      }
     },380);
   }else{
     for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot err';
@@ -844,168 +902,80 @@ function checkPin(){
 
 // ── KEYBOARD PIN ENTRY (PC) ──────────────────
 document.addEventListener('keydown',e=>{
-  const loginVisible=document.getElementById('login-screen').style.display!=='none'&&!document.getElementById('login-screen').classList.contains('out');
-  const trisVisible=document.getElementById('tris-pin-area')&&document.getElementById('tris-pin-area').style.display!=='none'&&document.getElementById('user-select-screen').classList.contains('show');
-  if(!loginVisible&&!trisVisible)return;
-  if(/^[0-9]$/.test(e.key)){
-    e.preventDefault();
-    trisVisible?tkp(e.key):kp(e.key);
-  }else if(e.key==='Backspace'){
-    e.preventDefault();
-    trisVisible?tkd():kd();
-  }else if(e.key==='Escape'){
-    e.preventDefault();
-    trisVisible?tkc():kc();
-  }
+  const ls=document.getElementById('login-screen');
+  const loginVisible=ls.style.display!=='none'&&!ls.classList.contains('out');
+  if(!loginVisible)return;
+  if(/^[0-9]$/.test(e.key)){e.preventDefault();kp(e.key)}
+  else if(e.key==='Backspace'){e.preventDefault();kd()}
+  else if(e.key==='Escape'){e.preventDefault();kc()}
 });
 
-// ── USER SELECTION + OWNER PIN ──────────────
-const OWNER_PIN='312007';
-let trisPin='';
-let currentUser=null;
+// ── TONE PREFERENCE + ENTRY ──────────────────
+let currentUser='Tris👑';
+let tonePref='none';
 
-function selectUser(name){
-  if(name==='Tris👑'){
-    // Show secondary pin
-    document.querySelector('#user-select-screen h1').textContent='👑 Owner Access';
-    document.querySelector('#user-select-screen .sub').style.display='none';
-    document.getElementById('user-list').style.display='none';
-    document.getElementById('tris-pin-area').style.display='block';
-    trisPin='';tdots();
-  }else{
-    currentUser=name;
-    enterAppAsFriend(name);
-  }
-}
-
-function cancelTrisPin(){
-  document.querySelector('#user-select-screen h1').textContent='Who\'s training?';
-  document.querySelector('#user-select-screen .sub').style.display='block';
-  document.getElementById('user-list').style.display='flex';
-  document.getElementById('tris-pin-area').style.display='none';
-  trisPin='';tdots();
-}
-
-function tkp(d){if(trisPin.length>=6)return;trisPin+=d;tdots();if(trisPin.length===6)setTimeout(checkTrisPin,120)}
-function tkd(){trisPin=trisPin.slice(0,-1);tdots()}
-function tkc(){trisPin='';tdots()}
-function tdots(){for(let i=0;i<6;i++){const e=document.getElementById('tpd'+i);if(e)e.className='pin-dot'+(i<trisPin.length?' on':'')}}
-function checkTrisPin(){
-  if(trisPin===OWNER_PIN){
-    currentUser='Tris👑';
-    enterAppAsOwner();
-  }else{
-    for(let i=0;i<6;i++){const e=document.getElementById('tpd'+i);if(e)e.className='pin-dot err'}
-    setTimeout(()=>{trisPin='';tdots()},700);
-  }
-}
-
-function enterAppAsOwner(){
+function choosePref(p){
+  tonePref=p;store.setItem('tone_pref',p);
   const us=document.getElementById('user-select-screen');
   us.classList.add('out');
-  setTimeout(()=>{
-    us.classList.remove('show','out');
-    us.style.opacity='';us.style.transform='';
-    document.getElementById('app').classList.add('show');
-    loadApiKey();loadGhSettings();loadHistory();loadTrainingData();
-    updateCardVisibility();
-    // Force trainer code to Tris
-    trainerCode='Tris👑';store.setItem('trainer_code','Tris👑');
-    const input=document.getElementById('trainer-code-input');
-    if(input)input.value='Tris👑';
-    if(trainingData.length<5){
-      document.getElementById('login-train-prompt').style.display='block';
-    }
-  },380);
+  setTimeout(()=>{us.classList.remove('show','out');us.style.display='none';us.style.opacity='';us.style.transform='';enterApp()},380);
 }
 
-function enterAppAsFriend(name){
-  const us=document.getElementById('user-select-screen');
-  us.classList.add('out');
-  setTimeout(()=>{
-    us.classList.remove('show','out');
-    us.style.opacity='';us.style.transform='';
-    // Load minimal state for training only
-    loadApiKey();loadTrainingData();
-    // Lock trainer code to selected name
-    trainerCode=name;store.setItem('trainer_code',name);
-    // Open training in friend mode
-    openTrainingFriendMode(name);
-  },380);
-}
-
-function openTrainingFriendMode(name){
-  // Reset session counter so the 6-save reminder fires for this session
-  sessionSaveCount=0;
-  hideExportReminder();
-  // Apply friend lock: hide import, lock trainer code, change Done to Sign Out
-  document.getElementById('train-overlay').classList.add('open');
-  document.body.style.overflow='hidden';
-  // Lock the trainer code input
+function enterApp(){
+  document.getElementById('app').classList.add('show');
+  trainerCode='Tris👑';store.setItem('trainer_code','Tris👑');
+  tonePref=store.getItem('tone_pref')||'none';
+  loadApiKey();loadGhSettings();loadHistory();loadTrainingData();
   const input=document.getElementById('trainer-code-input');
-  if(input){input.value=name;input.disabled=true;input.style.opacity='.7'}
-  // Hide import button (friends can only export their own training)
-  const buttons=document.querySelectorAll('.train-body button.action-btn');
-  buttons.forEach(b=>{if(b.textContent.includes('Import'))b.style.display='none'});
-  // Change Done button to Sign Out
-  const closeBtn=document.querySelector('.train-close');
-  if(closeBtn){closeBtn.textContent='Sign Out';closeBtn.onclick=signOutFriend}
-  // Add a banner showing who's logged in
-  let banner=document.getElementById('friend-banner');
-  if(!banner){
-    banner=document.createElement('div');
-    banner.id='friend-banner';
-    banner.style.cssText='background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);text-align:center';
-    const body=document.getElementById('train-body-inner');
-    body.insertBefore(banner,body.firstChild);
-  }
-  banner.innerHTML=`👋 Logged in as <strong style="color:var(--text)">${name}</strong> — train and export your replies for Tris to import`;
-  renderContributors();
-  renderTrainingBatch();
+  if(input)input.value='Tris👑';
+  updateCardVisibility();
 }
 
-function signOutFriend(){
-  document.getElementById('train-overlay').classList.remove('open');
-  document.body.style.overflow='';
-  // Reset state
-  currentUser=null;
-  pin='';dots();
-  // Restore login screen with a fresh entry animation
-  const ls=document.getElementById('login-screen');
-  ls.style.display='flex';
-  ls.classList.remove('out');
-  // Force reflow so the entry animation re-fires
-  ls.style.animation='none';
-  void ls.offsetHeight;
-  ls.style.animation='';
-  // Reset user-select state for next time
-  cancelTrisPin();
-  document.getElementById('user-select-screen').classList.remove('show','out');
+// ── SETTINGS / PANELS ────────────────────────
+const TONE_PREF_LABELS={spicy:'🌶️ Spicy',funny:'😂 Funny',flirty:'😏 Playful',random:'🎲 Random',none:'🚫 None'};
+function setPref(p){
+  tonePref=p;store.setItem('tone_pref',p);
+  renderSettingsPref();
+  showToast(`Vibe set to ${TONE_PREF_LABELS[p]||p}`);
 }
+function renderSettingsPref(){
+  document.querySelectorAll('#settings-pref-grid .pref-btn').forEach(b=>{
+    b.classList.toggle('selected',b.dataset.pref===tonePref);
+  });
+}
+function openApiPanel(){document.getElementById('api-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function openHistoryPanel(){renderHistory();document.getElementById('history-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function openSettingsPanel(){renderSettingsPref();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
 
 // ── API KEY ──────────────────────────────────
 let apiKey='';
 function saveApiKey(){
-  const k=document.getElementById('api-key-input').value.trim();
+  const inp=document.getElementById('api-key-input');
+  const k=inp.value.trim();
+  if(k.includes('•'))return; // already masked, no change
   if(!k.startsWith('gsk_')){document.getElementById('key-status').textContent='⚠️ Should start with gsk_';return}
   apiKey=k;store.setItem('ig_api_key',k);
   document.getElementById('key-status').textContent='✅ Key saved.';
-  document.getElementById('api-key-input').value=k.slice(0,14)+'••••••••••••';
-  collapseSetup();
+  inp.value=k.slice(0,14)+'••••••••••••';
+  markApiSaved();
 }
 function loadApiKey(){
   const k=store.getItem('ig_api_key');
-  if(k){apiKey=k;collapseSetup();}
+  if(k){
+    apiKey=k;
+    const inp=document.getElementById('api-key-input');
+    if(inp)inp.value=k.slice(0,14)+'••••••••••••';
+    markApiSaved();
+  }
 }
-function collapseSetup(){
-  const card=document.getElementById('api-card');
-  card.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:var(--text3)">✅ API key saved</span><button class="action-btn" style="flex:none;padding:6px 14px;font-size:12px" onclick="expandSetup()">Change</button></div>`;
-}
-function expandSetup(){
-  document.getElementById('api-card').innerHTML=`<div class="card-label">Setup</div>
-  <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Groq API key. Get one free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--text);font-weight:500;">console.groq.com</a>.</p>
-  <div class="setup-row"><input type="text" id="api-key-input" placeholder="gsk_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1"/><button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveApiKey()">Save</button></div>
-  <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>`;
+function markApiSaved(){
+  const icon=document.getElementById('api-icon');
+  if(icon&&!document.getElementById('api-dot')){
+    const dot=document.createElement('span');
+    dot.id='api-dot';dot.className='train-badge';dot.style.background='var(--green)';
+    icon.appendChild(dot);
+  }
 }
 
 // ── REVEAL HELPERS ───────────────────────────
@@ -1016,13 +986,13 @@ function revealCard(el){
   el.classList.remove('reveal-out');
   void el.offsetWidth;
   el.classList.add('reveal-in');
-  setTimeout(()=>el&&el.classList.remove('reveal-in'),650);
+  setTimeout(()=>el&&el.classList.remove('reveal-in'),1100);
 }
 function hideCard(el){
   if(!el||el.style.display==='none')return;
   el.classList.remove('reveal-in');
   el.classList.add('reveal-out');
-  setTimeout(()=>{if(el){el.style.display='none';el.classList.remove('reveal-out')}},330);
+  setTimeout(()=>{if(el){el.style.display='none';el.classList.remove('reveal-out')}},500);
 }
 
 // ── MODE ─────────────────────────────────────
@@ -1072,7 +1042,7 @@ function updateDmReveal(){
   const genBtn=document.getElementById('gen-btn');
   if(hasInput){
     revealCard(ctxCard);
-    setTimeout(()=>{if(mode==='dm'){revealCard(rtCard);revealCard(genBtn)}},170);
+    setTimeout(()=>{if(mode==='dm'){revealCard(rtCard);revealCard(genBtn)}},420);
   }else{
     hideCard(ctxCard);
     hideCard(rtCard);
@@ -2403,11 +2373,18 @@ async function quickGenerate(forcedTone){
     if(m)toneHint=m[1];
   }
 
-  const trainingCtx=getTrainingExamples(toneHint||'match');
+  // Preferred vibe — always force at least one reply in this tone (settings)
+  let prefTone='';
+  if(tonePref&&tonePref!=='none'){
+    prefTone=tonePref==='random'?ALL_TONES[Math.floor(Math.random()*ALL_TONES.length)]:tonePref;
+  }
+  const prefLine=prefTone?`\nIMPORTANT — Regardless of the detected vibe, exactly ONE of the 3 replies MUST be in a ${prefTone} tone (this is the user's go-to vibe). The other two should fit the actual message.`:'';
+
+  const trainingCtx=getTrainingExamples(toneHint||prefTone||'match');
   const system=`You are a fast texting assistant for a confident guy. Read the incoming message, detect the vibe, and fire back 3 quick replies that fit.${trainingCtx}
 
 ${ctx?`Extra context from the user: ${ctx}`:''}
-${toneHint?`The user wants a ${toneHint} tone — use it.`:''}
+${toneHint?`The user wants a ${toneHint} tone — use it.`:''}${prefLine}
 
 RULES:
 - Sound like a real person texting — never AI or robotic
@@ -2640,12 +2617,7 @@ function copyResult(){
 }
 
 // ── HISTORY ──────────────────────────────────
-let history=[];let histOpen=false;
-function toggleHistory(){
-  histOpen=!histOpen;
-  document.getElementById('history-toggle').classList.toggle('open',histOpen);
-  document.getElementById('history-panel').classList.toggle('open',histOpen);
-}
+let history=[];
 function addToHistory(tone,their,reply,m,imgUrl){
   history.unshift({tone,their:their.length>80?their.slice(0,80)+'…':their,reply,mode:m,imgUrl:imgUrl||null,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
   if(history.length>30)history=history.slice(0,30);
@@ -2704,27 +2676,50 @@ function saveGhSettings(){
   document.getElementById('gh-status').textContent='✅ GitHub connected — images will be saved automatically.';
   document.getElementById('gh-token').value=tok.slice(0,10)+'••••••••';
 }
-function compressImage(b64,mimeType,maxDim=800,quality=0.78){
+function drawToJpeg(src,w,h,quality){
+  const canvas=document.createElement('canvas');
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(src,0,0,w,h);
+  const dataUrl=canvas.toDataURL('image/jpeg',quality);
+  const result=dataUrl.split(',')[1]||'';
+  return result.length>100?result:null;
+}
+
+async function compressImage(b64,mimeType,maxDim=800,quality=0.78){
+  // Primary path: createImageBitmap — most reliable on iOS, handles HEIC/large/orientation
+  try{
+    const blob=await(await fetch(`data:${mimeType};base64,${b64}`)).blob();
+    if(typeof createImageBitmap==='function'){
+      let bitmap;
+      try{bitmap=await createImageBitmap(blob,{imageOrientation:'from-image'});}
+      catch(e){bitmap=await createImageBitmap(blob);}
+      const scale=Math.min(1,maxDim/Math.max(bitmap.width||1,bitmap.height||1));
+      const w=Math.round((bitmap.width||800)*scale);
+      const h=Math.round((bitmap.height||800)*scale);
+      const out=drawToJpeg(bitmap,w,h,quality);
+      bitmap.close&&bitmap.close();
+      if(out)return{b64:out,type:'image/jpeg'};
+    }
+  }catch(e){console.warn('createImageBitmap path failed, falling back',e);}
+
+  // Fallback path: HTMLImageElement (object URL is more iOS-friendly than data URL)
   return new Promise(resolve=>{
+    const blobUrl=(()=>{try{return URL.createObjectURL(new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:mimeType}))}catch(e){return `data:${mimeType};base64,${b64}`}})();
     const img=new Image();
     img.onload=()=>{
+      let result=null;
       try{
-        const scale=Math.min(1,maxDim/Math.max(img.width||1,img.height||1));
-        const w=Math.round((img.width||800)*scale);
-        const h=Math.round((img.height||800)*scale);
-        const canvas=document.createElement('canvas');
-        canvas.width=w;canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        const dataUrl=canvas.toDataURL('image/jpeg',quality);
-        // Validate result isn't empty or broken
-        const result=dataUrl.split(',')[1]||'';
-        if(result.length>100){resolve({b64:result,type:'image/jpeg'});return}
-      }catch(err){console.warn('Canvas compression failed',err)}
-      // Fallback: use original only if it decoded OK (img loaded means browser can display it)
-      resolve({b64,type:'image/jpeg'});
+        const scale=Math.min(1,maxDim/Math.max(img.naturalWidth||img.width||1,img.naturalHeight||img.height||1));
+        const w=Math.round((img.naturalWidth||img.width||800)*scale);
+        const h=Math.round((img.naturalHeight||img.height||800)*scale);
+        result=drawToJpeg(img,w,h,quality);
+      }catch(err){console.warn('Canvas fallback failed',err)}
+      if(blobUrl.startsWith('blob:'))URL.revokeObjectURL(blobUrl);
+      resolve(result?{b64:result,type:'image/jpeg'}:{b64,type:mimeType});
     };
-    img.onerror=()=>resolve(null); // Signal failure
-    img.src=`data:${mimeType};base64,${b64}`;
+    img.onerror=()=>{if(blobUrl.startsWith('blob:'))URL.revokeObjectURL(blobUrl);resolve(null);};
+    img.src=blobUrl;
   });
 }
 async function uploadImageToGithub(b64,mimeType,label){
