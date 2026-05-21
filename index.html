@@ -247,8 +247,31 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface3)}
 .rw-btn.copy-rw{color:var(--text2);border-color:var(--border2)}
 .rw-btn.copy-rw:hover{color:var(--accent);border-color:var(--accent)}
+.rw-btn.report-rw{color:var(--text3);border-color:var(--border)}
+.rw-btn.report-rw:hover{color:var(--red);border-color:var(--red);background:var(--red-bg)}
+.rw-btn.report-rw.reported{color:var(--red);border-color:var(--red);background:var(--red-bg);pointer-events:none}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
+/* report modal */
+.report-modal{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:940;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(6px)}
+.report-modal.open{opacity:1;pointer-events:all}
+.report-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 80px rgba(224,85,85,0.12)}
+.report-box h3{font-size:16px;font-weight:600;margin-bottom:6px}
+.report-box .rep-reply{font-size:13px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:10px 0;font-style:italic}
+.report-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.report-chip{padding:6px 12px;border-radius:100px;border:1px solid var(--border);background:var(--surface2);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.report-chip.on{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.report-box textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;min-height:64px}
+.report-box textarea:focus{border-color:var(--red)}
+.report-actions{display:flex;gap:8px;margin-top:14px}
+/* reports list in settings */
+.report-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;position:relative}
+.report-item .ri-reply{font-size:13px;color:var(--text);margin-bottom:5px;padding-right:24px}
+.report-item .ri-reason{font-size:11px;color:var(--red);font-weight:500}
+.report-item .ri-msg{font-size:11px;color:var(--text3);font-style:italic;margin-top:4px}
+.report-item .ri-del{position:absolute;top:9px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:2px}
+.report-item .ri-del:hover{color:var(--red)}
+.reports-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0}
 
 /* ── USER SELECT SCREEN ── */
 #user-select-screen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:998;transition:opacity .35s,transform .35s;padding:20px}
@@ -806,6 +829,41 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="pref-btn" data-pref="random" onclick="setPref('random')"><span>🎲 Random<div class="pref-sub">surprise me each time</div></span><span class="arrow">✓</span></button>
         <button class="pref-btn" data-pref="none" onclick="setPref('none')"><span>🚫 None<div class="pref-sub">no forced tone</div></span><span class="arrow">✓</span></button>
       </div>
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="card-label" style="margin-bottom:0">🚩 Reported replies</div>
+          <span class="history-count" id="report-count-badge">0</span>
+        </div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">Replies you flag are fed back as "never do this" examples to sharpen future replies. <span id="report-count-label">0 flagged</span>.</p>
+        <div id="reports-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <button class="action-btn" style="flex:1" onclick="exportReports()">📤 Export reports</button>
+          <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearReports()">Clear all</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="report-modal" id="report-modal" onclick="if(event.target===this)closeReport()">
+  <div class="report-box">
+    <h3>🚩 What's wrong with this reply?</h3>
+    <div class="rep-reply" id="report-reply-text"></div>
+    <div class="report-chips" id="report-chips">
+      <button class="report-chip" onclick="toggleReportChip(this,'too cringe')">too cringe</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'wrong tone')">wrong tone</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'sounds female / wrong POV')">sounds female</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too long')">too long</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too try-hard / desperate')">try-hard</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too generic')">generic</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'doesn\'t fit the message')">doesn't fit</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'not spicy enough')">not spicy enough</button>
+    </div>
+    <textarea id="report-note" placeholder="Add detail (optional) — what should it have done instead?"></textarea>
+    <div class="report-actions">
+      <button class="action-btn" onclick="closeReport()">Cancel</button>
+      <button class="action-btn" style="background:var(--red-bg);border-color:var(--red);color:var(--red);font-weight:600" onclick="submitReport()">Submit report</button>
     </div>
   </div>
 </div>
@@ -933,7 +991,7 @@ function enterApp(){
   document.getElementById('app').classList.add('show');
   trainerCode='Tris👑';store.setItem('trainer_code','Tris👑');
   tonePref=store.getItem('tone_pref')||'none';
-  loadApiKey();loadGhSettings();loadHistory();loadTrainingData();
+  loadApiKey();loadGhSettings();loadHistory();loadTrainingData();loadReports();
   const input=document.getElementById('trainer-code-input');
   if(input)input.value='Tris👑';
   updateCardVisibility();
@@ -953,7 +1011,7 @@ function renderSettingsPref(){
 }
 function openApiPanel(){document.getElementById('api-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function openHistoryPanel(){renderHistory();document.getElementById('history-overlay').classList.add('open');document.body.style.overflow='hidden'}
-function openSettingsPanel(){renderSettingsPref();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function openSettingsPanel(){renderSettingsPref();renderReports();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
 
 // ── API KEY ──────────────────────────────────
@@ -1217,7 +1275,7 @@ Rules: observations must quote or paraphrase the ACTUAL words from the messages.
     if(!res.ok)throw new Error('API error '+res.status);
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const parsed=parseJsonLoose(raw);if(!parsed)throw new Error('Bad JSON');
     imageAngles[id]=parsed.angles||[];
     renderImageAnalysis(parsed,id);
   }catch(e){
@@ -1399,7 +1457,7 @@ Return ONLY raw JSON, no markdown:
     if(!res.ok)return;
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const parsed=parseJsonLoose(raw);if(!parsed)throw new Error('Bad JSON');
     // Store each angle's suggestions in cache
     for(const[key,val] of Object.entries(parsed)){
       const idx=parseInt(key);
@@ -1508,7 +1566,7 @@ Generate exactly 3 reply options. Return ONLY raw JSON:
     if(!res.ok)throw new Error('API error '+res.status);
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const parsed=parseJsonLoose(raw);if(!parsed)throw new Error('Bad JSON');
     const replies=parsed.replies||[];
     if(!usedSuggestions[id][angleKey])usedSuggestions[id][angleKey]=[];
     usedSuggestions[id][angleKey].push(...replies);
@@ -2227,6 +2285,131 @@ function getRefinedContext(userMsg,limit=3){
   return`\n\nRETRIEVED EXAMPLES — closest real situations to this message, with replies that landed (✓) and replies that flopped (✗):\n\n${blocks}\n\nWrite in the spirit of the ✓ replies — natural, confident, low effort, real chemistry. NEVER produce anything resembling the ✗ replies (cringe, try-hard, "good girl", "alpha", "i'd destroy you", over-eager). Match her energy, don't overshoot it.`;
 }
 
+// ── REPORTED REPLIES (user feedback loop) ────
+let reportedReplies=[];
+let lastGenMessage='';
+let reportTarget=null;
+let reportChips=new Set();
+
+function loadReports(){try{reportedReplies=JSON.parse(store.getItem('rizz_reports')||'[]')}catch(e){reportedReplies=[]}updateReportCount()}
+function saveReports(){store.setItem('rizz_reports',JSON.stringify(reportedReplies.slice(-200)));updateReportCount()}
+function updateReportCount(){
+  const el=document.getElementById('report-count-label');if(el)el.textContent=`${reportedReplies.length} flagged`;
+  const badge=document.getElementById('report-count-badge');if(badge)badge.textContent=reportedReplies.length;
+}
+function renderReports(){
+  const list=document.getElementById('reports-list');if(!list)return;
+  if(!reportedReplies.length){list.innerHTML='<div class="reports-empty">No reports yet — tap 🚩 on any reply to flag it.</div>';return}
+  // newest first
+  list.innerHTML=reportedReplies.slice().reverse().map((r,revIdx)=>{
+    const realIdx=reportedReplies.length-1-revIdx;
+    const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return`<div class="report-item">
+      <button class="ri-del" onclick="deleteReport(${realIdx})" title="Remove">✕</button>
+      <div class="ri-reply">"${esc(r.reply)}"</div>
+      <div class="ri-reason">⚠ ${esc(r.reason)}</div>
+      ${r.message?`<div class="ri-msg">on: "${esc(r.message)}"</div>`:''}
+    </div>`;
+  }).join('');
+}
+function deleteReport(i){
+  reportedReplies.splice(i,1);
+  saveReports();
+  renderReports();
+}
+
+function openReport(i){
+  const r=currentReplies[i];if(!r)return;
+  reportTarget={index:i,text:r.text,tone:r.tone||''};
+  reportChips=new Set();
+  document.getElementById('report-reply-text').textContent='"'+r.text+'"';
+  document.getElementById('report-note').value='';
+  document.querySelectorAll('#report-chips .report-chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('report-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeReport(){document.getElementById('report-modal').classList.remove('open');document.body.style.overflow='';reportTarget=null}
+function toggleReportChip(el,reason){
+  if(reportChips.has(reason)){reportChips.delete(reason);el.classList.remove('on')}
+  else{reportChips.add(reason);el.classList.add('on')}
+}
+function submitReport(){
+  if(!reportTarget)return;
+  const note=document.getElementById('report-note').value.trim();
+  const reasons=[...reportChips];
+  if(note)reasons.push(note);
+  if(!reasons.length){showToast('Pick a reason or add a note');return}
+  reportedReplies.push({message:lastGenMessage||'',reply:reportTarget.text,tone:reportTarget.tone,reason:reasons.join('; '),ts:Date.now()});
+  saveReports();renderReports();
+  const btn=document.getElementById('report-btn-'+reportTarget.index);
+  if(btn){btn.classList.add('reported');btn.textContent='🚩 Reported'}
+  closeReport();
+  showToast('🚩 Reported — the AI will avoid this going forward');
+}
+function clearReports(){
+  if(!reportedReplies.length){showToast('No reports to clear');return}
+  if(!confirm('Clear all '+reportedReplies.length+' reports?'))return;
+  reportedReplies=[];saveReports();renderReports();showToast('Reports cleared');
+}
+function exportReports(){
+  if(!reportedReplies.length){showToast('Nothing to export yet');return}
+  const json=JSON.stringify({type:'rizz_reports',exportedAt:Date.now(),reports:reportedReplies},null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='rizz-reports-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast('📤 Exported '+reportedReplies.length+' reports');
+}
+
+// Inject relevant reports as negative examples
+function getReportsContext(userMsg,limit=4){
+  if(!reportedReplies.length)return'';
+  // prefer reports whose source message resembles the current one, else most recent
+  const scored=reportedReplies.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})}));
+  scored.sort((a,b)=>(b.s-a.s)||(b.r.ts-a.r.ts));
+  const picked=scored.slice(0,limit).map(x=>x.r);
+  if(!picked.length)return'';
+  return`\n\nUSER-FLAGGED MISTAKES — the user explicitly reported these exact replies as bad. NEVER produce anything like them again:\n`+
+    picked.map(r=>`✗ "${r.reply}" — problem: ${r.reason}`).join('\n');
+}
+
+// ── TOLERANT JSON PARSER ─────────────────────
+// Generic loose parse: strip fences, slice to outer braces, repair trailing commas.
+function parseJsonLoose(raw){
+  let s=(raw||'').replace(/```json/gi,'').replace(/```/g,'').trim();
+  const start=s.indexOf('{'),end=s.lastIndexOf('}');
+  if(start>=0&&end>start)s=s.slice(start,end+1);
+  try{return JSON.parse(s);}catch(e){}
+  try{return JSON.parse(s.replace(/,\s*([}\]])/g,'$1'));}catch(e){}
+  return null;
+}
+// The model sometimes returns slightly-broken JSON (stray quote/comma). Recover gracefully.
+function parseRepliesResponse(raw){
+  let s=(raw||'').replace(/```json/gi,'').replace(/```/g,'').trim();
+  const start=s.indexOf('{'),end=s.lastIndexOf('}');
+  if(start>=0&&end>start)s=s.slice(start,end+1);
+  // 1) straight parse
+  try{return JSON.parse(s);}catch(e){}
+  // 2) remove trailing commas then parse
+  try{return JSON.parse(s.replace(/,\s*([}\]])/g,'$1'));}catch(e){}
+  // 3) regex-recover the reply texts even if structure is broken
+  const replies=[];
+  const re=/"text"\s*:\s*"((?:[^"\\]|\\.)*)"(?:\s*,\s*"tone"\s*:\s*"((?:[^"\\]|\\.)*)")?(?:\s*,\s*"why"\s*:\s*"((?:[^"\\]|\\.)*)")?/g;
+  let m;
+  while((m=re.exec(s))){
+    const clean=t=>(t||'').replace(/\\"/g,'"').replace(/\\n/g,' ').replace(/\\\\/g,'\\').trim();
+    if(clean(m[1]))replies.push({text:clean(m[1]),tone:clean(m[2]),why:clean(m[3])});
+  }
+  if(replies.length){
+    const tm=s.match(/"detected_tone"\s*:\s*"([^"]*)"/);
+    const cm=s.match(/"confidence"\s*:\s*"([^"]*)"/);
+    return{detected_tone:tm?tm[1]:'',confidence:cm?cm[1]:'high',replies};
+  }
+  return null;
+}
+
 // ── TONE BUTTONS (image/story mode) ──────────
 document.getElementById('tone-grid').addEventListener('click',e=>{
   const btn=e.target.closest('.tone-btn');if(!btn)return;
@@ -2363,7 +2546,8 @@ STRICT RULES:
 - My texting style: ${style||'lowercase, natural, minimal punctuation'}`;
 
   const refinedCtx=getRefinedContext(isImage?'':textMsg,3);
-  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}
+  const reportsCtx=getReportsContext(isImage?'':textMsg,4);
+  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}${reportsCtx}
 
 Generate 3 genuinely different reply options.
 
@@ -2390,8 +2574,10 @@ Return ONLY valid JSON, no markdown:
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
     const data=await res.json();
     const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(rawTxt.replace(/```json|```/g,'').trim());
-    currentReplies=parsed.replies||[];
+    const parsed=parseRepliesResponse(rawTxt);
+    if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the reply — tap generate again');
+    currentReplies=parsed.replies;
+    lastGenMessage=isImage?'[DM screenshot]':textMsg;
     if(cacheKey)writeCache(cacheKey,currentReplies);
     renderReplyCards(currentReplies);
     const src=isImage?'[Screenshot]':textMsg;
@@ -2447,7 +2633,8 @@ async function quickGenerate(forcedTone){
 
   const trainingCtx=getTrainingExamples(toneHint||prefTone||'match');
   const refinedCtx=getRefinedContext(textMsg||'',3);
-  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}
+  const reportsCtx=getReportsContext(textMsg||'',4);
+  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${reportsCtx}
 
 ${ctx?`Extra context from the user: ${ctx}`:''}
 ${toneHint?`The user wants a ${toneHint} tone — use it.`:''}${prefLine}
@@ -2486,7 +2673,8 @@ Return ONLY valid JSON, no markdown:
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
     const data=await res.json();
     const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(rawTxt.replace(/```json|```/g,'').trim());
+    const parsed=parseRepliesResponse(rawTxt);
+    if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the reply — tap generate again');
 
     // Low confidence + no tone hint → ask the user for the tone
     if(!toneHint&&parsed.confidence==='low'){
@@ -2496,7 +2684,8 @@ Return ONLY valid JSON, no markdown:
       return;
     }
 
-    currentReplies=parsed.replies||[];
+    currentReplies=parsed.replies;
+    lastGenMessage=isImage?'[Quick screenshot]':textMsg;
     renderReplyCards(currentReplies);
     const detected=parsed.detected_tone||toneHint||'reply';
     const src=isImage?'[Quick · Screenshot]':textMsg;
@@ -2580,6 +2769,7 @@ function renderReplyCards(replies){
         <button class="rw-btn" onclick="rewriteReply(${i},'chill')">More chill</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'spicy')">More spicy</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'energy')">Match energy</button>
+        <button class="rw-btn report-rw" id="report-btn-${i}" onclick="openReport(${i})">🚩 Report</button>
         <button class="rw-btn copy-rw" onclick="copyCardReply(${i})">Copy ↗</button>
       </div>
     </div>`).join('');
