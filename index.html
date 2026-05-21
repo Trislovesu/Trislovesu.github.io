@@ -354,6 +354,29 @@ input[type="text"]::placeholder{color:var(--text3)}
 .vibe-score-fill{height:100%;border-radius:100px;transition:width .8s ease}
 .profile-analyzing{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text3);padding:18px 0}
 
+/* ── PROGRESSIVE REVEAL ── */
+@keyframes revealGlow{
+  0%{opacity:0;transform:translateY(-12px) scale(.985)}
+  55%{box-shadow:0 0 0 1.5px rgba(160,130,255,0.5),0 0 46px rgba(160,130,255,0.4),0 8px 40px rgba(0,0,0,0.5)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes revealOut{
+  0%{opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(-10px)}
+}
+.reveal-in{animation:revealGlow .6s cubic-bezier(.22,1,.36,1)}
+.reveal-out{animation:revealOut .32s ease forwards}
+
+/* ── QUICK RESPONSE ── */
+.quick-ctx-box{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;transition:border-color .2s,box-shadow .2s}
+.quick-ctx-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(226,226,226,0.06)}
+.quick-ctx-icon{font-size:16px;flex-shrink:0;opacity:.8}
+.quick-ctx-box input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:0}
+.quick-ctx-box input::placeholder{color:var(--text3)}
+.quick-tone-prompt{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:12px 14px;margin-top:12px;font-size:13px;color:var(--amber);display:flex;align-items:center;gap:8px}
+.quick-detected{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-top:10px}
+.quick-detected strong{color:var(--text)}
+
 /* ── AESTHETIC TAP FLASH ── */
 @keyframes tapFlash{
   0%{box-shadow:0 0 0 0 rgba(255,255,255,0),0 0 0 0 rgba(255,255,255,0);background-color:initial}
@@ -413,6 +436,8 @@ input[type="text"]::placeholder{color:var(--text3)}
   .angles-grid{grid-template-columns:1fr}
   .angle-card.spicy{grid-column:auto}
   .tone-btn,.rtype-btn{min-height:38px}
+  .mode-row{flex-wrap:wrap}
+  .mode-btn{font-size:12px;padding:9px 8px;flex:1 1 30%;min-height:42px}
 }
 
 /* ── AMBIENT GLOW ── */
@@ -537,19 +562,49 @@ body{background:
   <div class="card">
     <div class="card-label">Mode</div>
     <div class="mode-row">
-      <button class="mode-btn active" id="mode-dm" onclick="setMode('dm')">💬 Reply to DM</button>
+      <button class="mode-btn active" id="mode-quick" onclick="setMode('quick')">🔥 Quick response</button>
+      <button class="mode-btn" id="mode-dm" onclick="setMode('dm')">💬 Reply to DM</button>
       <button class="mode-btn" id="mode-story" onclick="setMode('story')">📖 React to Story</button>
-      <button class="mode-btn" id="mode-profile" onclick="setMode('profile')">👤 Profile</button>
+    </div>
+
+    <!-- QUICK RESPONSE PANEL -->
+    <div id="panel-quick">
+      <div class="input-tabs">
+        <button class="itab active" id="qtab-text" onclick="switchQuickTab('text')">✏️ Type / Paste</button>
+        <button class="itab" id="qtab-image" onclick="switchQuickTab('image')">📷 Screenshot</button>
+      </div>
+      <div id="quick-text-panel">
+        <textarea id="quick-msg" rows="4" placeholder="Paste their message — AI detects the vibe and fires back 3 replies fast..." maxlength="1000"></textarea>
+      </div>
+      <div id="quick-image-panel" style="display:none">
+        <div class="drop-zone" id="dz-quick" ondragover="dzOver(event,'quick')" ondragleave="dzLeave('quick')" ondrop="dzDrop(event,'quick')">
+          <input type="file" accept="image/*" onchange="dzFile(this,'quick')" />
+          <div class="drop-icon">⚡</div>
+          <div class="drop-label">Drop a chat screenshot</div>
+          <div class="drop-sub">AI scans it, reads the vibe, and fires back 3 quick replies</div>
+        </div>
+        <div id="preview-quick" style="text-align:center"></div>
+      </div>
+      <!-- always-available context/tone box -->
+      <div class="quick-ctx-box">
+        <span class="quick-ctx-icon">🎚️</span>
+        <input type="text" id="quick-ctx" placeholder="Optional: add context or force a tone (e.g. flirty, she's my ex)..." />
+      </div>
+      <!-- tone fallback prompt (hidden until AI is unsure) -->
+      <div id="quick-tone-prompt" class="quick-tone-prompt" style="display:none">
+        <span>🤔 Sorry, can't detect the tone — pick one:</span>
+      </div>
+      <div id="quick-tone-picker" class="tone-grid" style="display:none;margin-top:10px"></div>
     </div>
 
     <!-- DM PANEL -->
-    <div id="panel-dm">
+    <div id="panel-dm" style="display:none">
       <div class="input-tabs">
         <button class="itab active" id="tab-text" onclick="switchTab('text')">✏️ Type / Paste</button>
         <button class="itab" id="tab-image" onclick="switchTab('image')">📷 Screenshot</button>
       </div>
       <div id="dm-text-panel">
-        <textarea id="msg-text" rows="5" placeholder="Paste their message here..." maxlength="1000" oninput="updateCharCount()"></textarea>
+        <textarea id="msg-text" rows="5" placeholder="Paste their message here..." maxlength="1000" oninput="updateCharCount();updateDmReveal()"></textarea>
         <div class="char-counter-row" id="msg-char-count" style="display:none">0 / 1000</div>
       </div>
       <div id="dm-image-panel" style="display:none">
@@ -557,57 +612,9 @@ body{background:
           <input type="file" accept="image/*" onchange="dzFile(this,'dm')" />
           <div class="drop-icon">📸</div>
           <div class="drop-label">Drop DM screenshot or click to browse</div>
-          <div class="drop-sub">Claude reads the message and detects the conversation tone automatically</div>
+          <div class="drop-sub">AI reads their message and writes your reply</div>
         </div>
         <div id="preview-dm" style="text-align:center"></div>
-        <!-- DM INTEL PANEL -->
-        <div class="intel-panel" id="intel-dm">
-          <div class="intel-section" id="intel-dm-obs">
-            <div class="intel-section-title">👁 What I see</div>
-            <div class="obs-list" id="dm-obs-list"><div class="intel-analyzing"><div class="analyzing-dot"></div> Reading the conversation...</div></div>
-          </div>
-          <div class="intel-section">
-            <div class="intel-section-title">📊 Conversation vibe</div>
-            <div class="tone-bars" id="intel-dm-bars"></div>
-          </div>
-          <div class="intel-section">
-            <div class="intel-section-title">📐 Pick your angle</div>
-            <div class="angles-grid" id="dm-angles-grid"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROFILE PANEL -->
-    <div id="panel-profile" style="display:none">
-      <div style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:7px">Instagram username <span style="color:var(--text3);font-weight:400">(optional — just for context)</span></div>
-        <input type="text" id="profile-username" placeholder="@yourusername" style="font-family:'DM Mono',monospace;font-size:13px" />
-      </div>
-      <div class="drop-zone" id="dz-profile" ondragover="dzOver(event,'profile')" ondragleave="dzLeave('profile')" ondrop="dzDrop(event,'profile')">
-        <input type="file" accept="image/*" onchange="dzFile(this,'profile')" />
-        <div class="drop-icon">📱</div>
-        <div class="drop-label">Drop your profile screenshot</div>
-        <div class="drop-sub">Screenshot your Instagram profile page — bio, grid, highlights visible</div>
-      </div>
-      <div id="preview-profile" style="text-align:center"></div>
-      <div class="intel-panel" id="intel-profile">
-        <div class="intel-section">
-          <div class="intel-section-title">📊 Profile Score</div>
-          <div id="profile-score-area"><div class="profile-analyzing"><div class="analyzing-dot"></div> Analyzing your profile...</div></div>
-        </div>
-        <div class="intel-section">
-          <div class="intel-section-title">✅ What's working</div>
-          <div class="obs-list" id="profile-working"></div>
-        </div>
-        <div class="intel-section">
-          <div class="intel-section-title">🔧 What to fix</div>
-          <div class="profile-suggestion-grid" id="profile-fixes"></div>
-        </div>
-        <div class="intel-section">
-          <div class="intel-section-title">💡 Post ideas for you</div>
-          <div class="post-ideas-grid" id="profile-post-ideas"></div>
-        </div>
       </div>
     </div>
 
@@ -638,8 +645,8 @@ body{background:
     </div>
   </div>
 
-  <!-- TEXT MODE: CONTEXT + REPLY TYPE -->
-  <div class="card" id="text-context-card">
+  <!-- DM MODE: CONTEXT (reveals after input) -->
+  <div class="card" id="dm-context-card" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div class="card-label" style="margin-bottom:0">Context</div>
       <div class="quality-toggle">
@@ -662,7 +669,10 @@ body{background:
         <div class="char-counter-row" id="style-char-count">0 / 300</div>
       </div>
     </div>
-    <div class="divider"></div>
+  </div>
+
+  <!-- DM MODE: REPLY TYPE (reveals after context) -->
+  <div class="card" id="dm-replytype-card" style="display:none">
     <div class="card-label" style="margin-bottom:10px">Reply Type</div>
     <div class="rtype-grid" id="rtype-grid">
       <button class="rtype-btn active" data-rtype="match">⚡ Match energy</button>
@@ -685,28 +695,24 @@ body{background:
     </div>
   </div>
 
-  <!-- IMAGE/STORY MODE: TONE PICKER -->
-  <div class="card" id="tone-card" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div class="card-label" style="margin-bottom:0">Reply Tone</div>
-      <div id="tone-auto-label" style="font-size:11px;color:var(--text3);display:none">AI recommended ↓</div>
+  <!-- Vestigial tone elements (kept hidden for story analysis compatibility) -->
+  <div id="tone-card" style="display:none">
+    <div id="tone-auto-label" style="display:none"></div>
+    <div class="tone-grid" id="tone-grid" style="display:none">
+      <button class="tone-btn active" data-tone="flirty"><span class="tone-pct-pill" id="pct-flirty"></span></button>
+      <button class="tone-btn" data-tone="funny"><span class="tone-pct-pill" id="pct-funny"></span></button>
+      <button class="tone-btn" data-tone="chill"><span class="tone-pct-pill" id="pct-chill"></span></button>
+      <button class="tone-btn" data-tone="mysterious"><span class="tone-pct-pill" id="pct-mysterious"></span></button>
+      <button class="tone-btn" data-tone="savage"><span class="tone-pct-pill" id="pct-savage"></span></button>
+      <button class="tone-btn" data-tone="wholesome"><span class="tone-pct-pill" id="pct-wholesome"></span></button>
+      <button class="tone-btn" data-tone="confident"><span class="tone-pct-pill" id="pct-confident"></span></button>
+      <button class="tone-btn" data-tone="short"><span class="tone-pct-pill" id="pct-short"></span></button>
     </div>
-    <div class="tone-grid" id="tone-grid">
-      <button class="tone-btn active" data-tone="flirty">😏 Flirty<span class="tone-pct-pill" id="pct-flirty"></span></button>
-      <button class="tone-btn" data-tone="funny">😂 Funny<span class="tone-pct-pill" id="pct-funny"></span></button>
-      <button class="tone-btn" data-tone="chill">😎 Chill<span class="tone-pct-pill" id="pct-chill"></span></button>
-      <button class="tone-btn" data-tone="mysterious">🎭 Mysterious<span class="tone-pct-pill" id="pct-mysterious"></span></button>
-      <button class="tone-btn" data-tone="savage">🔥 Savage<span class="tone-pct-pill" id="pct-savage"></span></button>
-      <button class="tone-btn" data-tone="wholesome">🤍 Wholesome<span class="tone-pct-pill" id="pct-wholesome"></span></button>
-      <button class="tone-btn" data-tone="confident">💫 Confident<span class="tone-pct-pill" id="pct-confident"></span></button>
-      <button class="tone-btn" data-tone="short">✂️ Short<span class="tone-pct-pill" id="pct-short"></span></button>
-    </div>
-    <div class="divider"></div>
-    <input type="text" id="ctx-input" placeholder="Extra context (optional) — e.g. girl I matched with, close friend..." />
+    <input type="text" id="ctx-input" style="display:none" />
   </div>
 
   <!-- GENERATE -->
-  <button class="gen-btn" id="gen-btn" onclick="generate()">
+  <button class="gen-btn" id="gen-btn" onclick="generate()" style="display:none">
     <span id="gen-label">✨ Generate Replies</span>
   </button>
 
@@ -835,6 +841,23 @@ function checkPin(){
     setTimeout(()=>{pin='';dots()},700);
   }
 }
+
+// ── KEYBOARD PIN ENTRY (PC) ──────────────────
+document.addEventListener('keydown',e=>{
+  const loginVisible=document.getElementById('login-screen').style.display!=='none'&&!document.getElementById('login-screen').classList.contains('out');
+  const trisVisible=document.getElementById('tris-pin-area')&&document.getElementById('tris-pin-area').style.display!=='none'&&document.getElementById('user-select-screen').classList.contains('show');
+  if(!loginVisible&&!trisVisible)return;
+  if(/^[0-9]$/.test(e.key)){
+    e.preventDefault();
+    trisVisible?tkp(e.key):kp(e.key);
+  }else if(e.key==='Backspace'){
+    e.preventDefault();
+    trisVisible?tkd():kd();
+  }else if(e.key==='Escape'){
+    e.preventDefault();
+    trisVisible?tkc():kc();
+  }
+});
 
 // ── USER SELECTION + OWNER PIN ──────────────
 const OWNER_PIN='312007';
@@ -985,20 +1008,40 @@ function expandSetup(){
   <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>`;
 }
 
+// ── REVEAL HELPERS ───────────────────────────
+function revealCard(el){
+  if(!el)return;
+  if(el.style.display==='block'&&!el.classList.contains('reveal-out'))return;
+  el.style.display='block';
+  el.classList.remove('reveal-out');
+  void el.offsetWidth;
+  el.classList.add('reveal-in');
+  setTimeout(()=>el&&el.classList.remove('reveal-in'),650);
+}
+function hideCard(el){
+  if(!el||el.style.display==='none')return;
+  el.classList.remove('reveal-in');
+  el.classList.add('reveal-out');
+  setTimeout(()=>{if(el){el.style.display='none';el.classList.remove('reveal-out')}},330);
+}
+
 // ── MODE ─────────────────────────────────────
-let mode='dm';
+let mode='quick';
 function setMode(m){
   mode=m;
-  document.getElementById('mode-dm').classList.toggle('active',m==='dm');
-  document.getElementById('mode-story').classList.toggle('active',m==='story');
-  document.getElementById('mode-profile').classList.toggle('active',m==='profile');
-  document.getElementById('panel-dm').style.display=m==='dm'?'block':'none';
-  document.getElementById('panel-story').style.display=m==='story'?'block':'none';
-  document.getElementById('panel-profile').style.display=m==='profile'?'block':'none';
+  ['quick','dm','story'].forEach(x=>{
+    document.getElementById('mode-'+x).classList.toggle('active',m===x);
+    document.getElementById('panel-'+x).style.display=m===x?'block':'none';
+  });
+  // Clear stale replies so quick/dm don't show each other's results
+  currentReplies=[];
+  document.getElementById('reply-cards').innerHTML='';
+  document.getElementById('quick-tone-prompt').style.display='none';
+  document.getElementById('quick-tone-picker').style.display='none';
   updateCardVisibility();
 }
 
-// ── TABS ─────────────────────────────────────
+// ── DM TABS ──────────────────────────────────
 let activeTab='text';
 function switchTab(t){
   activeTab=t;
@@ -1006,23 +1049,67 @@ function switchTab(t){
   document.getElementById('tab-image').classList.toggle('active',t==='image');
   document.getElementById('dm-text-panel').style.display=t==='text'?'block':'none';
   document.getElementById('dm-image-panel').style.display=t==='image'?'block':'none';
-  if(t==='text'){clearIntelPanel('dm')}
-  updateCardVisibility();
+  updateDmReveal();
+}
+
+// ── QUICK TABS ───────────────────────────────
+let quickTab='text';
+function switchQuickTab(t){
+  quickTab=t;
+  document.getElementById('qtab-text').classList.toggle('active',t==='text');
+  document.getElementById('qtab-image').classList.toggle('active',t==='image');
+  document.getElementById('quick-text-panel').style.display=t==='text'?'block':'none';
+  document.getElementById('quick-image-panel').style.display=t==='image'?'block':'none';
+}
+
+// ── DM PROGRESSIVE REVEAL ────────────────────
+function updateDmReveal(){
+  if(mode!=='dm')return;
+  const hasInput=(activeTab==='text'&&document.getElementById('msg-text').value.trim().length>0)
+              ||(activeTab==='image'&&!!imgs.dm.b64);
+  const ctxCard=document.getElementById('dm-context-card');
+  const rtCard=document.getElementById('dm-replytype-card');
+  const genBtn=document.getElementById('gen-btn');
+  if(hasInput){
+    revealCard(ctxCard);
+    setTimeout(()=>{if(mode==='dm'){revealCard(rtCard);revealCard(genBtn)}},170);
+  }else{
+    hideCard(ctxCard);
+    hideCard(rtCard);
+    hideCard(genBtn);
+  }
 }
 
 function updateCardVisibility(){
-  const isTextMode=mode==='dm'&&activeTab==='text';
-  const isProfile=mode==='profile';
-  document.getElementById('text-context-card').style.display=isTextMode?'block':'none';
-  document.getElementById('tone-card').style.display=(isTextMode||isProfile)?'none':'block';
-  document.getElementById('replies-area').style.display=isTextMode&&currentReplies.length?'block':'none';
-  document.getElementById('result-card').style.display=(isTextMode||isProfile)?'none':'block';
-  document.getElementById('gen-btn').style.display=isProfile?'none':'block';
+  const isQuick=mode==='quick',isDm=mode==='dm',isStory=mode==='story';
+  const genBtn=document.getElementById('gen-btn');
+  const genLabel=document.getElementById('gen-label');
+
+  // DM progressive cards are managed by updateDmReveal — hide them outside DM
+  if(!isDm){
+    document.getElementById('dm-context-card').style.display='none';
+    document.getElementById('dm-replytype-card').style.display='none';
+  }
+
+  if(isQuick){
+    genBtn.style.display='block';genBtn.classList.remove('reveal-out');
+    genLabel.textContent='🔥 Get Quick Replies';
+  }else if(isStory){
+    genBtn.style.display='block';genBtn.classList.remove('reveal-out');
+    genLabel.textContent='✨ Generate Story Reply';
+  }else if(isDm){
+    genLabel.textContent='✨ Generate Replies';
+    updateDmReveal();
+  }
+
+  // 3-reply cards used by quick + dm; single result card used by story
+  document.getElementById('replies-area').style.display=(currentReplies.length&&(isQuick||isDm))?'block':'none';
+  document.getElementById('result-card').style.display=isStory?'block':'none';
 }
 
 // ── DROP ZONES ───────────────────────────────
-let imgs={dm:{b64:null,type:null},story:{b64:null,type:null},profile:{b64:null,type:null}};
-let imgUrls={dm:null,story:null};
+let imgs={quick:{b64:null,type:null},dm:{b64:null,type:null},story:{b64:null,type:null}};
+let imgUrls={quick:null,dm:null,story:null};
 let currentReplies=[];
 function dzOver(e,id){e.preventDefault();document.getElementById('dz-'+id).classList.add('over')}
 function dzLeave(id){document.getElementById('dz-'+id).classList.remove('over')}
@@ -1043,14 +1130,20 @@ function handleFile(file,id){
       return;
     }
     imgs[id]={b64:compressed.b64,type:compressed.type};
-    document.getElementById('preview-'+id).innerHTML=`<div class="preview-wrap" style="margin-top:12px;display:inline-block"><img src="data:${compressed.type};base64,${compressed.b64}" alt="Preview" onerror="this.parentElement.parentElement.innerHTML='<p style=\\'color:var(--red);font-size:13px;padding:8px 0\\'>Preview failed — but analysis will still run.</p>'"/><button class="preview-remove" onclick="removeImg('${id}')">✕</button></div>`;
-    if(id==='profile'){
-      analyzeProfile();
-    }else{
-      analyzeImage(id);
+    document.getElementById('preview-'+id).innerHTML=`<div class="preview-wrap" style="margin-top:12px;display:inline-block"><img src="data:${compressed.type};base64,${compressed.b64}" alt="Preview" onerror="this.parentElement.parentElement.innerHTML='<p style=\\'color:var(--red);font-size:13px;padding:8px 0\\'>Preview failed — but it will still be read.</p>'"/><button class="preview-remove" onclick="removeImg('${id}')">✕</button></div>`;
+    if(id==='story'){
+      // Story uses the angle/intel flow
+      analyzeImage('story');
       const ghUrl=await uploadImageToGithub(compressed.b64,compressed.type,id);
       imgUrls[id]=ghUrl;
       if(ghUrl)showToast('📸 Image saved to GitHub');
+    }else if(id==='dm'){
+      // DM screenshot → progressive reveal (no auto-analysis)
+      updateDmReveal();
+      uploadImageToGithub(compressed.b64,compressed.type,id).then(u=>{if(u)imgUrls[id]=u});
+    }else if(id==='quick'){
+      // Quick screenshot → just store, generate on button press
+      uploadImageToGithub(compressed.b64,compressed.type,id).then(u=>{if(u)imgUrls[id]=u});
     }
   };
   reader.onerror=()=>showToast('Could not read file — try a different image');
@@ -1059,14 +1152,13 @@ function handleFile(file,id){
 function removeImg(id){
   imgs[id]={b64:null,type:null};
   if(imgUrls[id]!==undefined)imgUrls[id]=null;
-  if(id==='profile'){
-    document.getElementById('intel-profile').classList.remove('visible');
-  }else{
-    selectedAngles[id]=null;
-    imageAngles[id]=[];
-    clearIntelPanel(id);
+  if(id==='story'){
+    selectedAngles.story=null;
+    imageAngles.story=[];
+    clearIntelPanel('story');
   }
   document.getElementById('preview-'+id).innerHTML='';
+  if(id==='dm')updateDmReveal();
 }
 
 // ── IMAGE ANALYSIS ───────────────────────────
@@ -2040,121 +2132,67 @@ function hideExportReminder(){
 }
 
 // Get relevant training examples to inject into prompts (style hint, not override)
+// Baked-in seed training — real examples from the crew, always part of the style pool
+const SEED_TRAINING=[
+  // Ismaaeel
+  {trainer:"Ismaaeel",tone:"flirty",message:"okay I looked at your profile... you seem interesting",userReply:"Oh really ? Good interesting I hope"},
+  {trainer:"Ismaaeel",tone:"flirty",message:"stop making me laugh at work",userReply:"Its not my fault you have the humor of a 11 year old boy"},
+  {trainer:"Ismaaeel",tone:"flirty",message:"I was gonna wait for you to text but here we are",userReply:"Oh you couldn't help yourself, couldn't you ."},
+  {trainer:"Ismaaeel",tone:"funny",message:"I just saw the most unhinged thing at the mall",userReply:"Oh my god ? Was it the walrus on the bicycle?"},
+  {trainer:"Ismaaeel",tone:"funny",message:"what was that story you just posted 😭",userReply:"I thought it was goofy and apparently you do too"},
+  {trainer:"Ismaaeel",tone:"savage",message:"you left me on read for 3 days and NOW you text",userReply:"Yeah and ? I'm still busy"},
+  {trainer:"Ismaaeel",tone:"chill",message:"how was your day",userReply:"Pretty chill. Just watched some Netflix and relaxed"},
+  {trainer:"Ismaaeel",tone:"savage",message:"I've seen your type before",userReply:"The type you keep falling for ? Seems like a skill issue to me"},
+  {trainer:"Ismaaeel",tone:"mysterious",message:"tell me something nobody else knows about you",userReply:"And why would I tell you that ?"},
+  {trainer:"Ismaaeel",tone:"mysterious",message:"what do you think about at 3am",userReply:"The fact that each second of your being awake can be put into hundreds of books but we're not conscious of it"},
+  {trainer:"Ismaaeel",tone:"bold",message:"what do you actually want from me",userReply:"I want you to be my Friday night"},
+  {trainer:"Ismaaeel",tone:"plans",message:"there's this place I think you'd actually like",userReply:"We should tonight"},
+  {trainer:"Ismaaeel",tone:"wholesome",message:"I feel like I can talk to you about anything",userReply:"You can talk to me about anything"},
+  {trainer:"Ismaaeel",tone:"chill",message:"I'm bored",userReply:"Cool"},
+  {trainer:"Ismaaeel",tone:"dry",message:"k",userReply:"After g"},
+  {trainer:"Ismaaeel",tone:"spicy",message:"I had a dream about you last night 👀",userReply:"Oh I could only imagine what was happening with your dirty little mind"},
+  {trainer:"Ismaaeel",tone:"plans",message:"you've never actually taken me anywhere 😒",userReply:"Okay me and you. dinner! tonight!"},
+  {trainer:"Ismaaeel",tone:"chill",message:"you're quiet today",userReply:"I haven't had much sleep"},
+  {trainer:"Ismaaeel",tone:"wholesome",message:"you're actually one of the good ones I think",userReply:"I really appreciate that"},
+  // Nikolai
+  {trainer:"Nikolai",tone:"flirty",message:"I was gonna wait for you to text but here we are",userReply:"Flattered af, wow😩 I'll make it up to you.... 🤭"},
+  {trainer:"Nikolai",tone:"funny",message:"be honest, were you always this weird or is it just with me",userReply:"I'm weirder where my heart resides 😅☺️"},
+  {trainer:"Nikolai",tone:"chill",message:"how was your day",userReply:"T'was aite, Better now that you asked..."},
+  {trainer:"Nikolai",tone:"savage",message:"boys like you are all the same",userReply:"That why you're still here?💋"},
+  {trainer:"Nikolai",tone:"mysterious",message:"tell me something nobody else knows about you",userReply:"They aint know you're REALLY my type.. does that count?"},
+  {trainer:"Nikolai",tone:"bold",message:"I'm not gonna chase you",userReply:"Saying that was your first mistake luv."},
+  {trainer:"Nikolai",tone:"wholesome",message:"you genuinely made my day better today",userReply:"It brings me warmth that I could bring you joy..."},
+  {trainer:"Nikolai",tone:"spicy",message:"what would you do if I was there right now",userReply:"Wanna come get u rn so I could show you.."},
+  {trainer:"Nikolai",tone:"plans",message:"I'm free this weekend randomly",userReply:"We're gonna randomly have so much fun at the movies together"},
+  {trainer:"Nikolai",tone:"dry",message:"I guess",userReply:"Yep"},
+  {trainer:"Nikolai",tone:"flirty",message:"stop making me laugh at work",userReply:"Where else you think we should laugh then?👀"},
+  {trainer:"Nikolai",tone:"funny",message:"this is literally the worst day of my entire life",userReply:"Holy shit bro aint no way bro"},
+  {trainer:"Nikolai",tone:"chill",message:"what you up to",userReply:"YouTube n here with u🫵🏽"},
+  {trainer:"Nikolai",tone:"savage",message:"you think you're that guy huh",userReply:"I'm that guy pal"},
+  {trainer:"Nikolai",tone:"mysterious",message:"I feel like you're hiding something",userReply:"I feel like I might be"},
+  {trainer:"Nikolai",tone:"bold",message:"if you like me just say it",userReply:"It👉🏽👈🏽"},
+  {trainer:"Nikolai",tone:"wholesome",message:"you're different from who I thought you were (in a good way)",userReply:"Flattered but curious 😩 .."},
+  {trainer:"Nikolai",tone:"spicy",message:"I had a dream about you last night 👀",userReply:"Cowgirl or missionary?👀"},
+  {trainer:"Nikolai",tone:"plans",message:"okay so when are we actually doing something",userReply:"Tonight and the rest of the weekend together"},
+  {trainer:"Nikolai",tone:"dry",message:"you're so much",userReply:"My fault"},
+  {trainer:"Nikolai",tone:"flirty",message:"why do you look so serious in all your pics",userReply:"Trying to find you wasn't a laughing matter👀"},
+  {trainer:"Nikolai",tone:"funny",message:"what are you actually doing right now be honest",userReply:"Being honest"},
+  {trainer:"Nikolai",tone:"chill",message:"been a while",userReply:"Genuinely missed ya"},
+  {trainer:"Nikolai",tone:"savage",message:"I don't really see this going anywhere",userReply:"Enjoy your night 😕"},
+  {trainer:"Nikolai",tone:"mysterious",message:"what do you think about at 3am",userReply:"Purpose😔"},
+  {trainer:"Nikolai",tone:"bold",message:"stop being weird about it just tell me",userReply:"Can I tell you over dinner tonight?"},
+];
+
 function getTrainingExamples(tone='',limit=5){
-  if(!trainingData.length)return'';
-  const matching=trainingData.filter(d=>d.tone===tone).sort(()=>Math.random()-.5);
-  const others=trainingData.filter(d=>d.tone!==tone).sort(()=>Math.random()-.5);
+  // Combine the user's own saved data with the baked-in crew seed set
+  const pool=[...trainingData,...SEED_TRAINING];
+  if(!pool.length)return'';
+  const matching=pool.filter(d=>d.tone===tone).sort(()=>Math.random()-.5);
+  const others=pool.filter(d=>d.tone!==tone).sort(()=>Math.random()-.5);
   const picked=[...matching.slice(0,3),...others].slice(0,limit);
   if(!picked.length)return'';
   return`\n\nSTYLE REFERENCE — Real reply examples from this user and their trusted friends. Use these as a style guide to match the vocabulary, length and energy (don't copy verbatim — just inform the vibe):\n`+
     picked.map(d=>`[${d.tone}${d.trainer?' · '+d.trainer:''}] received: "${d.message}" → replied: "${d.userReply}"`).join('\n');
-}
-
-// ── PROFILE ANALYSIS ─────────────────────────
-async function analyzeProfile(){
-  if(!apiKey){showToast('Enter your API key first');return}
-  if(!imgs.profile?.b64)return;
-  const username=document.getElementById('profile-username').value.trim();
-  const panel=document.getElementById('intel-profile');
-  panel.classList.add('visible');
-  document.getElementById('profile-score-area').innerHTML='<div class="profile-analyzing"><div class="analyzing-dot"></div> Reading your profile...</div>';
-  document.getElementById('profile-working').innerHTML='';
-  document.getElementById('profile-fixes').innerHTML='';
-  document.getElementById('profile-post-ideas').innerHTML='';
-
-  const system=`You are a girl scrolling through a guy's Instagram profile, deciding whether he's interesting or not. You're attractive, have options, and your standards are high. You're not a marketing consultant — you're judging this the way any girl actually would when she lands on a guy's page.
-
-You're looking at this profile from a female perspective: is he attractive? does he look like he actually has a life? does he come across as confident or try-hard? does his profile make you want to follow him or message him? or does something feel off?
-
-The username is: ${username||'not provided'}
-
-Analyze the profile screenshot — look at his photos, bio, highlights, the vibe of his grid, what kind of life it shows, how he presents himself.
-
-Return ONLY raw JSON, no markdown:
-{
-  "vibe_score": <number 1-10>,
-  "vibe_label": "<short honest label from a girl's POV — e.g. 'Lowkey interesting', 'Giving gym bro', 'Actually intriguing', 'Too try-hard', 'No personality', 'Could be cute'>",
-  "working": ["specific thing that reads well to a girl 1", "specific thing 2"],
-  "fixes": [
-    {"area": "Photos|Bio|Grid|Vibe|Red flag|Energy", "priority": "urgent|normal|minor", "issue": "what a girl actually notices and thinks about this", "fix": "what he should change and why it would land better"},
-    ...
-  ],
-  "post_ideas": ["specific post idea that would genuinely make a girl more interested — based on what she sees in this profile"],
-  "summary": "one honest sentence like a girl texting her friend about his profile"
-}
-
-Rules:
-- Think like a girl with options, not a marketing agency
-- fixes should call out real things girls notice: too many solo mirror selfies, no social life visible, flexing too hard, looks like he has no friends, try-hard captions, following way more than followers, looks boring, no personality coming through
-- Green flags to highlight: looks social, candid shots with friends, doing interesting things, natural confidence, clear hobbies, traveling, looks like he's living life not performing for instagram
-- Red flags to flag: gym selfie overload, obvious thirst traps, flexing money/cars looks insecure not impressive, zero personality in the grid, every photo is posed, captions that try too hard
-- post_ideas should be stuff that would make a girl genuinely curious or attracted — not "post more reels for the algorithm"
-- Be direct and a little brutal — girls are honest with each other about this stuff
-- priority "urgent" = she'd probably close the page because of this`;
-
-  try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({
-        model:'meta-llama/llama-4-scout-17b-16e-instruct',
-        max_tokens:900,
-        temperature:0.7,
-        messages:[
-          {role:'system',content:system},
-          {role:'user',content:[
-            {type:'image_url',image_url:{url:`data:${imgs.profile.type};base64,${imgs.profile.b64}`}},
-            {type:'text',text:'Analyze this Instagram profile screenshot and return the JSON.'}
-          ]}
-        ]
-      })
-    });
-    if(!res.ok)throw new Error('API error '+res.status);
-    const data=await res.json();
-    const raw=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    renderProfileAnalysis(parsed);
-  }catch(e){
-    document.getElementById('profile-score-area').innerHTML='<div style="font-size:12px;color:var(--text3)">Could not analyze — try again.</div>';
-    console.error(e);
-  }
-}
-
-function renderProfileAnalysis(d){
-  const scoreColor=d.vibe_score>=8?'#4db37a':d.vibe_score>=5?'#e0a847':'#e05555';
-  document.getElementById('profile-score-area').innerHTML=`
-    <div class="vibe-score-row">
-      <div class="vibe-score-num" style="color:${scoreColor}">${d.vibe_score}</div>
-      <div class="vibe-score-bar-wrap">
-        <div class="vibe-score-label">${d.vibe_label||''}</div>
-        <div class="vibe-score-track"><div class="vibe-score-fill" style="width:${d.vibe_score*10}%;background:${scoreColor}"></div></div>
-        ${d.summary?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${d.summary}</div>`:''}
-      </div>
-    </div>`;
-
-  if(d.working?.length){
-    document.getElementById('profile-working').innerHTML=d.working.map(w=>`<div class="obs-item">${w}</div>`).join('');
-  }
-
-  if(d.fixes?.length){
-    document.getElementById('profile-fixes').innerHTML=d.fixes.map(f=>`
-      <div class="ps-card ${f.priority==='urgent'?'urgent':f.priority==='minor'?'':''}">
-        <div class="ps-card-header">
-          <span class="ps-area-tag">${f.area}</span>
-          ${f.priority==='urgent'?'<span style="font-size:10px;color:var(--red);font-weight:600">urgent</span>':''}
-        </div>
-        <div class="ps-issue">${f.issue}</div>
-        <div class="ps-fix">→ ${f.fix}</div>
-      </div>`).join('');
-  }
-
-  if(d.post_ideas?.length){
-    document.getElementById('profile-post-ideas').innerHTML=d.post_ideas.map((idea,i)=>`
-      <div class="post-idea">
-        <span class="post-idea-num">${i+1}</span>
-        <span>${idea}</span>
-      </div>`).join('');
-  }
 }
 
 // ── TONE BUTTONS (image/story mode) ──────────
@@ -2163,7 +2201,7 @@ document.getElementById('tone-grid').addEventListener('click',e=>{
   document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 });
-function getActiveTone(){const b=document.querySelector('.tone-btn.active');return b?b.dataset.tone:'chill'}
+function getActiveTone(){const b=document.querySelector('#tone-grid .tone-btn.active');return b?b.dataset.tone:'chill'}
 
 // ── REPLY TYPE BUTTONS (text mode) ───────────
 document.getElementById('rtype-grid').addEventListener('click',e=>{
@@ -2247,9 +2285,11 @@ const LENGTH_PROMPTS={
   match:'Match the length of their message roughly.'
 };
 
-async function generateTextReplies(){
+async function generateDmReplies(){
+  const isImage=activeTab==='image';
   const textMsg=document.getElementById('msg-text').value.trim();
-  if(!textMsg){showToast('Paste their message first');return}
+  if(isImage&&!imgs.dm.b64){showToast('Upload a screenshot first');return}
+  if(!isImage&&!textMsg){showToast('Paste their message first');return}
 
   const rel=document.getElementById('ctx-relationship').value.trim();
   const goal=document.getElementById('ctx-goal').value.trim();
@@ -2257,14 +2297,12 @@ async function generateTextReplies(){
   const rtype=getActiveRtype();
   const len=getActiveLength();
 
-  // Check cache first
-  const cacheKey=getCacheKey(textMsg,rel,goal,rtype,len,style);
-  const cached=readCache(cacheKey);
-  if(cached){
-    currentReplies=cached;
-    renderReplyCards(cached);
-    showToast('⚡ Loaded from cache');
-    return;
+  // Cache only for text input (can't easily key an image)
+  let cacheKey=null;
+  if(!isImage){
+    cacheKey=getCacheKey(textMsg,rel,goal,rtype,len,style);
+    const cached=readCache(cacheKey);
+    if(cached){currentReplies=cached;renderReplyCards(cached);showToast('⚡ Loaded from cache');return;}
   }
 
   const btn=document.getElementById('gen-btn');
@@ -2273,52 +2311,153 @@ async function generateTextReplies(){
   lbl.innerHTML='<span class="spinner"></span> Generating...';
 
   const trainingCtx=getTrainingExamples(rtype);
-  const prompt=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}
+  const baseRules=`STRICT RULES:
+- Sound exactly like a real person texting — not AI, not a therapist, not a script
+- Zero exclamation marks unless the style explicitly uses them
+- No cringe, no overexplaining, no therapy-speak ("I hear you", "that makes sense")
+- No AI phrases: "certainly", "of course", "great question", "I'd love to"
+- Lowercase preferred — matches how people actually text
+- Each of the 3 replies must be genuinely different — not tiny variations
+- First person — write the actual message text, not a description
+- No long paragraphs unless length is medium and the context demands it`;
 
-Generate 3 genuinely different reply options to this message.
-
-INCOMING MESSAGE:
-"${textMsg.slice(0,1000)}"
-
-CONTEXT:
+  const ctxBlock=`CONTEXT:
 - Relationship: ${rel||'not specified'}
 - Goal: ${goal||'reply naturally'}
 - Reply type: ${RTYPE_PROMPTS[rtype]||RTYPE_PROMPTS.match}
 - Length: ${LENGTH_PROMPTS[len]||LENGTH_PROMPTS.short}
-- My texting style: ${style||'lowercase, natural, minimal punctuation'}
+- My texting style: ${style||'lowercase, natural, minimal punctuation'}`;
 
-STRICT RULES:
-- Sound exactly like a real person texting — not AI, not a therapist, not a script
-- Zero exclamation marks unless the style explicitly uses them
-- No cringe, no overexplaining, no therapy-speak ("I hear you", "that makes sense", "I understand")
-- No AI phrases: "certainly", "of course", "great question", "I'd love to"
-- Lowercase preferred — matches how people actually text
-- Each of the 3 replies must be genuinely different — not tiny variations of the same idea
-- First person — write the actual message text, not a description of what to say
-- No long paragraphs unless length is medium and the context demands it
+  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}
 
-Return ONLY valid JSON, no markdown, no explanation:
+Generate 3 genuinely different reply options.
+
+${ctxBlock}
+
+${baseRules}
+
+Return ONLY valid JSON, no markdown:
 {"replies":[{"text":"reply text","tone":"one word tone label","why":"one short phrase why this works"}]}`;
 
   try{
+    let body;
+    if(isImage){
+      const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`Instagram DM screenshot. ONLY read the text inside the message bubbles. RIGHT bubbles = my messages, LEFT bubbles = hers. The bottom-most LEFT bubble is her latest message — reply to that. Ignore the username, status bar, icons, timestamps, all UI. Generate 3 replies as JSON.`}];
+      body={model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.92,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
+    }else{
+      body={model:getTextModel(),max_tokens:500,temperature:0.92,messages:[{role:'system',content:system},{role:'user',content:`Their message:\n"${textMsg.slice(0,1000)}"\n\nGenerate 3 replies as JSON.`}]};
+    }
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:getTextModel(),max_tokens:500,temperature:0.92,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify(body)
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
     const data=await res.json();
-    const raw=data.choices?.[0]?.message?.content?.trim()||'';
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=JSON.parse(rawTxt.replace(/```json|```/g,'').trim());
     currentReplies=parsed.replies||[];
-    writeCache(cacheKey,currentReplies);
+    if(cacheKey)writeCache(cacheKey,currentReplies);
     renderReplyCards(currentReplies);
-    currentReplies.forEach(r=>addToHistory(r.tone||rtype,'[Text]',r.text,'dm',null));
+    const src=isImage?'[Screenshot]':textMsg;
+    currentReplies.forEach(r=>addToHistory(r.tone||rtype,src,r.text,'dm',isImage?imgUrls.dm:null));
   }catch(err){
     showToast('Error: '+err.message);console.error(err);
   }finally{
     btn.disabled=false;
     lbl.textContent='✨ Generate Replies';
+  }
+}
+
+// ── QUICK RESPONSE ───────────────────────────
+let quickDetectedTone=null;
+function renderQuickTonePicker(){
+  const picker=document.getElementById('quick-tone-picker');
+  picker.innerHTML=ALL_TONES.map(t=>`<button class="tone-btn" data-qtone="${t}" onclick="pickQuickTone('${t}')">${toneEmoji(t)} ${t}</button>`).join('');
+}
+function pickQuickTone(t){
+  quickDetectedTone=t;
+  document.querySelectorAll('#quick-tone-picker .tone-btn').forEach(b=>b.classList.toggle('active',b.dataset.qtone===t));
+  quickGenerate(t);
+}
+
+async function quickGenerate(forcedTone){
+  if(!apiKey){showToast('⚠️ Enter your API key first');return}
+  const isImage=quickTab==='image';
+  const textMsg=document.getElementById('quick-msg').value.trim();
+  const ctx=document.getElementById('quick-ctx').value.trim();
+  if(isImage&&!imgs.quick.b64){showToast('Upload a screenshot first');return}
+  if(!isImage&&!textMsg){showToast('Paste their message first');return}
+
+  const btn=document.getElementById('gen-btn');
+  const lbl=document.getElementById('gen-label');
+  btn.disabled=true;
+  lbl.innerHTML='<span class="spinner"></span> Scanning...';
+  document.getElementById('quick-tone-prompt').style.display='none';
+  document.getElementById('quick-tone-picker').style.display='none';
+
+  // Detect a forced tone: from arg, the picker, or the context box (e.g. "flirty")
+  let toneHint=forcedTone||quickDetectedTone||'';
+  if(!toneHint&&ctx){
+    const m=ctx.toLowerCase().match(/\b(flirty|funny|chill|savage|mysterious|bold|wholesome|spicy|dry|confident|short)\b/);
+    if(m)toneHint=m[1];
+  }
+
+  const trainingCtx=getTrainingExamples(toneHint||'match');
+  const system=`You are a fast texting assistant for a confident guy. Read the incoming message, detect the vibe, and fire back 3 quick replies that fit.${trainingCtx}
+
+${ctx?`Extra context from the user: ${ctx}`:''}
+${toneHint?`The user wants a ${toneHint} tone — use it.`:''}
+
+RULES:
+- Sound like a real person texting — never AI or robotic
+- Zero exclamation marks
+- Lowercase preferred, short and punchy
+- 3 genuinely different replies, not variations
+- First person — the actual message text only
+
+${toneHint?'':'Also judge how confident you are about the tone. If the message is too vague/ambiguous to read the vibe, set confidence to "low".'}
+
+Return ONLY valid JSON, no markdown:
+{"detected_tone":"one word","confidence":"high|low","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+
+  try{
+    let body;
+    if(isImage){
+      const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.quick.type};base64,${imgs.quick.b64}`}},{type:'text',text:`Chat screenshot. ONLY read the text in the message bubbles. RIGHT = my messages, LEFT = theirs. Reply to the latest LEFT message. Ignore all UI. Detect the vibe and return the JSON.`}];
+      body={model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:450,temperature:0.9,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
+    }else{
+      body={model:getTextModel(),max_tokens:450,temperature:0.9,messages:[{role:'system',content:system},{role:'user',content:`Their message:\n"${textMsg.slice(0,1000)}"\n\nDetect the vibe and return the JSON.`}]};
+    }
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify(body)
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
+    const data=await res.json();
+    const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=JSON.parse(rawTxt.replace(/```json|```/g,'').trim());
+
+    // Low confidence + no tone hint → ask the user for the tone
+    if(!toneHint&&parsed.confidence==='low'){
+      document.getElementById('quick-tone-prompt').style.display='flex';
+      renderQuickTonePicker();
+      document.getElementById('quick-tone-picker').style.display='flex';
+      return;
+    }
+
+    currentReplies=parsed.replies||[];
+    renderReplyCards(currentReplies);
+    const detected=parsed.detected_tone||toneHint||'reply';
+    const src=isImage?'[Quick · Screenshot]':textMsg;
+    currentReplies.forEach(r=>addToHistory(r.tone||detected,src,r.text,'dm',isImage?imgUrls.quick:null));
+    showToast(`⚡ ${detected} vibe — 3 replies ready`);
+  }catch(err){
+    showToast('Error: '+err.message);console.error(err);
+  }finally{
+    btn.disabled=false;
+    lbl.textContent='🔥 Get Quick Replies';
+    quickDetectedTone=null;
   }
 }
 
@@ -2405,15 +2544,14 @@ let lastReply='';
 async function generate(){
   if(!apiKey){showToast('⚠️ Enter your API key first');return}
 
-  // Text mode → new multi-reply system
-  if(mode==='dm'&&activeTab==='text') return generateTextReplies();
+  // Route by mode
+  if(mode==='quick') return quickGenerate();
+  if(mode==='dm') return generateDmReplies();
 
+  // story → single-reply flow below
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
 
-  if(mode==='dm'){
-    if(activeTab==='image'&&!imgs.dm.b64){showToast('Upload a screenshot first');return}
-  }
   if(mode==='story'&&!imgs.story.b64){showToast('Upload their story screenshot first');return}
 
   const btn=document.getElementById('gen-btn');
@@ -2445,42 +2583,20 @@ STRICT RULES:
 - Output ONLY the reply text. Nothing else.`;
 
   try{
-    let userMsg;
-    if(mode==='story'){
-      const angle=selectedAngles.story;
-      const angleText=angle?`\n\nApproach angle to use: "${angle.label}" — ${angle.approach}`:'';
-      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.story.type};base64,${imgs.story.b64}`}},{type:'text',text:`This is an Instagram story screenshot. Look at everything in the image before writing — who's there, what they're doing, the vibe, their energy.
+    const angle=selectedAngles.story;
+    const angleText=angle?`\n\nApproach angle to use: "${angle.label}" — ${angle.approach}`:'';
+    const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.story.type};base64,${imgs.story.b64}`}},{type:'text',text:`This is an Instagram story screenshot. Look at everything in the image before writing — who's there, what they're doing, the vibe, their energy.
 
 If there's a girl/woman visible: react to HER specifically — what she's wearing, her expression, the moment. Feel like you actually noticed her, not just the photo.
 
 If it's scenery, food, or no people: react to what's actually happening.${angleText}
 
 Write ONLY the DM reply text. Nothing else.`}];
-    }else if(activeTab==='image'){
-      const angle=selectedAngles.dm;
-      const angleText=angle?`\n\nApproach angle to use: "${angle.label}" — ${angle.approach}`:'';
-      userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`Instagram DM screenshot. ONLY read the text inside the message bubbles.
 
-LAYOUT (this is critical):
-- RIGHT side bubbles (darker/coloured) = MY messages
-- LEFT side bubbles (lighter/grey) = HER messages
-- The bottom-most LEFT bubble is her most recent message — THAT is what I need to reply to
-
-IGNORE completely: the username at the top, profile picture, "Active now" / "Seen", phone status bar, time, battery, message input box, reaction emojis on bubbles, all icons and UI chrome.
-
-Read her latest message word-for-word and respond directly to what she actually said.${angleText}
-
-Write ONLY my reply text. Nothing else.`}];
-    }else{
-      userMsg=`They sent me this Instagram DM:\n\n"${textMsg}"\n\nWrite my reply:`;
-    }
-
-    const needsVision=mode==='story'||activeTab==='image';
-    const model=needsVision?'meta-llama/llama-4-scout-17b-16e-instruct':'llama-3.1-8b-instant';
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model,max_tokens:250,stream:true,temperature:0.95,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:250,stream:true,temperature:0.95,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status)}
 
@@ -2505,10 +2621,7 @@ Write ONLY my reply text. Nothing else.`}];
     document.getElementById('result-actions').style.display='flex';
     const cpBtn=document.getElementById('copy-btn');
     cpBtn.className='action-btn';cpBtn.textContent='📋 Copy Reply';
-
-    const src=mode==='story'?'[Story]':activeTab==='image'?'[Screenshot]':textMsg;
-    const imgUrl=mode==='story'?imgUrls.story:(activeTab==='image'?imgUrls.dm:null);
-    addToHistory(tone,src,reply,mode,imgUrl);
+    addToHistory(tone,'[Story]',reply,'story',imgUrls.story);
   }catch(err){
     document.getElementById('result-box').innerHTML=`<span style="color:var(--red)">Error: ${err.message}</span>`;
     showToast('Something went wrong');console.error(err);
