@@ -2451,6 +2451,20 @@ function getGoodsContext(userMsg,limit=4){
     picked.map(r=>`✓ "${r.reply}"${r.tone?` [${r.tone}]`:''}`).join('\n');
 }
 
+// Remove duplicate / near-identical replies (keeps order, keeps at least one)
+function dedupeReplies(arr){
+  if(!Array.isArray(arr))return[];
+  const seen=new Set();const out=[];
+  for(const r of arr){
+    const txt=(r&&r.text||'').trim();
+    if(!txt)continue;
+    const key=txt.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,45);
+    if(seen.has(key))continue;
+    seen.add(key);out.push(r);
+  }
+  return out;
+}
+
 // ── TOLERANT JSON PARSER ─────────────────────
 // Generic loose parse: strip fences, slice to outer braces, repair trailing commas.
 function parseJsonLoose(raw){
@@ -2653,7 +2667,7 @@ Return ONLY valid JSON, no markdown:
     const rawTxt=data.choices?.[0]?.message?.content?.trim()||'';
     const parsed=parseRepliesResponse(rawTxt);
     if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the reply — tap generate again');
-    currentReplies=parsed.replies;
+    currentReplies=dedupeReplies(parsed.replies);
     lastGenMessage=isImage?'[DM screenshot]':textMsg;
     if(cacheKey)writeCache(cacheKey,currentReplies);
     renderReplyCards(currentReplies);
@@ -2728,21 +2742,22 @@ RULES:
 - Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
 - Lowercase preferred, short and punchy
-- 3 genuinely different replies, not variations
+- You MUST return EXACTLY 3 replies in the array — never fewer
+- All 3 must be COMPLETELY different from each other: different opening words, different angle, different length. They are NOT rephrasings of one idea — they're 3 separate ways to play it.
 - First person as HIM — the actual message he'd send only
 
 ${toneHint?'':'Also judge how confident you are about the tone. If the message is too vague/ambiguous to read the vibe, set confidence to "low".'}
 
-Return ONLY valid JSON, no markdown:
-{"detected_tone":"one word","confidence":"high|low","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+Return ONLY valid JSON, no markdown. The "replies" array MUST contain exactly 3 distinct objects:
+{"detected_tone":"one word","confidence":"high|low","replies":[{"text":"reply 1","tone":"label","why":"short reason"},{"text":"reply 2","tone":"label","why":"short reason"},{"text":"reply 3","tone":"label","why":"short reason"}]}`;
 
   try{
     let body;
     if(isImage){
-      const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.quick.type};base64,${imgs.quick.b64}`}},{type:'text',text:`Chat screenshot. ONLY read the text in the message bubbles. RIGHT = my messages, LEFT = theirs. Reply to the latest LEFT message. Ignore all UI. Detect the vibe and return the JSON.`}];
-      body={model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:450,temperature:0.9,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
+      const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.quick.type};base64,${imgs.quick.b64}`}},{type:'text',text:`Chat screenshot. ONLY read the text in the message bubbles. RIGHT = my messages, LEFT = theirs. Reply to the latest LEFT message. Ignore all UI. Detect the vibe and return EXACTLY 3 distinct replies in the JSON.`}];
+      body={model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
     }else{
-      body={model:getTextModel(),max_tokens:450,temperature:0.9,messages:[{role:'system',content:system},{role:'user',content:`Their message:\n"${textMsg.slice(0,1000)}"\n\nDetect the vibe and return the JSON.`}]};
+      body={model:getTextModel(),max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:`Their message:\n"${textMsg.slice(0,1000)}"\n\nDetect the vibe and return EXACTLY 3 distinct replies in the JSON.`}]};
     }
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
@@ -2762,7 +2777,7 @@ Return ONLY valid JSON, no markdown:
       return;
     }
 
-    currentReplies=parsed.replies;
+    currentReplies=dedupeReplies(parsed.replies);
     lastGenMessage=isImage?'[Quick screenshot]':textMsg;
     renderReplyCards(currentReplies);
     const detected=parsed.detected_tone||toneHint||'reply';
