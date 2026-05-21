@@ -492,15 +492,15 @@ input[type="text"]::placeholder{color:var(--text3)}
 .panel-close:active{transform:scale(.95)}
 .panel-body{padding:0 22px 30px}
 
-/* ── STICKER NOTE (stuck to the login card's left edge) ── */
+/* ── STICKER NOTE (taped to the top of the login card) ── */
 .login-card{position:relative}
-.sticker-note{position:absolute;top:38px;left:-186px;width:188px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:18px 16px 20px;z-index:1;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 50px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:right center;transform:rotate(-5deg);animation:stickerFloat 6s ease-in-out infinite}
-/* tape strip across the seam where the note meets the card */
-.sticker-note::after{content:'';position:absolute;top:50%;right:-16px;transform:translateY(-50%) rotate(8deg);width:34px;height:22px;background:rgba(226,226,226,0.13);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+.sticker-note{position:absolute;top:-104px;left:50%;width:200px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:18px 16px 18px;z-index:1;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 50px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:top center;transform:translateX(-50%) rotate(-3deg);animation:stickerFloat 6s ease-in-out infinite}
+/* tape strip across the top of the note */
+.sticker-note::after{content:'';position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-2deg);width:60px;height:22px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
 .sticker-note h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:7px;display:flex;align-items:center;gap:6px}
-.sticker-note p{font-size:11.5px;line-height:1.55;color:var(--text2)}
+.sticker-note p{font-size:11.5px;line-height:1.5;color:var(--text2)}
 .sticker-note .crew{font-size:10.5px;color:rgba(160,130,255,0.85);margin-top:9px;font-weight:600}
-@keyframes stickerFloat{0%,100%{transform:rotate(-5deg) translateY(0)}50%{transform:rotate(-4deg) translateY(-5px)}}
+@keyframes stickerFloat{0%,100%{transform:translateX(-50%) rotate(-3deg) translateY(0)}50%{transform:translateX(-50%) rotate(-3deg) translateY(-5px)}}
 @media (max-width:840px){.sticker-note{display:none}}
 
 /* ── AUTH FORM ── */
@@ -939,14 +939,28 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <h3>🚩 What's wrong with this reply?</h3>
     <div class="rep-reply" id="report-reply-text"></div>
     <div class="report-chips" id="report-chips">
+      <button class="report-chip" onclick="toggleReportChip(this,'doesn\'t fit the message')">doesn't fit</button>
       <button class="report-chip" onclick="toggleReportChip(this,'too cringe')">too cringe</button>
       <button class="report-chip" onclick="toggleReportChip(this,'wrong tone')">wrong tone</button>
       <button class="report-chip" onclick="toggleReportChip(this,'sounds female / wrong POV')">sounds female</button>
-      <button class="report-chip" onclick="toggleReportChip(this,'too long')">too long</button>
       <button class="report-chip" onclick="toggleReportChip(this,'too try-hard / desperate')">try-hard</button>
-      <button class="report-chip" onclick="toggleReportChip(this,'too generic')">generic</button>
-      <button class="report-chip" onclick="toggleReportChip(this,'doesn\'t fit the message')">doesn't fit</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too generic / boring')">generic</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too long')">too long</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too short')">too short</button>
       <button class="report-chip" onclick="toggleReportChip(this,'not spicy enough')">not spicy enough</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too spicy / too much')">too spicy</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'not confident enough')">not confident</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too aggressive')">too aggressive</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too soft / needy')">too soft</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'bad grammar / spelling')">bad grammar</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'confusing pronoun (they/it)')">confusing pronoun</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'sounds robotic / AI')">sounds AI</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'just echoes her words')">echoes her</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'repeats other replies')">repetitive</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'too formal / stiff')">too formal</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'corny / outdated slang')">corny</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'off-topic / random')">off-topic</button>
+      <button class="report-chip" onclick="toggleReportChip(this,'cliche pickup line')">cliche</button>
     </div>
     <textarea id="report-note" placeholder="Add detail (optional) — what should it have done instead?"></textarea>
     <div class="report-actions">
@@ -1200,6 +1214,19 @@ function enterApp(){
   const acctEl=document.getElementById('current-account');
   if(acctEl)acctEl.textContent=currentUser;
   updateCardVisibility();
+  startExportReminder();
+}
+
+// Gentle reminder every 7 min to export collected good/bad replies
+let exportReminderTimer=null;
+function startExportReminder(){
+  if(exportReminderTimer)return;
+  exportReminderTimer=setInterval(()=>{
+    const g=(savedGoodReplies||[]).length, r=(reportedReplies||[]).length;
+    if(g+r>=3){
+      showToast(`💾 ${g} good · ${r} reported — export them in ⚙️ settings when you're done`);
+    }
+  },7*60*1000);
 }
 
 // ── SETTINGS / PANELS ────────────────────────
@@ -1416,6 +1443,7 @@ let imageAngles={dm:[],story:[]};
 async function analyzeImage(id='dm'){
   if(!apiKey){showToast('Enter your API key first');return}
   if(!imgs[id].b64)return;
+  if(!checkCallLimit())return;
 
   const panel=document.getElementById('intel-'+id);
   panel.classList.add('visible');
@@ -1610,6 +1638,7 @@ const cachedSuggestions={dm:{},story:{}};
 // ── BATCH PRELOAD ────────────────────────────
 async function preloadAngleSuggestions(angles,id){
   if(!apiKey||!imgs[id]?.b64)return;
+  if(!checkCallLimit())return;
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
   const isStory=id==='story';
@@ -1689,6 +1718,7 @@ Return ONLY raw JSON, no markdown:
 
 async function generateAngleSuggestions(angle,id,cacheIndex=null){
   if(!apiKey)return;
+  if(!checkCallLimit())return;
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
   const isStory=id==='story';
@@ -2880,6 +2910,20 @@ function getGoodsContext(userMsg,limit=4){
 }
 
 // Friendly error message from an API response (esp. rate limits)
+// ── DAILY CALL LIMIT (protects the shared API key) ──
+const DAILY_CALL_LIMIT=60;  // generations per device per day
+function checkCallLimit(){
+  const today=new Date().toISOString().slice(0,10);
+  let data;try{data=JSON.parse(store.getItem('rizz_calls')||'{}')}catch(e){data={}}
+  if(data.day!==today)data={day:today,count:0};
+  if(data.count>=DAILY_CALL_LIMIT){
+    showToast(`🛑 Daily limit reached (${DAILY_CALL_LIMIT}/day). Resets at midnight.`);
+    return false;
+  }
+  data.count++;store.setItem('rizz_calls',JSON.stringify(data));
+  return true;
+}
+
 async function apiErrorMessage(res){
   if(res.status===429){
     let wait='';
@@ -3050,6 +3094,8 @@ async function generateDmReplies(){
     if(cached){currentReplies=cached;renderReplyCards(cached);showToast('⚡ Loaded from cache');return;}
   }
 
+  if(!checkCallLimit())return;
+
   const btn=document.getElementById('gen-btn');
   const lbl=document.getElementById('gen-label');
   btn.disabled=true;
@@ -3163,6 +3209,8 @@ async function quickGenerate(forcedTone){
     }
   }
 
+  if(!checkCallLimit())return;
+
   const btn=document.getElementById('gen-btn');
   const lbl=document.getElementById('gen-label');
   btn.disabled=true;
@@ -3262,6 +3310,7 @@ const REWRITE_PROMPTS={
 
 async function rewriteReply(index,type){
   if(!apiKey){showToast('Enter your API key first');return}
+  if(!checkCallLimit())return;
   const reply=currentReplies[index];
   if(!reply)return;
 
@@ -3351,6 +3400,7 @@ async function generate(){
   const ctx=document.getElementById('ctx-input').value.trim();
 
   if(mode==='story'&&!imgs.story.b64){showToast('Upload their story screenshot first');return}
+  if(!checkCallLimit())return;
 
   const btn=document.getElementById('gen-btn');
   const lbl=document.getElementById('gen-label');
