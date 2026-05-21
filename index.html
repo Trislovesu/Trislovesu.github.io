@@ -250,6 +250,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.report-rw{color:var(--text3);border-color:var(--border)}
 .rw-btn.report-rw:hover{color:var(--red);border-color:var(--red);background:var(--red-bg)}
 .rw-btn.report-rw.reported{color:var(--red);border-color:var(--red);background:var(--red-bg);pointer-events:none}
+.rw-btn.good-rw{color:var(--text3);border-color:var(--border)}
+.rw-btn.good-rw:hover{color:var(--green);border-color:var(--green);background:var(--green-bg)}
+.rw-btn.good-rw.marked{color:var(--green);border-color:var(--green);background:var(--green-bg);pointer-events:none}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
 /* report modal */
@@ -269,6 +272,8 @@ input[type="text"]::placeholder{color:var(--text3)}
 .report-item .ri-reply{font-size:13px;color:var(--text);margin-bottom:5px;padding-right:24px}
 .report-item .ri-reason{font-size:11px;color:var(--red);font-weight:500}
 .report-item .ri-msg{font-size:11px;color:var(--text3);font-style:italic;margin-top:4px}
+.report-item.good{border-color:rgba(77,179,122,0.3)}
+.report-item .ri-good-tag{font-size:11px;color:var(--green);font-weight:500}
 .report-item .ri-del{position:absolute;top:9px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:2px}
 .report-item .ri-del:hover{color:var(--red)}
 .reports-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0}
@@ -831,6 +836,19 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       </div>
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="card-label" style="margin-bottom:0">⭐ Saved good replies</div>
+          <span class="history-count" id="good-count-badge">0</span>
+        </div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">Replies you star are fed in as "do more of this" examples. <span id="good-count-label">0 saved</span>.</p>
+        <div id="goods-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <button class="action-btn" style="flex:1" onclick="exportGoods()">📤 Export saved</button>
+          <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearGoods()">Clear all</button>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
           <div class="card-label" style="margin-bottom:0">🚩 Reported replies</div>
           <span class="history-count" id="report-count-badge">0</span>
         </div>
@@ -991,7 +1009,7 @@ function enterApp(){
   document.getElementById('app').classList.add('show');
   trainerCode='Tris👑';store.setItem('trainer_code','Tris👑');
   tonePref=store.getItem('tone_pref')||'none';
-  loadApiKey();loadGhSettings();loadHistory();loadTrainingData();loadReports();
+  loadApiKey();loadGhSettings();loadHistory();loadTrainingData();loadReports();loadGoods();
   const input=document.getElementById('trainer-code-input');
   if(input)input.value='Tris👑';
   updateCardVisibility();
@@ -1011,7 +1029,7 @@ function renderSettingsPref(){
 }
 function openApiPanel(){document.getElementById('api-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function openHistoryPanel(){renderHistory();document.getElementById('history-overlay').classList.add('open');document.body.style.overflow='hidden'}
-function openSettingsPanel(){renderSettingsPref();renderReports();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function openSettingsPanel(){renderSettingsPref();renderGoods();renderReports();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
 
 // ── API KEY ──────────────────────────────────
@@ -2375,6 +2393,64 @@ function getReportsContext(userMsg,limit=4){
     picked.map(r=>`✗ "${r.reply}" — problem: ${r.reason}`).join('\n');
 }
 
+// ── GOOD REPLIES (positive feedback loop) ────
+let savedGoodReplies=[];
+function loadGoods(){try{savedGoodReplies=JSON.parse(store.getItem('rizz_goods')||'[]')}catch(e){savedGoodReplies=[]}updateGoodCount()}
+function saveGoods(){store.setItem('rizz_goods',JSON.stringify(savedGoodReplies.slice(-200)));updateGoodCount()}
+function updateGoodCount(){
+  const el=document.getElementById('good-count-label');if(el)el.textContent=`${savedGoodReplies.length} saved`;
+  const badge=document.getElementById('good-count-badge');if(badge)badge.textContent=savedGoodReplies.length;
+}
+function markGood(i){
+  const r=currentReplies[i];if(!r)return;
+  savedGoodReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',ts:Date.now()});
+  saveGoods();renderGoods();
+  const btn=document.getElementById('good-btn-'+i);
+  if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}
+  showToast('⭐ Saved — the AI will lean into replies like this');
+}
+function renderGoods(){
+  const list=document.getElementById('goods-list');if(!list)return;
+  if(!savedGoodReplies.length){list.innerHTML='<div class="reports-empty">No saved replies yet — tap ⭐ on a reply you love.</div>';return}
+  list.innerHTML=savedGoodReplies.slice().reverse().map((r,revIdx)=>{
+    const realIdx=savedGoodReplies.length-1-revIdx;
+    const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return`<div class="report-item good">
+      <button class="ri-del" onclick="deleteGood(${realIdx})" title="Remove">✕</button>
+      <div class="ri-reply">"${esc(r.reply)}"</div>
+      ${r.tone?`<div class="ri-good-tag">⭐ ${esc(r.tone)}</div>`:''}
+      ${r.message?`<div class="ri-msg">on: "${esc(r.message)}"</div>`:''}
+    </div>`;
+  }).join('');
+}
+function deleteGood(i){savedGoodReplies.splice(i,1);saveGoods();renderGoods()}
+function clearGoods(){
+  if(!savedGoodReplies.length){showToast('Nothing to clear');return}
+  if(!confirm('Clear all '+savedGoodReplies.length+' saved replies?'))return;
+  savedGoodReplies=[];saveGoods();renderGoods();showToast('Cleared');
+}
+function exportGoods(){
+  if(!savedGoodReplies.length){showToast('Nothing to export yet');return}
+  const json=JSON.stringify({type:'rizz_goods',exportedAt:Date.now(),goods:savedGoodReplies},null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='rizz-good-replies-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast('📤 Exported '+savedGoodReplies.length+' saved replies');
+}
+// Inject saved good replies as positive examples
+function getGoodsContext(userMsg,limit=4){
+  if(!savedGoodReplies.length)return'';
+  const scored=savedGoodReplies.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})}));
+  scored.sort((a,b)=>(b.s-a.s)||(b.r.ts-a.r.ts));
+  const picked=scored.slice(0,limit).map(x=>x.r);
+  if(!picked.length)return'';
+  return`\n\nUSER-APPROVED REPLIES — the user loved these exact replies. Lean into this exact style, energy and length:\n`+
+    picked.map(r=>`✓ "${r.reply}"${r.tone?` [${r.tone}]`:''}`).join('\n');
+}
+
 // ── TOLERANT JSON PARSER ─────────────────────
 // Generic loose parse: strip fences, slice to outer braces, repair trailing commas.
 function parseJsonLoose(raw){
@@ -2547,7 +2623,8 @@ STRICT RULES:
 
   const refinedCtx=getRefinedContext(isImage?'':textMsg,3);
   const reportsCtx=getReportsContext(isImage?'':textMsg,4);
-  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}${reportsCtx}
+  const goodsCtx=getGoodsContext(isImage?'':textMsg,4);
+  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}
 
 Generate 3 genuinely different reply options.
 
@@ -2634,7 +2711,8 @@ async function quickGenerate(forcedTone){
   const trainingCtx=getTrainingExamples(toneHint||prefTone||'match');
   const refinedCtx=getRefinedContext(textMsg||'',3);
   const reportsCtx=getReportsContext(textMsg||'',4);
-  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${reportsCtx}
+  const goodsCtx=getGoodsContext(textMsg||'',4);
+  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}
 
 ${ctx?`Extra context from the user: ${ctx}`:''}
 ${toneHint?`The user wants a ${toneHint} tone — use it.`:''}${prefLine}
@@ -2769,6 +2847,7 @@ function renderReplyCards(replies){
         <button class="rw-btn" onclick="rewriteReply(${i},'chill')">More chill</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'spicy')">More spicy</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'energy')">Match energy</button>
+        <button class="rw-btn good-rw" id="good-btn-${i}" onclick="markGood(${i})">⭐ Good</button>
         <button class="rw-btn report-rw" id="report-btn-${i}" onclick="openReport(${i})">🚩 Report</button>
         <button class="rw-btn copy-rw" onclick="copyCardReply(${i})">Copy ↗</button>
       </div>
