@@ -492,16 +492,16 @@ input[type="text"]::placeholder{color:var(--text3)}
 .panel-close:active{transform:scale(.95)}
 .panel-body{padding:0 22px 30px}
 
-/* ── STICKER NOTE (taped to the top of the login card) ── */
+/* ── STICKER NOTE (taped to top-left of the login card) ── */
 .login-card{position:relative}
-.sticker-note{position:absolute;top:-104px;left:50%;width:200px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:18px 16px 18px;z-index:1;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 50px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:top center;transform:translateX(-50%) rotate(-3deg);animation:stickerFloat 6s ease-in-out infinite}
+.sticker-note{position:absolute;top:-76px;left:-6px;width:150px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:12px 11px 13px;z-index:2;box-shadow:0 12px 32px rgba(0,0,0,0.55),0 0 44px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:top left;transform:rotate(-6deg);animation:stickerFloat 6s ease-in-out infinite}
 /* tape strip across the top of the note */
-.sticker-note::after{content:'';position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-2deg);width:60px;height:22px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
-.sticker-note h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:7px;display:flex;align-items:center;gap:6px}
-.sticker-note p{font-size:11.5px;line-height:1.5;color:var(--text2)}
-.sticker-note .crew{font-size:10.5px;color:rgba(160,130,255,0.85);margin-top:9px;font-weight:600}
-@keyframes stickerFloat{0%,100%{transform:translateX(-50%) rotate(-3deg) translateY(0)}50%{transform:translateX(-50%) rotate(-3deg) translateY(-5px)}}
-@media (max-width:840px){.sticker-note{display:none}}
+.sticker-note::after{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-3deg);width:44px;height:17px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+.sticker-note h3{font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.sticker-note p{font-size:9.5px;line-height:1.45;color:var(--text2)}
+.sticker-note .crew{font-size:9px;color:rgba(160,130,255,0.85);margin-top:7px;font-weight:600}
+@keyframes stickerFloat{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(-6deg) translateY(-4px)}}
+@media (max-width:600px){.sticker-note{width:132px;left:-2px;top:-70px;padding:10px 9px 11px}.sticker-note p{font-size:9px}}
 
 /* ── AUTH FORM ── */
 .auth-toggle{display:flex;gap:0;background:var(--surface2);border-radius:10px;padding:4px;border:1px solid var(--border);margin-bottom:22px}
