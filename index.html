@@ -364,8 +364,8 @@ input[type="text"]::placeholder{color:var(--text3)}
   0%{opacity:1;transform:translateY(0)}
   100%{opacity:0;transform:translateY(-10px)}
 }
-.reveal-in{animation:revealGlow 1.05s cubic-bezier(.22,1,.36,1)}
-.reveal-out{animation:revealOut .5s ease forwards}
+.reveal-in{animation:revealGlow 1.4s cubic-bezier(.22,1,.36,1)}
+.reveal-out{animation:revealOut .6s cubic-bezier(.4,0,.6,1) forwards}
 
 /* ── QUICK RESPONSE ── */
 .quick-ctx-box{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;transition:border-color .2s,box-shadow .2s}
@@ -476,12 +476,20 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 /* ── AMBIENT GLOW + BREATHING ── */
 body{background:var(--bg)}
-body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+body::before{content:'';position:fixed;inset:-15%;z-index:-2;pointer-events:none;
   background:
     radial-gradient(ellipse 80% 55% at 15% -5%,rgba(100,55,220,0.22) 0%,transparent 60%),
     radial-gradient(ellipse 55% 35% at 88% 8%,rgba(55,95,230,0.14) 0%,transparent 60%);
-  animation:bgBreathe 11s ease-in-out infinite}
-@keyframes bgBreathe{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
+  animation:bgBreathe 13s ease-in-out infinite,bgHue 24s ease-in-out infinite}
+/* second drifting colour layer for a living, breathing gradient */
+body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 45% at 80% 95%,rgba(220,55,150,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse 65% 50% at 10% 90%,rgba(55,180,200,0.10) 0%,transparent 60%);
+  animation:bgBreathe2 17s ease-in-out infinite,bgHue 24s ease-in-out infinite reverse}
+@keyframes bgBreathe{0%,100%{opacity:.65;transform:scale(1) translateY(0)}50%{opacity:1;transform:scale(1.08) translateY(-1.5%)}}
+@keyframes bgBreathe2{0%,100%{opacity:.5;transform:scale(1.05) translateY(0)}50%{opacity:.85;transform:scale(1) translateY(1.5%)}}
+@keyframes bgHue{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(38deg)}}
 .login-card{box-shadow:0 0 0 1px rgba(255,255,255,0.05),0 24px 80px rgba(0,0,0,0.8),0 0 140px rgba(100,55,220,0.22),inset 0 1px 0 rgba(255,255,255,0.07)}
 .app-logo{box-shadow:0 0 28px rgba(226,226,226,0.28),0 0 60px rgba(226,226,226,0.1)}
 .card{box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 8px 40px rgba(0,0,0,0.5),0 0 80px rgba(100,55,220,0.09),inset 0 1px 0 rgba(255,255,255,0.05)}
@@ -981,18 +989,23 @@ function markApiSaved(){
 // ── REVEAL HELPERS ───────────────────────────
 function revealCard(el){
   if(!el)return;
+  // already visible and not mid-hide → leave it
   if(el.style.display==='block'&&!el.classList.contains('reveal-out'))return;
-  el.style.display='block';
   el.classList.remove('reveal-out');
+  el.style.display='block';
+  void el.offsetWidth;
+  el.classList.remove('reveal-in');
   void el.offsetWidth;
   el.classList.add('reveal-in');
-  setTimeout(()=>el&&el.classList.remove('reveal-in'),1100);
+  setTimeout(()=>el&&el.classList.remove('reveal-in'),1450);
 }
 function hideCard(el){
   if(!el||el.style.display==='none')return;
+  if(el.classList.contains('reveal-out'))return; // already hiding
   el.classList.remove('reveal-in');
+  void el.offsetWidth; // force reflow so the exit animation always plays
   el.classList.add('reveal-out');
-  setTimeout(()=>{if(el){el.style.display='none';el.classList.remove('reveal-out')}},500);
+  setTimeout(()=>{if(el&&el.classList.contains('reveal-out')){el.style.display='none';el.classList.remove('reveal-out')}},620);
 }
 
 // ── MODE ─────────────────────────────────────
@@ -1042,7 +1055,7 @@ function updateDmReveal(){
   const genBtn=document.getElementById('gen-btn');
   if(hasInput){
     revealCard(ctxCard);
-    setTimeout(()=>{if(mode==='dm'){revealCard(rtCard);revealCard(genBtn)}},420);
+    setTimeout(()=>{if(mode==='dm'){revealCard(rtCard);revealCard(genBtn)}},600);
   }else{
     hideCard(ctxCard);
     hideCard(rtCard);
@@ -2153,7 +2166,7 @@ const SEED_TRAINING=[
   {trainer:"Nikolai",tone:"bold",message:"stop being weird about it just tell me",userReply:"Can I tell you over dinner tonight?"},
 ];
 
-function getTrainingExamples(tone='',limit=5){
+function getTrainingExamples(tone='',limit=3){
   // Combine the user's own saved data with the baked-in crew seed set
   const pool=[...trainingData,...SEED_TRAINING];
   if(!pool.length)return'';
@@ -2163,6 +2176,55 @@ function getTrainingExamples(tone='',limit=5){
   if(!picked.length)return'';
   return`\n\nSTYLE REFERENCE — Real reply examples from this user and their trusted friends. Use these as a style guide to match the vocabulary, length and energy (don't copy verbatim — just inform the vibe):\n`+
     picked.map(d=>`[${d.tone}${d.trainer?' · '+d.trainer:''}] received: "${d.message}" → replied: "${d.userReply}"`).join('\n');
+}
+
+// ── REFINED DATASET (good/bad examples + local retrieval) ──
+const REFINED_DATASET=[
+  {tone:"subtle_spicy",context:"She's late-night texting and being forward",message:"im so wet rn",good:["wish i was there to feel it","you're killing me rn","tell me more"],bad:["i would destroy you","good girl","you're mine now"]},
+  {tone:"subtle_spicy",context:"She's teasing you about a dream",message:"I had the filthiest dream about you last night",good:["details or it didn't happen","you dreaming about me now huh","wanna recreate it"],bad:["i'd dominate you","i want you so badly","alpha male energy"]},
+  {tone:"low_tension",context:"She's hinting she wants you over",message:"my parents are gone for the weekend 👀",good:["sounds dangerous","i should come keep you company","you tryna get me in trouble"],bad:["on my way right now","door unlocked?","be naked when i get there"]},
+  {tone:"playful_teasing",context:"She's being a brat",message:"you couldn't handle me anyway",good:["says the one texting me at 2am","keep telling yourself that","we'll see"],bad:["try me","you'd fold first","come here"]},
+  {tone:"smooth_confident",context:"She's describing what she's wearing",message:"wearing that little thing you like rn",good:["you're playing dirty","bet it looks insane on you","careful before i come over"],bad:["take it off slow","send a pic","good girl"]},
+  {tone:"late_night",context:"She's in bed texting",message:"in bed and bored... entertain me",good:["what you wearing","you always text me when you're bored huh","come keep me company instead"],bad:["i'd pin you down","be mean to me","you're making me horny"]},
+  {tone:"soft_affection",context:"She's opening up a bit",message:"I feel like I can actually talk to you",good:["same here","good keep going","you've been in my head lately too"],bad:["i'll always protect you princess","you're my safe place too","i need you badly"]},
+  {tone:"sarcastic_flirty",context:"She's playfully annoyed",message:"you're so annoying why do I like talking to you",good:["cause i'm addictive","you love it","same but i won't admit it"],bad:["you're mine now","good girl","i would destroy you"]},
+  {tone:"casual_chemistry",context:"She's on your fyp",message:"you're everywhere on my fyp lately",good:["you looking for me or what","can't escape you either","fate i guess"],bad:["obsessed with me huh","you want me bad","alpha energy"]},
+  {tone:"playful_teasing",context:"She's fishing for compliments",message:"be honest what's your first impression of me",good:["trouble","better in person","you're lowkey dangerous"],bad:["perfect princess","you're mine","i'd dominate you"]},
+  {tone:"smooth_confident",context:"She's challenging you lightly",message:"you think you're smooth huh",good:["you noticed","smooth enough for you","depends on who's watching"],bad:["im the best","girls always want me","alpha male"]},
+  {tone:"late_night",context:"She's feeling needy but soft",message:"wish you were next to me rn",good:["same","you got me thinking about it now","what would we do"],bad:["i'd pin you down","be naked","come ruin you"]},
+  {tone:"playful_teasing",context:"She's being dramatic",message:"this is literally the worst day ever",good:["you'll survive","dramatic much","what happened trouble"],bad:["i'm deeply sorry","how can i assist","i'll protect you"]},
+  {tone:"subtle_spicy",context:"She's hinting at wanting more",message:"I can't stop thinking about your hands",good:["they're thinking about you too","what are they doing in your head","careful where your mind's going"],bad:["around your throat","i'd destroy you","good girl"]},
+  {tone:"emotionally_smooth",context:"She's opening up",message:"you genuinely made my day better",good:["glad i could","you're easy to make smile","same here tbh"],bad:["you're my princess","i need you","always here for you baby"]},
+  {tone:"sarcastic_flirty",context:"She's teasing your reply speed",message:"you take forever to reply busy texting other girls?",good:["only one girl worth replying to","jealous?","caught me"],bad:["you're the only one","i'm obsessed with you","no other girls"]},
+];
+
+// Conversation escalation patterns (general style reference)
+const REFINED_FLOWS=[
+  [["you're kinda trouble","you seem into it tho"],["maybe a little","just a little?"],["okay more than a little","that's what i thought"]],
+];
+
+function _tok(s){return(s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2)}
+const _STOP=new Set(['the','and','you','your','are','for','that','with','was','rn','but','not','this','have','just','like','what','when','okay','about','idk','its']);
+function scoreRelevance(userMsg,entry){
+  const u=new Set(_tok(userMsg).filter(w=>!_STOP.has(w)));
+  if(!u.size)return 0;
+  const e=_tok(entry.message+' '+entry.context).filter(w=>!_STOP.has(w));
+  let overlap=0;e.forEach(w=>{if(u.has(w))overlap++});
+  return overlap;
+}
+
+// Build the retrieval block: closest situations with good (✓) and bad (✗) examples
+function getRefinedContext(userMsg,limit=3){
+  const scored=REFINED_DATASET.map(e=>({e,s:scoreRelevance(userMsg||'',e)})).sort((a,b)=>b.s-a.s);
+  let top=scored.filter(x=>x.s>0).slice(0,limit).map(x=>x.e);
+  // Fall back to a few random examples if nothing matches — still useful for steering away from cringe
+  if(top.length<2){
+    const extra=[...REFINED_DATASET].sort(()=>Math.random()-.5).slice(0,3);
+    top=[...new Set([...top,...extra])].slice(0,limit);
+  }
+  if(!top.length)return'';
+  const blocks=top.map(e=>`She: "${e.message}"\n  ✓ good: ${e.good.map(g=>`"${g}"`).join(' / ')}\n  ✗ never: ${e.bad.map(b=>`"${b}"`).join(' / ')}`).join('\n\n');
+  return`\n\nRETRIEVED EXAMPLES — closest real situations to this message, with replies that landed (✓) and replies that flopped (✗):\n\n${blocks}\n\nWrite in the spirit of the ✓ replies — natural, confident, low effort, real chemistry. NEVER produce anything resembling the ✗ replies (cringe, try-hard, "good girl", "alpha", "i'd destroy you", over-eager). Match her energy, don't overshoot it.`;
 }
 
 // ── TONE BUTTONS (image/story mode) ──────────
@@ -2281,14 +2343,16 @@ async function generateDmReplies(){
   lbl.innerHTML='<span class="spinner"></span> Generating...';
 
   const trainingCtx=getTrainingExamples(rtype);
-  const baseRules=`STRICT RULES:
+  const baseRules=`PERSPECTIVE — you are ALWAYS the GUY replying to HER. Every reply is what HE sends back. Never write from her point of view, never echo her words back as if you're in her position. If she says something sexual, HE responds as a confident man reacting to her — not speaking as her.
+
+STRICT RULES:
 - Sound exactly like a real person texting — not AI, not a therapist, not a script
 - Zero exclamation marks unless the style explicitly uses them
 - No cringe, no overexplaining, no therapy-speak ("I hear you", "that makes sense")
 - No AI phrases: "certainly", "of course", "great question", "I'd love to"
 - Lowercase preferred — matches how people actually text
 - Each of the 3 replies must be genuinely different — not tiny variations
-- First person — write the actual message text, not a description
+- First person as HIM — write the actual message text, not a description
 - No long paragraphs unless length is medium and the context demands it`;
 
   const ctxBlock=`CONTEXT:
@@ -2298,7 +2362,8 @@ async function generateDmReplies(){
 - Length: ${LENGTH_PROMPTS[len]||LENGTH_PROMPTS.short}
 - My texting style: ${style||'lowercase, natural, minimal punctuation'}`;
 
-  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}
+  const refinedCtx=getRefinedContext(isImage?'':textMsg,3);
+  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}
 
 Generate 3 genuinely different reply options.
 
@@ -2378,20 +2443,28 @@ async function quickGenerate(forcedTone){
   if(tonePref&&tonePref!=='none'){
     prefTone=tonePref==='random'?ALL_TONES[Math.floor(Math.random()*ALL_TONES.length)]:tonePref;
   }
-  const prefLine=prefTone?`\nIMPORTANT — Regardless of the detected vibe, exactly ONE of the 3 replies MUST be in a ${prefTone} tone (this is the user's go-to vibe). The other two should fit the actual message.`:'';
+  const prefLine=prefTone?`\nIMPORTANT — The user's go-to vibe is ${prefTone}. The FIRST reply in the array MUST be a ${prefTone}-tone reply (put it at the top). The other two should fit the actual detected vibe of her message.`:'';
 
   const trainingCtx=getTrainingExamples(toneHint||prefTone||'match');
-  const system=`You are a fast texting assistant for a confident guy. Read the incoming message, detect the vibe, and fire back 3 quick replies that fit.${trainingCtx}
+  const refinedCtx=getRefinedContext(textMsg||'',3);
+  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}
 
 ${ctx?`Extra context from the user: ${ctx}`:''}
 ${toneHint?`The user wants a ${toneHint} tone — use it.`:''}${prefLine}
 
+CRITICAL PERSPECTIVE RULE:
+- Every reply is what HE sends back to HER. You are the man.
+- NEVER write from the girl's point of view. NEVER continue her sentence or echo her words back as if you're the one in her situation.
+- Example of WRONG: she says "im so wet rn" → "you better be ready to dry me off" (this talks about HER body from her side — WRONG).
+- Example of RIGHT: she says "im so wet rn" → "keep talking like that and see what happens" / "say that again and i'm on my way" (HIS confident male response).
+- If she's sexual, HE responds as a dominant, confident man — reacting TO her, never speaking as her.
+
 RULES:
-- Sound like a real person texting — never AI or robotic
+- Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
 - Lowercase preferred, short and punchy
 - 3 genuinely different replies, not variations
-- First person — the actual message text only
+- First person as HIM — the actual message he'd send only
 
 ${toneHint?'':'Also judge how confident you are about the tone. If the message is too vague/ambiguous to read the vibe, set confidence to "low".'}
 
@@ -2439,13 +2512,13 @@ Return ONLY valid JSON, no markdown:
 }
 
 const REWRITE_PROMPTS={
-  shorter:'Rewrite this reply to be shorter — cut anything unnecessary, keep the core',
-  natural:'Rewrite this to sound more natural and human — less stiff, more like how people actually text',
-  cringe:'Remove any cringe, awkward phrasing, or try-hard energy. Keep it real',
-  flirty:'Add subtle flirty energy — nothing thirsty, just a little pull',
-  confident:'Make this sound more confident and assured — less hesitant',
-  trini:'Rewrite with authentic Trinidad slang and dialect — make it sound like a Trini texting',
-  noemoji:'Remove all emojis from this reply'
+  shorter:'Rewrite shorter — cut anything unnecessary, keep the core punch',
+  flirty:'Add subtle flirty energy — a little pull, never thirsty or try-hard',
+  cringe:'Strip out any cringe, awkward phrasing, or try-hard energy. Keep it real and effortless',
+  confident:'Make it more confident and assured — less hesitant, owns the room',
+  chill:'Make it more chill and low-effort — relaxed, unbothered, like he barely thought about it',
+  spicy:'Make it spicier — more suggestive and bold, but still smooth, never crude or "good girl/alpha" cringe',
+  energy:'Match her exact energy — same length, same vibe, mirror how she\'s texting'
 };
 
 async function rewriteReply(index,type){
@@ -2463,9 +2536,10 @@ async function rewriteReply(index,type){
 Original reply: "${reply.text}"
 
 RULES:
+- This is a reply a GUY sends to a girl. Keep it from HIS point of view — never flip to her perspective or echo her words back as if you're in her position.
 - Keep it as a real text message — short, natural, lowercase preferred
 - Zero exclamation marks
-- First person only
+- No cringe ("good girl", "alpha", "i'd destroy you", over-eager)
 - Return ONLY the rewritten reply text, nothing else. No quotes, no explanation.`;
 
   try{
@@ -2500,12 +2574,12 @@ function renderReplyCards(replies){
       <div class="reply-text">${r.text}</div>
       <div class="rewrite-strip">
         <button class="rw-btn" onclick="rewriteReply(${i},'shorter')">Shorter</button>
-        <button class="rw-btn" onclick="rewriteReply(${i},'natural')">More natural</button>
-        <button class="rw-btn" onclick="rewriteReply(${i},'cringe')">Less cringe</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'flirty')">More flirty</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'cringe')">Less cringe</button>
         <button class="rw-btn" onclick="rewriteReply(${i},'confident')">More confident</button>
-        <button class="rw-btn" onclick="rewriteReply(${i},'trini')">🇹🇹 Trini</button>
-        <button class="rw-btn" onclick="rewriteReply(${i},'noemoji')">No emojis</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'chill')">More chill</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'spicy')">More spicy</button>
+        <button class="rw-btn" onclick="rewriteReply(${i},'energy')">Match energy</button>
         <button class="rw-btn copy-rw" onclick="copyCardReply(${i})">Copy ↗</button>
       </div>
     </div>`).join('');
