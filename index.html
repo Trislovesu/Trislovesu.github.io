@@ -470,6 +470,10 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 /* ── HEADER ICON BUTTONS ── */
 .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.baymax-badge{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:11px;background:linear-gradient(135deg,rgba(77,179,122,0.32),rgba(36,120,82,0.16));border:1px solid var(--green);color:#a8e9c4;font-size:11px;font-weight:700;letter-spacing:.01em;white-space:nowrap;cursor:default;flex-shrink:0;animation:baymaxGlow 3s ease-in-out infinite;-webkit-tap-highlight-color:transparent}
+.baymax-badge .bx-check{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--green);color:#0c1a12;font-size:10px;font-weight:900;flex-shrink:0;box-shadow:0 0 8px rgba(77,179,122,0.7)}
+@keyframes baymaxGlow{0%,100%{box-shadow:0 0 0 1px rgba(77,179,122,0.25),0 0 14px rgba(77,179,122,0.3)}50%{box-shadow:0 0 0 1px rgba(77,179,122,0.45),0 0 28px rgba(77,179,122,0.6)}}
+@media (max-width:600px){.baymax-badge{padding:0 9px;font-size:0}.baymax-badge .bx-check{font-size:10px}}
 .hdr-icon{width:38px;height:38px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0;position:relative;-webkit-tap-highlight-color:transparent}
 .hdr-icon:hover{background:var(--surface3);border-color:var(--border2)}
 .hdr-icon:active{transform:scale(.94)}
@@ -486,14 +490,49 @@ input[type="text"]::placeholder{color:var(--text3)}
 .panel-close:active{transform:scale(.95)}
 .panel-body{padding:0 22px 30px}
 
-/* ── STICKER NOTE ── */
-.sticker-note{position:fixed;left:24px;top:50%;transform:translateY(-50%) rotate(-4deg);width:210px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:4px;padding:20px 18px 22px;z-index:5;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 50px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;animation:stickerFloat 6s ease-in-out infinite}
-.sticker-note::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(3deg);width:62px;height:20px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.12);border-radius:2px;backdrop-filter:blur(2px)}
-.sticker-note h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.sticker-note p{font-size:12px;line-height:1.6;color:var(--text2)}
-.sticker-note .crew{font-size:11px;color:rgba(160,130,255,0.85);margin-top:10px;font-weight:600}
-@keyframes stickerFloat{0%,100%{transform:translateY(-50%) rotate(-4deg)}50%{transform:translateY(calc(-50% - 8px)) rotate(-3deg)}}
-@media (max-width:880px){.sticker-note{display:none}}
+/* ── STICKER NOTE (stuck to the login card's left edge) ── */
+.login-card{position:relative}
+.sticker-note{position:absolute;top:38px;left:-186px;width:188px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:18px 16px 20px;z-index:1;box-shadow:0 14px 40px rgba(0,0,0,0.55),0 0 50px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:right center;transform:rotate(-5deg);animation:stickerFloat 6s ease-in-out infinite}
+/* tape strip across the seam where the note meets the card */
+.sticker-note::after{content:'';position:absolute;top:50%;right:-16px;transform:translateY(-50%) rotate(8deg);width:34px;height:22px;background:rgba(226,226,226,0.13);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+.sticker-note h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.sticker-note p{font-size:11.5px;line-height:1.55;color:var(--text2)}
+.sticker-note .crew{font-size:10.5px;color:rgba(160,130,255,0.85);margin-top:9px;font-weight:600}
+@keyframes stickerFloat{0%,100%{transform:rotate(-5deg) translateY(0)}50%{transform:rotate(-4deg) translateY(-5px)}}
+@media (max-width:840px){.sticker-note{display:none}}
+
+/* ── AUTH FORM ── */
+.auth-toggle{display:flex;gap:0;background:var(--surface2);border-radius:10px;padding:4px;border:1px solid var(--border);margin-bottom:22px}
+.auth-toggle button{flex:1;padding:10px;border-radius:7px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent}
+.auth-toggle button.active{background:var(--surface3);color:var(--text);border:1px solid var(--border2)}
+.auth-field{margin-bottom:12px;text-align:left}
+.auth-field label{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.auth-field input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+.auth-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(226,226,226,0.06)}
+.auth-field input::placeholder{color:var(--text3)}
+.auth-error{font-size:12.5px;color:var(--red);min-height:16px;margin:2px 0 12px;text-align:left;line-height:1.4}
+.auth-error.ok{color:var(--green)}
+.auth-submit{width:100%;padding:15px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 0 0 1px rgba(200,200,200,0.1),0 0 32px rgba(226,226,226,0.15)}
+.auth-submit:hover{opacity:.93;box-shadow:0 0 0 1px rgba(200,200,200,0.18),0 0 50px rgba(226,226,226,0.3)}
+.auth-submit:active{transform:scale(.99)}
+.auth-submit:disabled{opacity:.6;cursor:not-allowed}
+.signout-row{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.signout-row .acct{font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signout-row .acct strong{color:var(--text2);font-weight:600}
+
+/* ── CROWN (dev login) ── */
+.crown-overlay{position:fixed;inset:0;z-index:1200;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(70,52,12,0.97) 0%,rgba(12,9,3,0.99) 70%);opacity:0;pointer-events:none;transition:opacity .45s ease;overflow:hidden}
+.crown-overlay.show{opacity:1;pointer-events:all}
+.crown-burst{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,70,0.35) 0%,transparent 62%);animation:crownBurst 2.4s ease-out;filter:blur(4px)}
+@keyframes crownBurst{0%{transform:scale(.2);opacity:0}30%{opacity:1}100%{transform:scale(1.6);opacity:0}}
+.crown-emoji{font-size:104px;line-height:1;filter:drop-shadow(0 0 34px rgba(255,205,70,0.85));animation:crownDrop 1s cubic-bezier(.2,1.5,.4,1),crownFloat 2.6s ease-in-out .95s infinite;z-index:2}
+@keyframes crownDrop{0%{transform:translateY(-160px) scale(.1) rotate(-40deg);opacity:0}55%{opacity:1}70%{transform:translateY(14px) scale(1.12) rotate(6deg)}100%{transform:translateY(0) scale(1) rotate(0);opacity:1}}
+@keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+.crown-text{margin-top:26px;font-size:24px;font-weight:800;color:#ffd96e;text-shadow:0 0 24px rgba(255,200,60,0.65);letter-spacing:.01em;opacity:0;transform:translateY(12px);animation:crownTextIn .7s cubic-bezier(.22,1,.36,1) .65s forwards;z-index:2}
+.crown-sub{margin-top:7px;font-size:13px;font-weight:600;color:rgba(255,216,110,0.7);letter-spacing:.06em;text-transform:uppercase;opacity:0;transform:translateY(10px);animation:crownTextIn .7s cubic-bezier(.22,1,.36,1) .95s forwards;z-index:2}
+@keyframes crownTextIn{to{opacity:1;transform:translateY(0)}}
+.crown-spark{position:absolute;font-size:24px;opacity:0;animation:crownSpark 2.2s ease-in-out forwards;z-index:1}
+@keyframes crownSpark{0%{opacity:0;transform:scale(.3)}25%{opacity:1;transform:scale(1.1)}60%{opacity:.8}100%{opacity:0;transform:scale(.6) translateY(-30px)}}
 
 /* ── TONE PREF / SETTINGS OPTIONS ── */
 .pref-grid{display:flex;flex-direction:column;gap:10px;margin-top:8px}
@@ -534,35 +573,51 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- AUTH (login / create account) -->
 <div id="login-screen">
-  <!-- STICKER NOTE for the crew -->
-  <div class="sticker-note">
-    <h3>📌 To the crew</h3>
-    <p>Thank you for your efforts and contribution training the Rizzer — it genuinely made it better. Check back soon, more coming.</p>
-    <div class="crew">— Nikolai · Ismaaeel · Jayden</div>
-  </div>
   <div class="login-card">
+    <!-- STICKER NOTE stuck to the card's edge -->
+    <div class="sticker-note">
+      <h3>📌 To the crew</h3>
+      <p>Thank you for your efforts and contribution training the Rizzer — it genuinely made it better. Check back soon, more coming.</p>
+      <div class="crew">— Nikolai · Ismaaeel · Jayden</div>
+    </div>
     <div class="logo-wrap">
       <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
     </div>
     <h1>Rizz App™</h1>
-    <p class="sub">Enter your PIN to continue</p>
-    <div class="login-train-prompt" id="login-train-prompt" style="display:none">
-      <p>🎯 <strong style="color:var(--text)">Train the Rizzer</strong> — teach the AI how YOU text so replies actually sound like you, not a chatbot.</p>
-      <button class="login-train-btn" onclick="openTraining()">Start Training →</button>
+    <p class="sub" id="auth-sub">Sign in to continue</p>
+    <div class="auth-toggle">
+      <button id="auth-tab-signin" class="active" onclick="setAuthMode('signin')">Sign In</button>
+      <button id="auth-tab-create" onclick="setAuthMode('create')">Create Account</button>
     </div>
-    <div class="pin-row" id="pin-dots">
-      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="email" id="auth-email" placeholder="you@email.com" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('auth-pin').focus()" />
     </div>
-    <div class="numpad">
-      <button class="nk" onclick="kp('1')">1</button><button class="nk" onclick="kp('2')">2</button><button class="nk" onclick="kp('3')">3</button>
-      <button class="nk" onclick="kp('4')">4</button><button class="nk" onclick="kp('5')">5</button><button class="nk" onclick="kp('6')">6</button>
-      <button class="nk" onclick="kp('7')">7</button><button class="nk" onclick="kp('8')">8</button><button class="nk" onclick="kp('9')">9</button>
-      <button class="nk sm" onclick="kc()">Clear</button><button class="nk" onclick="kp('0')">0</button><button class="nk sm" onclick="kd()">⌫</button>
+    <div class="auth-field">
+      <label>4-digit PIN</label>
+      <input type="password" id="auth-pin" placeholder="••••" inputmode="numeric" maxlength="4" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')submitAuth()" />
     </div>
+    <div class="auth-field" id="auth-pin2-field" style="display:none">
+      <label>Confirm PIN</label>
+      <input type="password" id="auth-pin2" placeholder="••••" inputmode="numeric" maxlength="4" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')submitAuth()" />
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-submit" id="auth-submit" onclick="submitAuth()">Sign In</button>
   </div>
+</div>
+
+<!-- CROWN ANIMATION (dev login) -->
+<div class="crown-overlay" id="crown-overlay">
+  <div class="crown-burst"></div>
+  <div class="crown-spark" style="top:32%;left:34%">✨</div>
+  <div class="crown-spark" style="top:30%;right:33%;animation-delay:.3s">✨</div>
+  <div class="crown-spark" style="bottom:34%;left:40%;animation-delay:.6s">⭐</div>
+  <div class="crown-spark" style="bottom:30%;right:38%;animation-delay:.45s">✨</div>
+  <div class="crown-emoji">👑</div>
+  <div class="crown-text">Welcome back, Tris</div>
+  <div class="crown-sub">the rizzlord has entered</div>
 </div>
 
 <!-- TONE PREFERENCE SCREEN (first login) -->
@@ -593,6 +648,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <div class="header-actions">
       <button class="hdr-icon" onclick="openApiPanel()" title="API key & gallery" id="api-icon">🔑</button>
       <button class="hdr-icon" onclick="openHistoryPanel()" title="Reply history">🕑<span class="history-count" id="history-count" style="position:absolute;top:-6px;right:-6px;min-width:18px;font-size:10px;padding:0 4px">0</span></button>
+      <div class="baymax-badge" title="Powered by BayMax — your wholesome AI companion"><span class="bx-check">✓</span>BayMax powered</div>
       <button class="hdr-icon" onclick="openSettingsPanel()" title="Settings">⚙️</button>
       <button class="hdr-icon" onclick="openTraining()" title="Train the Rizzer" id="train-icon-btn">🎯<span class="train-empty-badge" id="train-badge"></span></button>
     </div>
@@ -859,6 +915,11 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearReports()">Clear all</button>
         </div>
       </div>
+
+      <div class="signout-row">
+        <div class="acct">Signed in as <strong id="current-account">—</strong></div>
+        <button class="action-btn" style="flex:none;padding:10px 18px;color:var(--red);border-color:var(--red)" onclick="signOut()">Sign out</button>
+      </div>
     </div>
   </div>
 </div>
@@ -959,47 +1020,161 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('animationend',e=>{
   if(e.animationName==='tapFlash')e.target.classList.remove('tap-flash');
 },true);
-// ── PIN ──────────────────────────────────────
-const PIN='1010';let pin='';
-function kp(d){if(pin.length>=4)return;pin+=d;dots();if(pin.length===4)setTimeout(checkPin,120)}
-function kd(){pin=pin.slice(0,-1);dots()}
-function kc(){pin='';dots()}
-function dots(){for(let i=0;i<4;i++){const e=document.getElementById('pd'+i);e.className='pin-dot'+(i<pin.length?' on':'')}}
-function checkPin(){
-  if(pin===PIN){
-    const ls=document.getElementById('login-screen');
-    ls.classList.add('out');
-    setTimeout(()=>{
-      ls.style.display='none';
-      // First login → ask tone preference; otherwise straight in
-      if(store.getItem('tone_pref')){
-        enterApp();
-      }else{
-        document.getElementById('user-select-screen').classList.add('show');
-      }
-    },380);
-  }else{
-    for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot err';
-    setTimeout(()=>{pin='';dots()},700);
+// ── ACCOUNTS / AUTH ──────────────────────────
+let currentUser='';      // logged-in account email
+let tonePref='none';
+let authMode='signin';
+const DEV_EMAIL='tristan.sooklal@icloud.com';  // pre-seeded owner account (PIN 1010) → crown login
+
+// Disposable / temp email domains — blocked at signup
+const DISPOSABLE_DOMAINS=new Set(['mailinator.com','tempmail.com','temp-mail.org','10minutemail.com','10minutemail.net','guerrillamail.com','guerrillamail.info','guerrillamail.net','sharklasers.com','grr.la','guerrillamailblock.com','yopmail.com','yopmail.net','trashmail.com','trashmail.net','sharklasers.org','getnada.com','nada.email','maildrop.cc','throwawaymail.com','fakeinbox.com','dispostable.com','mailnesia.com','tempinbox.com','emailondeck.com','mintemail.com','mohmal.com','spam4.me','tmpmail.org','tmpmail.net','33mail.com','mailcatch.com','tempmailo.com','minuteinbox.com','moakt.com','luxusmail.org','tempr.email','discard.email','maileater.com','spambog.com','mvrht.net','inboxbear.com','tempemail.co','easytrashmail.com','wegwerfemail.de','byom.de','mailto.plus','fexbox.org','rover.info','vjuum.com','laafd.com','fivermail.com']);
+
+function validEmail(raw){
+  const e=(raw||'').trim().toLowerCase();
+  if(!e)return{ok:false,msg:'Enter your email'};
+  // RFC-ish format check
+  if(!/^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/.test(e))return{ok:false,msg:'That doesn\'t look like a valid email'};
+  if(e.length>120)return{ok:false,msg:'Email is too long'};
+  const domain=e.split('@')[1];
+  // block obvious junk + disposable providers
+  if(domain.includes('..')||domain.startsWith('.')||domain.endsWith('.'))return{ok:false,msg:'That doesn\'t look like a valid email'};
+  if(DISPOSABLE_DOMAINS.has(domain))return{ok:false,msg:'Temporary / disposable emails aren\'t allowed'};
+  return{ok:true,email:e};
+}
+
+function getAccounts(){try{return JSON.parse(store.getItem('rizz_accounts')||'{}')}catch(e){return{}}}
+function saveAccounts(a){store.setItem('rizz_accounts',JSON.stringify(a))}
+
+// Hash the PIN (salted with email) so it's never stored in plaintext
+async function hashPin(email,pin){
+  const input=email.toLowerCase()+'::'+pin+'::rizz_v1';
+  try{
+    if(window.crypto&&crypto.subtle){
+      const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input));
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  // fallback for non-secure contexts
+  let h=0;for(let i=0;i<input.length;i++){h=(Math.imul(h,31)+input.charCodeAt(i))>>>0}
+  return 'fb'+h.toString(16);
+}
+
+function setAuthMode(m){
+  authMode=m;
+  document.getElementById('auth-tab-signin').classList.toggle('active',m==='signin');
+  document.getElementById('auth-tab-create').classList.toggle('active',m==='create');
+  document.getElementById('auth-pin2-field').style.display=m==='create'?'block':'none';
+  document.getElementById('auth-submit').textContent=m==='create'?'Create Account':'Sign In';
+  document.getElementById('auth-sub').textContent=m==='create'?'Create your account':'Sign in to continue';
+  document.getElementById('auth-error').textContent='';
+  document.getElementById('auth-error').className='auth-error';
+}
+
+function authErr(msg,ok){
+  const el=document.getElementById('auth-error');
+  el.textContent=msg;el.className='auth-error'+(ok?' ok':'');
+}
+
+async function submitAuth(){
+  const v=validEmail(document.getElementById('auth-email').value);
+  const pin=document.getElementById('auth-pin').value.trim();
+  if(!v.ok){authErr(v.msg);return}
+  if(!/^\d{4}$/.test(pin)){authErr('PIN must be exactly 4 digits');return}
+
+  const btn=document.getElementById('auth-submit');
+  btn.disabled=true;
+  const accounts=getAccounts();
+
+  try{
+    if(authMode==='create'){
+      const pin2=document.getElementById('auth-pin2').value.trim();
+      if(pin!==pin2){authErr('PINs don\'t match');btn.disabled=false;return}
+      if(accounts[v.email]){authErr('An account with that email already exists — sign in instead');btn.disabled=false;return}
+      accounts[v.email]={pinHash:await hashPin(v.email,pin),createdAt:Date.now()};
+      saveAccounts(accounts);
+      authErr('Account created ✓',true);
+      startSession(v.email);
+    }else{
+      const acc=accounts[v.email];
+      if(!acc){authErr('No account found for that email — create one');btn.disabled=false;return}
+      const h=await hashPin(v.email,pin);
+      if(h!==acc.pinHash){authErr('Wrong PIN, try again');btn.disabled=false;return}
+      startSession(v.email);
+    }
+  }catch(e){
+    authErr('Something went wrong, try again');btn.disabled=false;console.error(e);
   }
 }
 
-// ── KEYBOARD PIN ENTRY (PC) ──────────────────
-document.addEventListener('keydown',e=>{
+function startSession(email){
+  currentUser=email;
+  store.setItem('rizz_session',email);
   const ls=document.getElementById('login-screen');
-  const loginVisible=ls.style.display!=='none'&&!ls.classList.contains('out');
-  if(!loginVisible)return;
-  if(/^[0-9]$/.test(e.key)){e.preventDefault();kp(e.key)}
-  else if(e.key==='Backspace'){e.preventDefault();kd()}
-  else if(e.key==='Escape'){e.preventDefault();kc()}
-});
+  ls.classList.add('out');
+  const after=()=>{
+    ls.style.display='none';
+    if(store.getItem('tone_pref_'+email)){
+      enterApp();
+    }else{
+      document.getElementById('user-select-screen').classList.add('show');
+    }
+  };
+  if(email===DEV_EMAIL){
+    // 👑 crown entrance for the rizzlord
+    setTimeout(()=>{ls.style.display='none';playCrown(after)},380);
+  }else{
+    setTimeout(after,380);
+  }
+}
+
+function playCrown(done){
+  const ov=document.getElementById('crown-overlay');
+  // re-trigger child animations
+  ov.classList.remove('show');void ov.offsetWidth;ov.classList.add('show');
+  setTimeout(()=>{
+    ov.classList.remove('show');
+    setTimeout(done,450);
+  },2300);
+}
+
+// Pre-seed the owner dev account (so PIN 1010 works out of the box)
+async function ensureDevAccount(){
+  const accts=getAccounts();
+  if(!accts[DEV_EMAIL]){
+    accts[DEV_EMAIL]={pinHash:await hashPin(DEV_EMAIL,'1010'),createdAt:Date.now(),dev:true};
+    saveAccounts(accts);
+  }
+}
+
+function signOut(){
+  if(!confirm('Sign out of '+currentUser+'?'))return;
+  store.removeItem('rizz_session');
+  location.reload();
+}
+
+// On load: resume an existing session, else show the auth screen
+async function initAuth(){
+  await ensureDevAccount();
+  const sess=store.getItem('rizz_session');
+  const accounts=getAccounts();
+  if(sess&&accounts[sess]){
+    currentUser=sess;
+    document.getElementById('login-screen').style.display='none';
+    if(store.getItem('tone_pref_'+sess)){
+      enterApp();
+    }else{
+      document.getElementById('user-select-screen').classList.add('show');
+    }
+  }else{
+    // ensure auth screen visible + focus email
+    setAuthMode('signin');
+    setTimeout(()=>{const e=document.getElementById('auth-email');if(e)e.focus()},200);
+  }
+}
 
 // ── TONE PREFERENCE + ENTRY ──────────────────
-let currentUser='Tris👑';
-let tonePref='none';
-
 function choosePref(p){
-  tonePref=p;store.setItem('tone_pref',p);
+  tonePref=p;store.setItem('tone_pref_'+currentUser,p);
   const us=document.getElementById('user-select-screen');
   us.classList.add('out');
   setTimeout(()=>{us.classList.remove('show','out');us.style.display='none';us.style.opacity='';us.style.transform='';enterApp()},380);
@@ -1007,18 +1182,21 @@ function choosePref(p){
 
 function enterApp(){
   document.getElementById('app').classList.add('show');
-  trainerCode='Tris👑';store.setItem('trainer_code','Tris👑');
-  tonePref=store.getItem('tone_pref')||'none';
+  trainerCode=currentUser||'Tris👑';store.setItem('trainer_code',trainerCode);
+  tonePref=store.getItem('tone_pref_'+currentUser)||'none';
   loadApiKey();loadGhSettings();loadHistory();loadTrainingData();loadReports();loadGoods();
   const input=document.getElementById('trainer-code-input');
-  if(input)input.value='Tris👑';
+  if(input)input.value=trainerCode;
+  // show current account in settings
+  const acctEl=document.getElementById('current-account');
+  if(acctEl)acctEl.textContent=currentUser;
   updateCardVisibility();
 }
 
 // ── SETTINGS / PANELS ────────────────────────
 const TONE_PREF_LABELS={spicy:'🌶️ Spicy',funny:'😂 Funny',flirty:'😏 Playful',random:'🎲 Random',none:'🚫 None'};
 function setPref(p){
-  tonePref=p;store.setItem('tone_pref',p);
+  tonePref=p;store.setItem('tone_pref_'+currentUser,p);
   renderSettingsPref();
   showToast(`Vibe set to ${TONE_PREF_LABELS[p]||p}`);
 }
@@ -2836,22 +3014,25 @@ async function rewriteReply(index,type){
   const rwBtns=card.querySelectorAll('.rw-btn');
   rwBtns.forEach(b=>b.classList.add('loading'));
 
-  const prompt=`Rewrite this text message reply with this instruction: ${REWRITE_PROMPTS[type]||type}
+  const realSrc=lastGenMessage&&!lastGenMessage.startsWith('[');
+  const srcLine=realSrc?`She originally texted me: "${lastGenMessage}"\n\n`:'';
+  const prompt=`${srcLine}My current reply to her is: "${reply.text}"
 
-Original reply: "${reply.text}"
+Rewrite MY reply with this single adjustment: ${REWRITE_PROMPTS[type]||type}
 
-RULES:
-- This is a reply a GUY sends to a girl. Keep it from HIS point of view — never flip to her perspective or echo her words back as if you're in her position.
-- Keep it as a real text message — short, natural, lowercase preferred
+CRITICAL:
+- The rewrite must STILL be a natural, direct reply to what she texted — keep the same core meaning and topic. Only apply the adjustment above. Do NOT change the subject or invent something unrelated.
+- This is what a GUY sends back to her. Keep HIS point of view — never flip to her perspective or echo her words back.
+- Keep it a real text message — short, natural, lowercase preferred
 - Zero exclamation marks
 - No cringe ("good girl", "alpha", "i'd destroy you", over-eager)
-- Return ONLY the rewritten reply text, nothing else. No quotes, no explanation.`;
+- Return ONLY the rewritten reply text — no quotes, no explanation, no preamble.`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:150,temperature:0.88,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:120,temperature:0.8,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok)throw new Error('API error');
     const data=await res.json();
@@ -3128,6 +3309,8 @@ function showToast(m){
   const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);
 }
+// Boot the auth flow (resume session or show sign-in)
+initAuth();
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
 </body>
