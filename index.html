@@ -542,6 +542,12 @@ input[type="text"]::placeholder{color:var(--text3)}
 .live-detected.show{display:block}
 .live-detected strong{color:var(--text);font-style:normal}
 .live-status{font-size:12px;color:var(--text3);text-align:center;margin-top:10px}
+.live-tone-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin:4px 0 8px}
+.live-tone-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.live-tone-chip{padding:6px 12px;border-radius:100px;border:1.5px solid var(--border);background:var(--surface2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s}
+.live-tone-chip.on{border-color:var(--accent);background:var(--surface3);color:var(--text);box-shadow:0 0 0 1.5px var(--accent)}
+.live-fix-btn{background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.live-fix-btn:hover{color:var(--text);border-color:var(--accent)}
 .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);margin-right:5px;animation:pulse 1.4s infinite}
 
 /* ── CROWN (dev login) ── */
@@ -1050,6 +1056,8 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     </div>
     <div id="live-active-area" style="display:none">
       <video id="live-video" autoplay muted playsinline></video>
+      <div class="live-tone-label">Reply vibe — pick up to 2 (2 replies lean these ways, 1 is the AI's best call)</div>
+      <div class="live-tone-row" id="live-tone-row"></div>
       <div style="display:flex;gap:8px">
         <button class="live-scan-btn" id="live-scan-btn" onclick="scanLive()">📸 Scan chat &amp; get replies</button>
         <button class="live-stop-btn" onclick="stopLiveShare()">Stop</button>
@@ -1303,6 +1311,17 @@ function closePanel(which){document.getElementById(which+'-overlay').classList.r
 // ── LIVE HELP (desktop screen-share) ─────────
 let liveStream=null;
 function liveSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia)}
+const LIVE_TONES=['flirty','funny','chill','spicy','bold','dry','savage','wholesome','mysterious','playful'];
+function renderLiveToneChips(){
+  const row=document.getElementById('live-tone-row');if(!row)return;
+  row.innerHTML=LIVE_TONES.map(t=>`<button class="live-tone-chip${liveTones.includes(t)?' on':''}" onclick="toggleLiveTone('${t}')">${t}</button>`).join('');
+}
+function toggleLiveTone(t){
+  const i=liveTones.indexOf(t);
+  if(i>=0)liveTones.splice(i,1);
+  else{if(liveTones.length>=2)liveTones.shift();liveTones.push(t);}
+  renderLiveToneChips();
+}
 function openLive(){
   const ov=document.getElementById('live-overlay');
   ov.classList.add('open');document.body.style.overflow='hidden';
@@ -1310,6 +1329,7 @@ function openLive(){
   document.getElementById('live-unsupported').style.display=ok?'none':'block';
   document.getElementById('live-start-area').style.display=(ok&&!liveStream)?'block':'none';
   document.getElementById('live-active-area').style.display=liveStream?'block':'none';
+  renderLiveToneChips();
 }
 function closeLive(){document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
 async function startLiveShare(){
@@ -1346,15 +1366,33 @@ function renderLiveCards(replies,doc){
       </div>
     </div>`).join('');
 }
-function copyLiveReply(i){const r=currentReplies[i];if(!r)return;navigator.clipboard.writeText(r.text).then(()=>showToast('Copied'));}
+function copyLiveReply(i){const r=currentReplies[i];if(!r)return;robustCopy(r.text);}
+// Works in the main tab AND the pop-out window (clipboard API needs the focused doc)
+function robustCopy(text){
+  const inPip=pipWindow&&!pipWindow.closed;
+  const doc=inPip?pipWindow.document:document;
+  // execCommand on the focused document is the most reliable across windows
+  try{
+    const ta=doc.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.top='0';ta.style.opacity='0';
+    doc.body.appendChild(ta);ta.focus();ta.select();
+    const ok=doc.execCommand('copy');
+    doc.body.removeChild(ta);
+    if(ok){showToast('Copied');return;}
+  }catch(e){}
+  // fallback to async clipboard if execCommand didn't work
+  try{(inPip?pipWindow.navigator:navigator).clipboard.writeText(text).then(()=>showToast('Copied')).catch(()=>showToast('Press Ctrl+C to copy'));}
+  catch(e){showToast('Couldn\'t copy automatically');}
+}
 function markGoodLive(i,btn){const r=currentReplies[i];if(!r)return;savedGoodReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',ts:Date.now()});saveGoods();renderGoods();if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}showToast('⭐ Saved');}
 function reportLive(i,btn){const r=currentReplies[i];if(!r)return;const reason=prompt('What\'s wrong with this reply? (e.g. doesn\'t fit, cringe, wrong tone, off-topic)');if(!reason||!reason.trim())return;reportedReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',reason:reason.trim(),ts:Date.now()});saveReports();renderReports();if(btn){btn.classList.add('reported');btn.textContent='🚩 Reported'}showToast('🚩 Reported');}
+
+let liveTones=[];      // up to 2 tones the user wants the replies to lean toward
+let lastLiveFrame=null; // last captured frame (for the "not this message" correction)
 
 async function scanLive(targetDoc){
   targetDoc=targetDoc||document;
   if(!liveStream){showToast('Start screen share first');return}
-  if(!apiKey){showToast('Enter your API key first');return}
-  if(!checkCallLimit())return;
   const v=document.getElementById('live-video');
   const vw=v.videoWidth||1280, vh=v.videoHeight||720;
   if(!vw){showToast('Give the share a second to start');return}
@@ -1362,17 +1400,41 @@ async function scanLive(targetDoc){
   const canvas=document.createElement('canvas');
   canvas.width=Math.round(vw*scale);canvas.height=Math.round(vh*scale);
   canvas.getContext('2d').drawImage(v,0,0,canvas.width,canvas.height);
-  const b64=canvas.toDataURL('image/jpeg',0.72).split(',')[1];
+  lastLiveFrame=canvas.toDataURL('image/jpeg',0.72).split(',')[1];
+  doLiveGenerate(targetDoc,lastLiveFrame,'');
+}
+
+// User correction: they type her exact latest message, AI regenerates anchored on it
+function fixLiveMessage(targetDoc){
+  targetDoc=targetDoc||document;
+  if(!lastLiveFrame){showToast('Scan first');return}
+  const correct=(targetDoc.defaultView||window).prompt('Type her exact latest message — I\'ll base the replies on it:');
+  if(!correct||!correct.trim())return;
+  doLiveGenerate(targetDoc,lastLiveFrame,correct.trim());
+}
+
+async function doLiveGenerate(targetDoc,b64,overrideMsg){
+  targetDoc=targetDoc||document;
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(!checkCallLimit())return;
 
   const btn=targetDoc.getElementById('live-scan-btn')||targetDoc.getElementById('pip-scan')||document.getElementById('live-scan-btn');
   if(btn){btn.disabled=true;btn.textContent='📡 Reading the chat...';}
 
-  // Preferred vibe
-  let prefTone2='';
-  if(tonePref&&tonePref!=='none')prefTone2=tonePref==='random'?ALL_TONES[Math.floor(Math.random()*ALL_TONES.length)]:tonePref;
-  const prefLine=prefTone2?`\nThe user's go-to vibe is ${prefTone2} — make the FIRST reply that tone, the other two fit her message.`:'';
+  // Tone leaning: 2 chosen tones (reply 1 & 2) + AI's best (reply 3); fall back to go-to vibe
+  let toneLine='';
+  if(liveTones.length>=2){
+    toneLine=`\nTONE MIX (lean the replies, but they MUST still fit her message and the convo flow):\n- Reply 1: ${liveTones[0]} tone\n- Reply 2: ${liveTones[1]} tone\n- Reply 3: YOUR best call given the context (whatever lands best)`;
+  }else if(liveTones.length===1){
+    toneLine=`\nTONE MIX: Reply 1 = ${liveTones[0]} tone; Replies 2 & 3 = your best call. All must fit her message and the flow.`;
+  }else if(tonePref&&tonePref!=='none'){
+    const pt=tonePref==='random'?ALL_TONES[Math.floor(Math.random()*ALL_TONES.length)]:tonePref;
+    toneLine=`\nThe user's go-to vibe is ${pt} — make the FIRST reply that tone, the other two your best call.`;
+  }
 
-  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${prefLine}
+  const overrideBlock=overrideMsg?`\n\n‼️ THE USER HAS CONFIRMED HER EXACT LATEST MESSAGE: "${overrideMsg}". Reply to THAT message specifically — do not guess from the image for the message itself. Still use the screenshot only to match the conversation's tone and flow.`:'';
+
+  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${toneLine}${overrideBlock}
 
 STEP 1 — FIND THE ACTIVE CHAT (this is where it usually goes wrong):
 - Messaging apps like Instagram/Messenger have a LEFT SIDEBAR listing OTHER conversations (names + tiny one-line previews of past chats with DIFFERENT people, a search bar, story circles). This sidebar is NOT the conversation — those preview snippets are from other people. COMPLETELY IGNORE the entire left sidebar.
@@ -1387,8 +1449,9 @@ STEP 2 — WHO SAID WHAT (critical, do not mix this up):
 STEP 3 — REPLY TO THE NEWEST MESSAGE (this matters most):
 - The conversation runs top = OLDEST, bottom = NEWEST. The messages at the very BOTTOM of the panel are the most recent.
 - Reply ONLY to the LATEST thing in the convo — the bottom-most messages. Messages higher up are old context; the conversation has MOVED ON from them. Do NOT reply to something from earlier just because it stood out.
-- The timestamps you see (like "7:11 PM", "8:40 PM", "New messages") are just time labels and dividers — they are NOT messages. Ignore them as content, but they confirm that lower = more recent.
-- Find HER newest message near the bottom and respond to THAT, in the current flow of the convo. If her newest line is short ("ou", "lol", "k"), reply to that short line — don't dig back up for something meatier.
+- Timestamps ("7:11 PM", "8:40 PM") are just time labels — NOT messages, ignore them as content, but lower on screen = more recent.
+- A "New messages" divider line is the most important signal: EVERYTHING BELOW IT is brand new/unread. Reply to the newest message BELOW that divider — that is the live edge of the conversation. Ignore the divider text itself.
+- Find HER newest message at the very bottom and respond to THAT, in the current flow of the convo. If her newest line is short ("ou", "lol", "k"), reply to that short line — don't dig back up for something meatier or older.
 
 STEP 4 — HOW TO USE EACH SIDE:
 - Read MY recent messages ONLY for context and to match the tone/energy/flow of the conversation (how formal, how flirty, how playful it's been). Do NOT reply to my own messages.
@@ -1406,17 +1469,16 @@ Return ONLY valid JSON: {"her_message":"her latest message, quoted exactly","rep
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'This is my full screen. Ignore everything that is not the chat. Find the conversation, separate MY messages (right side) from HER messages (left side), read the tone of the back-and-forth, then reply to HER most recent message (bottom-left). Return EXACTLY 3 distinct replies in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that, matching the convo's tone from the screenshot. Return EXACTLY 3 distinct replies in the JSON.`:'This is my full screen. Ignore everything that is not the chat (especially the left sidebar of other chats). Find the active conversation on the right, separate MY messages (right) from HERS (left), and reply to HER newest message at the very bottom. Return EXACTLY 3 distinct replies in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const parsed=parseRepliesResponse(data.choices?.[0]?.message?.content?.trim()||'');
     if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the chat — scan again');
     currentReplies=dedupeReplies(parsed.replies);
-    const her=parsed.her_message||'';
+    const her=overrideMsg||parsed.her_message||'';
     lastGenMessage=her||'[Live chat]';
-    const det=targetDoc.getElementById('live-detected');
-    if(det&&her){det.innerHTML=`💬 she said: <strong>"${her.replace(/</g,'&lt;')}"</strong>`;det.classList.add('show');}
+    renderDetected(targetDoc,her);
     renderLiveCards(currentReplies,targetDoc);
     currentReplies.forEach(r=>addToHistory(r.tone||'live','[Live]',r.text,'dm',null));
   }catch(err){
@@ -1424,6 +1486,13 @@ Return ONLY valid JSON: {"her_message":"her latest message, quoted exactly","rep
   }finally{
     if(btn){btn.disabled=false;btn.textContent='📸 Scan chat & get replies';}
   }
+}
+
+// detected-message bar with a "not this?" correction button
+function renderDetected(targetDoc,her){
+  const det=targetDoc.getElementById('live-detected');if(!det)return;
+  det.innerHTML=`<div style="margin-bottom:6px">💬 she said: <strong>"${(her||'(could not read it)').replace(/</g,'&lt;')}"</strong></div><button class="live-fix-btn" onclick="fixLiveMessage(document)">✏️ not this message? fix it</button>`;
+  det.classList.add('show');
 }
 
 // ── POP-OUT (floating window so you don't switch back to this tab) ──
@@ -1446,7 +1515,7 @@ async function popOutLive(){
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
   pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
   showToast('Popped out — keep it over your chat and scan from there');
