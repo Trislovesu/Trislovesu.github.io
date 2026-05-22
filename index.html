@@ -1352,22 +1352,32 @@ async function scanLive(){
   if(tonePref&&tonePref!=='none')prefTone2=tonePref==='random'?ALL_TONES[Math.floor(Math.random()*ALL_TONES.length)]:tonePref;
   const prefLine=prefTone2?`\nThe user's go-to vibe is ${prefTone2} — make the FIRST reply that tone, the other two fit her message.`:'';
 
-  const system=`You are a fast texting assistant. You're looking at a screenshot of a guy's chat. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${prefLine}
+  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${prefLine}
 
-LAYOUT: messages on the RIGHT (darker bubbles) = HIS, messages on the LEFT (lighter) = HERS. Find HER most recent message at the bottom-left and reply to THAT. Ignore the username, status bar, icons, all UI.
+STEP 1 — FIND THE CHAT: the screen may show other windows, browser tabs, notifications, the desktop, etc. IGNORE all of it. Locate the actual messaging conversation (the column of chat bubbles) and focus only on that. Nothing else on screen matters.
+
+STEP 2 — WHO SAID WHAT (critical, do not mix this up):
+- Go by POSITION / alignment, NOT colour. Bubbles aligned to the RIGHT side = MY messages (the guy's). Bubbles aligned to the LEFT side = HER messages.
+- Colour is only a weak hint and changes per app: iMessage = blue (mine) / grey (hers); Instagram = purple or a gradient (mine) / grey or dark (hers), and Instagram's colour can change. ALWAYS trust the left/right alignment over the colour.
+- HER most recent message is the bottom-most LEFT-aligned bubble. THAT is what you reply to.
+
+STEP 3 — HOW TO USE EACH SIDE:
+- Read MY recent messages ONLY for context and to match the tone/energy/flow of the conversation (how formal, how flirty, how playful it's been). Do NOT reply to my own messages.
+- Focus mainly on HER latest message — the reply must directly answer what SHE just said, in the established tone of the convo.
 
 RULES:
-- Every reply must DIRECTLY answer her latest message — never off-topic
+- Every reply must DIRECTLY answer HER latest message — never off-topic, never a reply to my own message
 - You are the man replying to her — never write from her POV
+- Match the existing tone of the conversation (read the back-and-forth, don't reset the vibe)
 - Zero exclamation marks, lowercase, short and punchy
 - 3 genuinely different replies, confident and natural, never cringe or thirsty
 
-Return ONLY valid JSON: {"her_message":"her latest message, quoted","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+Return ONLY valid JSON: {"her_message":"her latest message, quoted exactly","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read this chat. Find her latest message and return EXACTLY 3 distinct replies in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'This is my full screen. Ignore everything that is not the chat. Find the conversation, separate MY messages (right side) from HER messages (left side), read the tone of the back-and-forth, then reply to HER most recent message (bottom-left). Return EXACTLY 3 distinct replies in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -1603,8 +1613,8 @@ Rules: observations must be SPECIFIC to the actual story content only — descri
     :`You are reading an Instagram DM conversation screenshot. Your ONLY job is to read the actual text messages and figure out how to reply.
 
 CRITICAL LAYOUT RULES — get this right or everything else fails:
-- Messages on the RIGHT side of the screen = MY messages (the user's outgoing messages, usually in a darker/coloured bubble)
-- Messages on the LEFT side of the screen = HER messages (the other person, usually in a lighter/grey bubble)
+- Go by POSITION, not colour. Messages aligned to the RIGHT side of the screen = MY messages (outgoing). Messages aligned to the LEFT side = HER messages.
+- Colour is only a weak hint and varies by app — iMessage is blue (mine) / grey (hers), Instagram is purple or gradient (mine) / grey (hers) and can change. ALWAYS trust left/right alignment over colour.
 - The most recent message at the BOTTOM of the screen on the LEFT side is what I need to reply to
 - READ the actual text in each bubble carefully. Do not skim. Do not assume.
 
