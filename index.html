@@ -24,7 +24,7 @@
   --amber:#e0a847;--amber-bg:#261d0d;
   --radius:14px;--radius-sm:9px;
 }
-body{font-family:'DM Sans',sans-serif;background:radial-gradient(ellipse at top,#17171f 0%,var(--bg) 65%);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body{font-family:'DM Sans',sans-serif;background:radial-gradient(ellipse at top,#17171f 0%,var(--bg) 65%);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:calc(40px + env(safe-area-inset-top)) 20px calc(80px + env(safe-area-inset-bottom));font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
 
 /* ── LOGIN ── */
 #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;transition:opacity .35s,transform .35s}
@@ -298,7 +298,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 /* ── TRAINING MODAL ── */
 .train-overlay{position:fixed;inset:0;background:var(--bg);z-index:950;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto}
 .train-overlay.open{opacity:1;pointer-events:all}
-.train-header{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 0;flex-shrink:0;gap:12px}
+.train-header{display:flex;align-items:center;justify-content:space-between;padding:calc(20px + env(safe-area-inset-top)) 22px 0;flex-shrink:0;gap:12px}
 .train-title{font-size:18px;font-weight:700;color:var(--text)}
 .train-close{background:var(--surface2);border:1.5px solid var(--border2);border-radius:12px;padding:13px 22px;min-height:46px;min-width:88px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s,border-color .2s,transform .12s,box-shadow .2s;-webkit-tap-highlight-color:transparent;user-select:none;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 2px 12px rgba(0,0,0,0.3)}
 .train-close:hover{color:var(--text);background:var(--surface3);border-color:var(--accent);box-shadow:0 0 0 1px rgba(226,226,226,0.15),0 4px 18px rgba(0,0,0,0.4)}
@@ -442,7 +442,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 /* ── MOBILE OPTIMIZATIONS ── */
 @media (max-width:600px){
-  body{padding:20px 14px 60px}
+  body{padding:calc(24px + env(safe-area-inset-top)) 14px calc(60px + env(safe-area-inset-bottom))}
   .train-header{padding:16px 16px 0}
   .train-body{padding:18px 14px}
   .train-title{font-size:16px}
@@ -521,6 +521,28 @@ input[type="text"]::placeholder{color:var(--text3)}
 .signout-row{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .signout-row .acct{font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .signout-row .acct strong{color:var(--text2);font-weight:600}
+
+/* ── LIVE HELP ── */
+.hdr-icon.live-icon{border-color:rgba(77,179,122,0.4)}
+.hdr-icon.live-icon:hover{border-color:var(--green);background:var(--green-bg)}
+.live-overlay{position:fixed;inset:0;z-index:960;background:var(--bg);display:none;flex-direction:column;overflow-y:auto}
+.live-overlay.open{display:flex}
+.live-header{display:flex;align-items:center;justify-content:space-between;padding:calc(20px + env(safe-area-inset-top)) 22px 0;flex-shrink:0;gap:12px}
+.live-body{flex:1;padding:18px 18px 40px;max-width:720px;width:100%;margin:0 auto}
+.live-hint{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:16px}
+.live-unsupported{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--amber);line-height:1.6}
+.live-start-btn{width:100%;padding:16px;background:var(--green);color:#06140c;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 32px rgba(77,179,122,0.35);transition:all .15s}
+.live-start-btn:hover{opacity:.92;box-shadow:0 0 50px rgba(77,179,122,0.5)}
+.live-video{width:100%;max-height:230px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:12px}
+.live-scan-btn{flex:1;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 0 28px rgba(226,226,226,0.18)}
+.live-scan-btn:hover{opacity:.93}
+.live-scan-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;box-shadow:none}
+.live-stop-btn{flex:none;padding:14px 16px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.live-detected{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--radius-sm);padding:11px 14px;margin:14px 0 10px;font-size:13px;color:var(--text2);font-style:italic;display:none}
+.live-detected.show{display:block}
+.live-detected strong{color:var(--text);font-style:normal}
+.live-status{font-size:12px;color:var(--text3);text-align:center;margin-top:10px}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);margin-right:5px;animation:pulse 1.4s infinite}
 
 /* ── CROWN (dev login) ── */
 .crown-overlay{position:fixed;inset:0;z-index:1200;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(70,52,12,0.97) 0%,rgba(12,9,3,0.99) 70%);opacity:0;pointer-events:none;transition:opacity .45s ease;overflow:hidden}
@@ -656,6 +678,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     </div>
     <div class="header-actions">
       <div class="baymax-badge" title="Powered by BayMax — your wholesome AI companion"><span class="bx-check">✓</span>BayMax powered</div>
+      <button class="hdr-icon live-icon" onclick="openLive()" title="Live Help (desktop) — read your chat live">🟢</button>
       <button class="hdr-icon" onclick="openApiPanel()" title="API key & gallery" id="api-icon">🔑</button>
       <button class="hdr-icon" onclick="openHistoryPanel()" title="Reply history">🕑<span class="history-count" id="history-count" style="position:absolute;top:-6px;right:-6px;min-width:18px;font-size:10px;padding:0 4px">0</span></button>
       <button class="hdr-icon" onclick="openSettingsPanel()" title="Settings">⚙️</button>
@@ -1008,6 +1031,36 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
   </div>
 </div>
 
+<!-- LIVE HELP OVERLAY -->
+<div class="live-overlay" id="live-overlay">
+  <div class="live-header">
+    <div>
+      <div class="train-title">🟢 Live Help</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px">Share your chat window — scan it live, get replies instantly</div>
+    </div>
+    <button class="train-close" onclick="closeLive()">Done</button>
+  </div>
+  <div class="live-body">
+    <div class="live-unsupported" id="live-unsupported" style="display:none">
+      📵 Live Help needs a desktop browser (Chrome, Edge or Firefox). Screen sharing isn't supported on iPhone/iPad — use the 🔥 Quick Response screenshot flow on mobile instead.
+    </div>
+    <div id="live-start-area">
+      <p class="live-hint">Tap below, then pick the window with your chat (e.g. your browser tab with Instagram, or the Messages window). Rizz App reads what's on screen and fires back replies — no tab-switching.</p>
+      <button class="live-start-btn" onclick="startLiveShare()">▶ Start screen share</button>
+    </div>
+    <div id="live-active-area" style="display:none">
+      <video id="live-video" autoplay muted playsinline></video>
+      <div style="display:flex;gap:8px">
+        <button class="live-scan-btn" id="live-scan-btn" onclick="scanLive()">📸 Scan chat &amp; get replies</button>
+        <button class="live-stop-btn" onclick="stopLiveShare()">Stop</button>
+      </div>
+      <div class="live-detected" id="live-detected"></div>
+      <div class="reply-cards" id="live-reply-cards"></div>
+      <div class="live-status" id="live-status"><span class="live-dot"></span>sharing — scan whenever a new message comes in</div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- ANGLE SUGGESTIONS MODAL -->
@@ -1245,6 +1298,94 @@ function openApiPanel(){document.getElementById('api-overlay').classList.add('op
 function openHistoryPanel(){renderHistory();document.getElementById('history-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function openSettingsPanel(){renderSettingsPref();renderGoods();renderReports();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
+
+// ── LIVE HELP (desktop screen-share) ─────────
+let liveStream=null;
+function liveSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia)}
+function openLive(){
+  const ov=document.getElementById('live-overlay');
+  ov.classList.add('open');document.body.style.overflow='hidden';
+  const ok=liveSupported();
+  document.getElementById('live-unsupported').style.display=ok?'none':'block';
+  document.getElementById('live-start-area').style.display=(ok&&!liveStream)?'block':'none';
+  document.getElementById('live-active-area').style.display=liveStream?'block':'none';
+}
+function closeLive(){document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
+async function startLiveShare(){
+  if(!liveSupported()){showToast('Not supported on this device');return}
+  try{
+    liveStream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:1},audio:false});
+    const v=document.getElementById('live-video');
+    v.srcObject=liveStream;
+    liveStream.getVideoTracks()[0].addEventListener('ended',stopLiveShare);
+    document.getElementById('live-start-area').style.display='none';
+    document.getElementById('live-active-area').style.display='block';
+  }catch(e){showToast('Screen share cancelled');}
+}
+function stopLiveShare(){
+  if(liveStream){liveStream.getTracks().forEach(t=>t.stop());liveStream=null;}
+  const v=document.getElementById('live-video');if(v)v.srcObject=null;
+  document.getElementById('live-start-area').style.display='block';
+  document.getElementById('live-active-area').style.display='none';
+  document.getElementById('live-detected').classList.remove('show');
+  document.getElementById('live-reply-cards').innerHTML='';
+}
+
+async function scanLive(){
+  if(!liveStream){showToast('Start screen share first');return}
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(!checkCallLimit())return;
+  const v=document.getElementById('live-video');
+  const vw=v.videoWidth||1280, vh=v.videoHeight||720;
+  if(!vw){showToast('Give the share a second to start');return}
+  const scale=Math.min(1,1100/Math.max(vw,vh));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.round(vw*scale);canvas.height=Math.round(vh*scale);
+  canvas.getContext('2d').drawImage(v,0,0,canvas.width,canvas.height);
+  const b64=canvas.toDataURL('image/jpeg',0.72).split(',')[1];
+
+  const btn=document.getElementById('live-scan-btn');
+  btn.disabled=true;btn.textContent='📡 Reading the chat...';
+
+  // Preferred vibe
+  let prefTone2='';
+  if(tonePref&&tonePref!=='none')prefTone2=tonePref==='random'?ALL_TONES[Math.floor(Math.random()*ALL_TONES.length)]:tonePref;
+  const prefLine=prefTone2?`\nThe user's go-to vibe is ${prefTone2} — make the FIRST reply that tone, the other two fit her message.`:'';
+
+  const system=`You are a fast texting assistant. You're looking at a screenshot of a guy's chat. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${prefLine}
+
+LAYOUT: messages on the RIGHT (darker bubbles) = HIS, messages on the LEFT (lighter) = HERS. Find HER most recent message at the bottom-left and reply to THAT. Ignore the username, status bar, icons, all UI.
+
+RULES:
+- Every reply must DIRECTLY answer her latest message — never off-topic
+- You are the man replying to her — never write from her POV
+- Zero exclamation marks, lowercase, short and punchy
+- 3 genuinely different replies, confident and natural, never cringe or thirsty
+
+Return ONLY valid JSON: {"her_message":"her latest message, quoted","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read this chat. Find her latest message and return EXACTLY 3 distinct replies in the JSON.'}]}]})
+    });
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
+    const data=await res.json();
+    const parsed=parseRepliesResponse(data.choices?.[0]?.message?.content?.trim()||'');
+    if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the chat — scan again');
+    currentReplies=dedupeReplies(parsed.replies);
+    const her=parsed.her_message||'';
+    lastGenMessage=her||'[Live chat]';
+    const det=document.getElementById('live-detected');
+    if(her){det.innerHTML=`💬 she said: <strong>"${her.replace(/</g,'&lt;')}"</strong>`;det.classList.add('show');}
+    renderReplyCards(currentReplies,'live-reply-cards',null);
+    currentReplies.forEach(r=>addToHistory(r.tone||'live','[Live]',r.text,'dm',null));
+  }catch(err){
+    showToast(err.message&&err.message.length<90?err.message:'Scan failed');console.error(err);
+  }finally{
+    btn.disabled=false;btn.textContent='📸 Scan chat & get replies';
+  }
+}
 
 // ── API KEY ──────────────────────────────────
 let apiKey='';
@@ -2816,6 +2957,26 @@ const BAKED_REPORTS=[
   {message:"oh so we're showing off tonight?",reply:"sounds like a good time",reason:"too generic, doesn't engage her playful energy"},
   {message:"you look like bad decisions and good stories",reply:"keep it in mind for next time",reason:"generic, ignores her clever line instead of matching the wit"},
   {message:"nah because why are you kinda fine for no reason",reply:"guess that's the idea",reason:"flat, doesn't match her playful flirty energy"},
+  {message:"I love your eyes",reply:"you've seen enough of them",reason:"doesn't fit, slightly dismissive of a compliment"},
+  {message:"hey love",reply:"hey back",reason:"generic and lifeless — a greeting deserves a playful flip, not a mirror"},
+  {message:"hey love",reply:"whatcha up to",reason:"lame, deflects the warm greeting with a boring question"},
+  {message:"hey love",reply:"got a minute",reason:"doesn't fit — sounds like a cold business text, not a flirt"},
+  {message:"hey handsome",reply:"handsome is nice, but I like 'confident' better",reason:"tries too hard, comes off cocky and clunky"},
+  {message:"hey handsome",reply:"noted",reason:"too nonchalant, kills the vibe of a compliment"},
+  {message:"hey handsome",reply:"who said it wasn't mutual",reason:"doesn't quite fit the simple greeting"},
+  {message:"hey omg you're cute",reply:"im glad you noticed",reason:"try-hard and a little desperate"},
+  {message:"hey omg you're cute",reply:"you're looking for a pretty boy or what",reason:"wrong tone, sounds female POV, cringe"},
+  {message:"your back is insanely sexy omg",reply:"i've had my fair share of compliments but that's new",reason:"not confident, rambly and weak"},
+  {message:"your back is insanely sexy omg",reply:"don't think that gets worn out soon",reason:"robotic, makes no sense"},
+  {message:"I could show you what a real girl is",reply:"sounds like a challenge",reason:"cliche pickup-line response, lazy"},
+  {message:"I could show you what a real girl is",reply:"so you think you're a girl now",reason:"off-topic, misreads her line completely"},
+  {message:"I don't like football but if you want we can get messi",reply:"no need to bribe me to spend time with you",reason:"off-topic, ignores her playful offer instead of bantering with it"},
+  {message:"I don't like football but if you want we can get messi",reply:"you're just saying that because you like him",reason:"off-topic and corny, doesn't land"},
+  {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"go ahead, i'm not that scary",reason:"misses the joke, corny, wrong tone"},
+  {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"i'm more of a rescue mission, let's play that way instead",reason:"off-topic, kills her bit instead of playing along"},
+  {message:"roses are red violets are fine, you'll be the 6 i'll be the 9",reply:"i'm not the type to be in relationships, but i'd make an exception for you",reason:"off-topic and overshares, ignores the playful poem"},
+  {message:"roses are red violets are fine, you'll be the 6 i'll be the 9",reply:"which number am i supposed to call when the 9 is ringing",reason:"off-topic, tries too hard to be clever and flops"},
+  {message:"u fine asf ma",reply:"maybe that's why they say you get what you pay for",reason:"off-topic, makes no sense as a reply to a compliment"},
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -2828,7 +2989,14 @@ function getReportsContext(userMsg,limit=4){
   if(!picked.length)return'';
   return`\n\nFLAGGED MISTAKES — these exact replies were marked WRONG. NEVER produce anything like them, and learn the lesson behind each:\n`+
     picked.map(r=>`✗ she said "${r.message}" → "${r.reply}" — WRONG: ${r.reason}`).join('\n')+
-    `\n\nThe core lesson: every reply MUST directly answer what she actually said. If she compliments you, acknowledge it and flip it back with confidence — never deflect into a vague tangent or use pronouns ("they", "it") that don't clearly point to something.`;
+    `\n\nCORE LESSONS:
+- Every reply MUST directly answer what she actually said — never a vague tangent or off-topic line.
+- Compliments: acknowledge it and flip it back confidently. Never use pronouns ("they"/"it") that don't clearly point to something.
+- Greetings ("hey cutie", "hey handsome", "hey love", "hey mommy"): flip them playfully — never mirror it back ("hey back") or answer with a boring question.
+- Corny pickup lines, poems, or jokes (titanic, roses are red, "are you nine", football/messi, etc.): PLAY ALONG with her bit and match the humour or rhyme — never go off-topic, never explain it, never kill the joke with something random.
+- Crude / forward / explicit openers ("come play with my pussy", "gargle your cock", "you want this cock"): stay confident and in control with a smooth, slightly amused one-liner that holds the frame ("you're awfully forward", "straight to the point i see"). Never get flustered, never match it with something equally crude and random, never go off-topic.
+- Insults / negging ("ew you're black", etc.): stay completely unbothered — a calm, witty dismissal ("and yet here you are"). Never get defensive, never take the bait, never engage the insult seriously.
+- Feminizing terms (she calls HIM "mommy", "girl", "queen", or implies he's a woman): he is a MAN. Brush it off and keep the masculine frame — deflect lightly ("that's a new one", "wrong title") and never play along with or accept the female label.`;
 }
 
 // ── GOOD REPLIES (positive feedback loop) ────
@@ -2895,17 +3063,64 @@ const BAKED_GOODS=[
   {message:"you look like bad decisions and good stories",reply:"sounds like you've seen some fun nights",tone:"playful"},
   {message:"nah because why are you kinda fine for no reason",reply:"maybe i'm just that charming",tone:"teasing"},
   {message:"nah because why are you kinda fine for no reason",reply:"not my fault i'm worth it",tone:"playful"},
+  {message:"you post this knowing damn well I'm tryna behave",reply:"guess you can't just resist a good post",tone:"cheeky"},
   {message:"HI love",reply:"how's your day going",tone:"casual"},
+  {message:"hey cutie",reply:"just you then",tone:"flirty"},
+  {message:"hey cutie",reply:"im glad we know each other's nicknames",tone:"nonchalant"},
+  {message:"hey cutie",reply:"who told you to call me that",tone:"teasing"},
+  {message:"hey omg you're cute",reply:"cute is nice, but charming is better",tone:"flirty"},
+  {message:"your back is insanely sexy omg",reply:"glad you like it",tone:"nonchalant"},
+  {message:"I love your beard",reply:"it's getting expensive to maintain",tone:"joking"},
+  {message:"I love your beard",reply:"you got a type",tone:"teasing"},
+  {message:"I love your beard",reply:"glad you like the beard",tone:"casual"},
+  {message:"I could show you what a real girl is",reply:"i'm right here, what do you want to do to me",tone:"flirty"},
+  {message:"are you nine because you're fine, lemme bull yuh",reply:"maybe that's why they say age is just a number",tone:"flirty"},
+  {message:"roses are red violets are fine, you'll be the 6 i'll be the 9",reply:"sounds like a plan",tone:"flirty"},
+  {message:"u fine asf ma",reply:"better with you around",tone:"flirty"},
+  {message:"u fine asf ma",reply:"appreciated",tone:"polite"},
+  {message:"lovebomb me already so I can move on",reply:"glad you're impatient",tone:"teasing"},
+  {message:"lovebomb me already so I can move on",reply:"you're pretty eager huh",tone:"teasing"},
+  {message:"lovebomb me already so I can move on",reply:"you know i move on my terms",tone:"assertive"},
+];
+
+// Reference set — strong target responses for tricky message types that tend to flop
+const BAKED_GUIDE=[
+  // hostile / negging — stay unbothered, never defensive
+  {message:"ew you're black",reply:"and yet here you are in my comments",tone:"unbothered"},
+  {message:"ew you're black",reply:"weird way to shoot your shot but go off",tone:"unbothered"},
+  // playful greetings — flip, don't mirror
+  {message:"why hello",reply:"took you long enough",tone:"playful"},
+  {message:"why hello",reply:"look who finally showed up",tone:"playful"},
+  {message:"hey mommy",reply:"that's a new one",tone:"teasing"},
+  {message:"hey mommy",reply:"wrong title but i'll let it slide",tone:"confident"},
+  {message:"so you think you're a girl now",reply:"nice try, that's not landing",tone:"unbothered"},
+  // clever / pun openers — match the wit
+  {message:"saw all the muscle training posts and decided you're the new weight I wanna try lifting hi",reply:"careful, i'm heavier than i look",tone:"clever"},
+  {message:"saw all the muscle training posts and decided you're the new weight I wanna try lifting hi",reply:"you sure you can handle the load",tone:"flirty"},
+  // pickup-line poems — play along with her bit
+  {message:"are you nine because you're fine, lemme bull yuh",reply:"bold opener, i'll allow it",tone:"playful"},
+  {message:"since your age on the clock, you want this cock",reply:"that actually rhymed, points for effort",tone:"teasing"},
+  {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"subtle, real subtle",tone:"teasing"},
+  {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"you've got jokes and a plan, dangerous combo",tone:"playful"},
+  {message:"roses are red violets are fine, you be the 6 i'll be the 9",reply:"shakespeare's shaking",tone:"teasing"},
+  {message:"roses are red violets are fine, you be the 6 i'll be the 9",reply:"you rehearse that or natural talent",tone:"playful"},
+  {message:"I don't like football but if you want we can get messi",reply:"messi and you? you're spoiling me",tone:"playful"},
+  {message:"I don't like football but if you want we can get messi",reply:"now you're speaking my language",tone:"flirty"},
+  // explicit / forward — confident, hold the frame, don't get flustered or go crude-random
+  {message:"hey daddy come play with my pussy",reply:"you're awfully forward for a hello",tone:"confident"},
+  {message:"hey daddy come play with my pussy",reply:"slow down, we just got here",tone:"confident"},
+  {message:"let me gargle your cock prettyboy",reply:"straight to the point i see",tone:"confident"},
+  {message:"let me gargle your cock prettyboy",reply:"you don't waste any time huh",tone:"teasing"},
 ];
 
 function getGoodsContext(userMsg,limit=4){
-  const all=[...BAKED_GOODS,...savedGoodReplies];
+  const all=[...BAKED_GOODS,...BAKED_GUIDE,...savedGoodReplies];
   if(!all.length)return'';
   const scored=all.map(r=>({r,s:scoreRelevance(userMsg||'',{message:r.message||'',context:''})+(r.ts?0:0.4)}));
   scored.sort((a,b)=>(b.s-a.s)||((b.r.ts||0)-(a.r.ts||0)));
   const picked=scored.slice(0,limit).map(x=>x.r);
   if(!picked.length)return'';
-  return`\n\nUSER-APPROVED REPLIES — the user loved these exact replies. Lean hard into this style: confident, flips the compliment back, a little cheeky, never thirsty or eager:\n`+
+  return`\n\nTARGET-QUALITY REPLIES — examples of how to nail messages like this. Lean hard into this style: confident, flips it back, a little cheeky, holds the frame, never thirsty or flustered:\n`+
     picked.map(r=>`✓ "${r.reply}"${r.tone?` [${r.tone}]`:''}`).join('\n');
 }
 
@@ -3352,10 +3567,14 @@ CRITICAL:
   }
 }
 
-function renderReplyCards(replies){
-  const area=document.getElementById('replies-area');
-  const container=document.getElementById('reply-cards');
-  area.style.display='block';
+function renderReplyCards(replies,containerId,areaId){
+  const cid=containerId||'reply-cards';
+  // clear the sibling container so reply-card ids never collide
+  const other=document.getElementById(cid==='live-reply-cards'?'reply-cards':'live-reply-cards');
+  if(other)other.innerHTML='';
+  const area=areaId===null?null:document.getElementById(areaId||'replies-area');
+  const container=document.getElementById(cid);
+  if(area)area.style.display='block';
   container.innerHTML=replies.map((r,i)=>`
     <div class="reply-card" id="reply-card-${i}">
       <div class="reply-card-meta">
