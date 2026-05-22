@@ -258,7 +258,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
 /* report modal */
-.report-modal{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:940;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(6px)}
+.report-modal{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(6px)}
 .report-modal.open{opacity:1;pointer-events:all}
 .report-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 80px rgba(224,85,85,0.12)}
 .report-box h3{font-size:16px;font-weight:600;margin-bottom:6px}
@@ -1054,6 +1054,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-scan-btn" id="live-scan-btn" onclick="scanLive()">📸 Scan chat &amp; get replies</button>
         <button class="live-stop-btn" onclick="stopLiveShare()">Stop</button>
       </div>
+      <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
       <div class="live-status" id="live-status"><span class="live-dot"></span>sharing — scan whenever a new message comes in</div>
@@ -1331,7 +1332,26 @@ function stopLiveShare(){
   document.getElementById('live-reply-cards').innerHTML='';
 }
 
-async function scanLive(){
+// Live reply cards — self-contained actions that work in the overlay AND the pop-out window
+function renderLiveCards(replies,doc){
+  const cont=doc.getElementById('live-reply-cards');if(!cont)return;
+  cont.innerHTML=replies.map((r,i)=>`
+    <div class="reply-card">
+      <div class="reply-card-meta"><span class="reply-tone-tag">${r.tone||'reply'}</span><span class="reply-why">${(r.why||'').replace(/</g,'&lt;')}</span></div>
+      <div class="reply-text">${(r.text||'').replace(/</g,'&lt;')}</div>
+      <div class="rewrite-strip">
+        <button class="rw-btn good-rw" onclick="markGoodLive(${i},this)">⭐ Good</button>
+        <button class="rw-btn report-rw" onclick="reportLive(${i},this)">🚩 Report</button>
+        <button class="rw-btn copy-rw" onclick="copyLiveReply(${i})">Copy ↗</button>
+      </div>
+    </div>`).join('');
+}
+function copyLiveReply(i){const r=currentReplies[i];if(!r)return;navigator.clipboard.writeText(r.text).then(()=>showToast('Copied'));}
+function markGoodLive(i,btn){const r=currentReplies[i];if(!r)return;savedGoodReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',ts:Date.now()});saveGoods();renderGoods();if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}showToast('⭐ Saved');}
+function reportLive(i,btn){const r=currentReplies[i];if(!r)return;const reason=prompt('What\'s wrong with this reply? (e.g. doesn\'t fit, cringe, wrong tone, off-topic)');if(!reason||!reason.trim())return;reportedReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',reason:reason.trim(),ts:Date.now()});saveReports();renderReports();if(btn){btn.classList.add('reported');btn.textContent='🚩 Reported'}showToast('🚩 Reported');}
+
+async function scanLive(targetDoc){
+  targetDoc=targetDoc||document;
   if(!liveStream){showToast('Start screen share first');return}
   if(!apiKey){showToast('Enter your API key first');return}
   if(!checkCallLimit())return;
@@ -1344,8 +1364,8 @@ async function scanLive(){
   canvas.getContext('2d').drawImage(v,0,0,canvas.width,canvas.height);
   const b64=canvas.toDataURL('image/jpeg',0.72).split(',')[1];
 
-  const btn=document.getElementById('live-scan-btn');
-  btn.disabled=true;btn.textContent='📡 Reading the chat...';
+  const btn=targetDoc.getElementById('live-scan-btn')||targetDoc.getElementById('pip-scan')||document.getElementById('live-scan-btn');
+  if(btn){btn.disabled=true;btn.textContent='📡 Reading the chat...';}
 
   // Preferred vibe
   let prefTone2='';
@@ -1354,7 +1374,11 @@ async function scanLive(){
 
   const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${prefLine}
 
-STEP 1 — FIND THE CHAT: the screen may show other windows, browser tabs, notifications, the desktop, etc. IGNORE all of it. Locate the actual messaging conversation (the column of chat bubbles) and focus only on that. Nothing else on screen matters.
+STEP 1 — FIND THE ACTIVE CHAT (this is where it usually goes wrong):
+- Messaging apps like Instagram/Messenger have a LEFT SIDEBAR listing OTHER conversations (names + tiny one-line previews of past chats with DIFFERENT people, a search bar, story circles). This sidebar is NOT the conversation — those preview snippets are from other people. COMPLETELY IGNORE the entire left sidebar.
+- The ACTIVE conversation is the large panel on the RIGHT, with a person's name/header at the top and full chat bubbles below. ONLY read this right-hand panel.
+- Also ignore: the app's nav rail, browser tabs, the desktop, notifications, timestamps, "New messages" dividers, reaction icons, the message input box at the bottom.
+- If you accidentally read a one-line preview from the left list, you'll reply to the wrong thing — so anchor only on the big right-side conversation.
 
 STEP 2 — WHO SAID WHAT (critical, do not mix this up):
 - Go by POSITION / alignment, NOT colour. Bubbles aligned to the RIGHT side = MY messages (the guy's). Bubbles aligned to the LEFT side = HER messages.
@@ -1386,15 +1410,41 @@ Return ONLY valid JSON: {"her_message":"her latest message, quoted exactly","rep
     currentReplies=dedupeReplies(parsed.replies);
     const her=parsed.her_message||'';
     lastGenMessage=her||'[Live chat]';
-    const det=document.getElementById('live-detected');
-    if(her){det.innerHTML=`💬 she said: <strong>"${her.replace(/</g,'&lt;')}"</strong>`;det.classList.add('show');}
-    renderReplyCards(currentReplies,'live-reply-cards',null);
+    const det=targetDoc.getElementById('live-detected');
+    if(det&&her){det.innerHTML=`💬 she said: <strong>"${her.replace(/</g,'&lt;')}"</strong>`;det.classList.add('show');}
+    renderLiveCards(currentReplies,targetDoc);
     currentReplies.forEach(r=>addToHistory(r.tone||'live','[Live]',r.text,'dm',null));
   }catch(err){
     showToast(err.message&&err.message.length<90?err.message:'Scan failed');console.error(err);
   }finally{
-    btn.disabled=false;btn.textContent='📸 Scan chat & get replies';
+    if(btn){btn.disabled=false;btn.textContent='📸 Scan chat & get replies';}
   }
+}
+
+// ── POP-OUT (floating window so you don't switch back to this tab) ──
+let pipWindow=null;
+async function popOutLive(){
+  if(!liveStream){showToast('Start screen share first');return}
+  if(!('documentPictureInPicture' in window)){showToast('Pop-out needs Chrome or Edge on desktop');return}
+  try{
+    pipWindow=await documentPictureInPicture.requestWindow({width:400,height:600});
+  }catch(e){showToast('Could not open pop-out');return}
+  // copy styles into the pip window
+  [...document.styleSheets].forEach(ss=>{
+    try{const css=[...ss.cssRules].map(r=>r.cssText).join('');const s=document.createElement('style');s.textContent=css;pipWindow.document.head.appendChild(s);}
+    catch(e){if(ss.href){const l=document.createElement('link');l.rel='stylesheet';l.href=ss.href;pipWindow.document.head.appendChild(l);}}
+  });
+  pipWindow.document.body.style.cssText='margin:0;padding:14px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;overflow-y:auto';
+  pipWindow.document.body.innerHTML=`
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">🟢 Live Help</div>
+    <button class="live-scan-btn" id="pip-scan" style="width:100%;padding:13px;margin-bottom:12px">📸 Scan chat &amp; get replies</button>
+    <div class="live-detected" id="live-detected"></div>
+    <div class="reply-cards" id="live-reply-cards"></div>`;
+  // expose the handlers on the pip window so inline onclicks resolve there
+  ['scanLive','copyLiveReply','markGoodLive','reportLive'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
+  pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
+  showToast('Popped out — keep it over your chat and scan from there');
 }
 
 // ── API KEY ──────────────────────────────────
