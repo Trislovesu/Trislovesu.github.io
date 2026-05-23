@@ -508,6 +508,64 @@ input[type="text"]::placeholder{color:var(--text3)}
 .gender-btn:hover{border-color:var(--text2);color:var(--text)}
 .gender-btn.on{border-color:#9b6ee0;background:rgba(155,110,224,0.12);color:var(--text);box-shadow:0 0 24px rgba(155,110,224,0.25)}
 
+/* ── 📲 QR ONBOARDING (special flow for users who scan the QR code) ──
+   Lives on top of everything. Radiant glow background. Smooth slide transitions per step. */
+.qr-overlay{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(155,110,224,0.22) 0%,rgba(91,158,245,0.12) 35%,var(--bg) 75%),radial-gradient(ellipse 60% 40% at 50% 85%,rgba(224,85,128,0.14) 0%,transparent 60%),var(--bg)}
+.qr-overlay.open{display:flex;animation:screenFadeIn .5s cubic-bezier(.22,1,.36,1)}
+.qr-overlay::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(155,110,224,0.18),transparent 40%),radial-gradient(circle at 80% 80%,rgba(91,158,245,0.18),transparent 40%);animation:qrGlowPulse 8s ease-in-out infinite;pointer-events:none}
+@keyframes qrGlowPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.qr-stage{width:100%;max-width:440px;position:relative;z-index:1}
+.qr-card{background:linear-gradient(165deg,rgba(34,28,54,0.85),rgba(20,18,32,0.92));border:1px solid rgba(155,110,224,0.32);border-radius:22px;padding:34px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.55),0 0 80px rgba(155,110,224,0.22),inset 0 1px 0 rgba(255,255,255,0.06);backdrop-filter:blur(14px);animation:qrCardIn .55s cubic-bezier(.22,1,.36,1)}
+@keyframes qrCardIn{0%{opacity:0;transform:translateY(24px) scale(.96);filter:blur(6px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+.qr-card.swap-out{animation:qrCardOut .28s cubic-bezier(.55,0,.7,.4) forwards}
+@keyframes qrCardOut{to{opacity:0;transform:translateX(-20px) scale(.97);filter:blur(4px)}}
+.qr-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9b6ee0;margin-bottom:10px;text-align:center;text-shadow:0 0 14px rgba(155,110,224,0.5)}
+.qr-headline{font-size:22px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:10px;text-align:center}
+.qr-sub{font-size:13.5px;color:var(--text2);line-height:1.55;margin-bottom:24px;text-align:center}
+.qr-primary-btn{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 36px rgba(155,110,224,0.4),0 6px 18px rgba(0,0,0,0.35);letter-spacing:.01em;transition:transform .15s;margin-bottom:10px}
+.qr-primary-btn:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(155,110,224,0.55),0 10px 24px rgba(0,0,0,0.35)}
+.qr-primary-btn:active{transform:scale(.98)}
+.qr-secondary-btn{display:block;width:100%;padding:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.qr-secondary-btn:hover{color:var(--text);border-color:var(--text3)}
+.qr-input{width:100%;background:rgba(0,0,0,0.32);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14.5px;color:var(--text);outline:none;margin-bottom:18px;transition:border-color .2s,box-shadow .2s}
+.qr-input:focus{border-color:#9b6ee0;box-shadow:0 0 0 4px rgba(155,110,224,0.18)}
+.qr-pick{display:flex;gap:10px;margin-bottom:18px}
+.qr-pick-btn{flex:1;padding:18px 12px;background:rgba(255,255,255,0.03);border:1.5px solid var(--border);border-radius:14px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;text-align:center}
+.qr-pick-btn:hover{border-color:var(--text3);color:var(--text)}
+.qr-pick-btn.on{border-color:#9b6ee0;background:linear-gradient(135deg,rgba(155,110,224,0.18),rgba(91,158,245,0.1));color:var(--text);box-shadow:0 0 24px rgba(155,110,224,0.32);transform:scale(1.02)}
+.qr-pick-btn .sub{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:5px}
+.qr-skill-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:14px 0 8px}
+.qr-skill-btn{padding:11px 0;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s}
+.qr-skill-btn:hover{color:var(--text);border-color:var(--text2)}
+.qr-skill-btn.on{background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border-color:transparent;transform:scale(1.08);box-shadow:0 0 18px rgba(155,110,224,0.45)}
+.qr-skill-anchor{font-size:11px;color:var(--text3);text-align:center;font-style:italic;margin-bottom:18px}
+.qr-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 10px;min-height:200px}
+.qr-loading-spinner{width:46px;height:46px;border:3px solid rgba(155,110,224,0.18);border-top-color:#9b6ee0;border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.qr-loading-joke{font-size:14px;color:var(--text);text-align:center;line-height:1.5;font-style:italic;max-width:300px;opacity:0;animation:fadeIn .4s ease-out forwards}
+@keyframes fadeIn{to{opacity:1}}
+
+/* Slideshow with crowns — "AI Homies" */
+.qr-slideshow{padding:6px 0}
+.qr-slide-dots{display:flex;justify-content:center;gap:7px;margin-bottom:18px}
+.qr-slide-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .25s}
+.qr-slide-dot.on{background:#9b6ee0;width:22px;border-radius:4px;box-shadow:0 0 8px rgba(155,110,224,0.6)}
+.qr-homies{display:flex;gap:14px;justify-content:center;margin:18px 0 22px;flex-wrap:wrap}
+.qr-homie{position:relative;width:74px;text-align:center}
+.qr-homie-pfp{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--surface2),var(--surface));border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 6px;box-shadow:0 6px 18px rgba(0,0,0,0.4);position:relative}
+.qr-homie.lead .qr-homie-pfp{border-color:#ffcd46;box-shadow:0 6px 18px rgba(0,0,0,0.4),0 0 28px rgba(255,205,70,0.45)}
+.qr-homie .qr-crown{position:absolute;top:-22px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:24px;filter:drop-shadow(0 0 8px rgba(255,205,70,0.7));animation:crownBob 2.4s ease-in-out infinite}
+.qr-homie.lead .qr-crown{font-size:30px;animation-delay:.1s}
+@keyframes crownBob{0%,100%{transform:translateX(-50%) rotate(-8deg) translateY(0)}50%{transform:translateX(-50%) rotate(-8deg) translateY(-4px)}}
+.qr-homie-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.2}
+.qr-homie-role{font-size:9.5px;color:var(--text3);margin-top:2px;line-height:1.2}
+
+/* No-thanks GIF panel */
+.qr-gif-wrap{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:var(--surface2);margin:16px 0 20px;display:flex;align-items:center;justify-content:center;font-size:74px}
+.qr-gif-wrap::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,transparent 50%,rgba(0,0,0,0.4));pointer-events:none}
+.qr-bye-emoji{animation:byeWave 1.6s ease-in-out infinite;display:inline-block;transform-origin:70% 80%}
+@keyframes byeWave{0%,100%{transform:rotate(0)}25%{transform:rotate(14deg)}75%{transform:rotate(-10deg)}}
+
 #login-screen{animation:screenFadeIn .55s cubic-bezier(.22,1,.36,1)}
 #login-screen.out{animation:screenFadeOut .42s cubic-bezier(.55,0,.7,.4) forwards}
 #user-select-screen{transition:opacity .35s,transform .35s}
@@ -736,6 +794,11 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
   </div>
 </div>
 
+<!-- 📲 QR ONBOARDING OVERLAY — special landing for users who scan the QR code -->
+<div class="qr-overlay" id="qr-overlay">
+  <div class="qr-stage" id="qr-stage"></div>
+</div>
+
 <!-- 🎯 CONTRIBUTOR OVERLAY — minimal training UI for crew on Instagram -->
 <div class="contrib-overlay" id="contrib-overlay">
   <div class="contrib-header">
@@ -743,7 +806,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <button onclick="closeContribute()" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:6px 12px;font-family:'DM Sans',sans-serif">✕ Close</button>
   </div>
   <div id="contrib-stage" style="width:100%;max-width:520px"></div>
-  <button class="contrib-export-fab" id="contrib-export-fab" onclick="exportContribAnswers()" style="display:none">📤 Export my answers (<span id="contrib-fab-count">0</span>)</button>
+  <button class="contrib-export-fab" id="contrib-export-fab" onclick="contribAutoSend()" style="display:none">🚀 Send to tris (<span id="contrib-fab-count">0</span>)</button>
 </div>
 
 <!-- intro modal — auto-allow-close after 5s -->
@@ -758,11 +821,11 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 
 <!-- top-slide export prompt after N answers -->
 <div class="contrib-export-prompt" id="contrib-export-prompt">
-  <h3>📤 want to export your answers?</h3>
-  <p>your replies aren't saved permanently until you export — copy the file and send it back when you're done. you can keep going if you want.</p>
+  <h3>🚀 want to send what you have so far?</h3>
+  <p>one tap = your answers go straight to tris. you can keep answering after — every batch helps. nothing's locked in until you send.</p>
   <div class="row">
     <button class="keep-btn" onclick="dismissExportPrompt()">keep going</button>
-    <button class="export-btn" onclick="exportContribAnswers();dismissExportPrompt()">export now</button>
+    <button class="export-btn" onclick="dismissExportPrompt();contribAutoSend()">🚀 send now</button>
   </div>
 </div>
 
@@ -2924,7 +2987,272 @@ function clearIntelPanel(id){
 }
 
 // ══════════════════════════════════════════════════
-// 💜 CONTRIBUTOR FLOW — minimal training UI for crew posted from Instagram
+// 📲 QR ONBOARDING — runs when user scans the QR code and lands at #contribute
+// Flow: welcome → name → gender → DM-experience → skill rating → AI Homies slideshow → main contributor questions
+// All collected metadata is stored in contribState and gets embedded in the final exported JSON.
+// ══════════════════════════════════════════════════
+let qrStep=0;
+const QR_LOADING_JOKES_YES=[
+  '"oh? a smooth talker huh 👀"',
+  '"hmm look at u going first..."',
+  '"someone\'s got moves 😏"',
+  '"the streets are talking"'
+];
+const QR_LOADING_JOKES_NO=[
+  '"nooo way... a first timer 🥹"',
+  '"don\'t worry, gotta start somewhere"',
+  '"someone has the balls to admit it, respect"',
+  '"wholesome energy detected"'
+];
+
+function isQrEntry(){
+  return location.hash==='#contribute'||location.hash.startsWith('#c=')||location.search.includes('qr=1');
+}
+
+function maybeOpenQrOnboarding(){
+  if(!isQrEntry())return false;
+  // Hide the login screen so it doesn't flash
+  const login=document.getElementById('login-screen');
+  if(login){login.style.display='none';}
+  document.getElementById('qr-overlay').classList.add('open');
+  contribState.entrySource='qr';
+  qrStep=0;
+  renderQrStep();
+  return true;
+}
+
+function renderQrStep(){
+  const stage=document.getElementById('qr-stage');
+  // micro fade between steps using swap-out helper
+  const old=stage.querySelector('.qr-card');
+  if(old){
+    old.classList.add('swap-out');
+    setTimeout(()=>actuallyRenderStep(stage),260);
+  }else{
+    actuallyRenderStep(stage);
+  }
+}
+
+function actuallyRenderStep(stage){
+  const steps={
+    0:qrStepWelcome,
+    1:qrStepName,
+    2:qrStepGender,
+    3:qrStepDmExperience,
+    4:qrStepLoading,
+    5:qrStepSkillRating,
+    6:qrStepSlideshow,
+    7:qrStepHandoff
+  };
+  const fn=steps[qrStep]||qrStepWelcome;
+  stage.innerHTML=fn();
+  // post-render wiring per step
+  if(qrStep===1){
+    const inp=stage.querySelector('#qr-name-input');
+    if(inp){inp.focus();inp.addEventListener('input',()=>{
+      const btn=stage.querySelector('#qr-name-next');
+      const ok=inp.value.trim().length>=2;
+      btn.disabled=!ok;
+      btn.style.opacity=ok?'1':'.5';
+      btn.style.cursor=ok?'pointer':'not-allowed';
+    });
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=2){qrSubmitName();}});}
+  }
+  if(qrStep===4){
+    // loading screen — pick a joke, hold for 1.6s, then advance
+    setTimeout(()=>{qrStep=5;renderQrStep();},1600);
+  }
+  if(qrStep===6){
+    // slideshow auto-advances dots; user taps "next" to progress slides
+    qrSlideshowState={slide:0};
+    qrRenderSlideshow();
+  }
+}
+
+// ── STEP 0: Welcome ──
+function qrStepWelcome(){
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">📲 invitation</div>
+    <div style="text-align:center;font-size:54px;margin-bottom:6px">💜</div>
+    <div class="qr-headline">wanna contribute to the future?</div>
+    <div class="qr-sub">you scanned a special code 👀 help train Don't Miss™ — the AI wingman built in Trinidad. takes 2 minutes. no signup. anonymous if you want.</div>
+    <button class="qr-primary-btn" onclick="qrAdvance()">yes, let's go ✨</button>
+    <button class="qr-secondary-btn" onclick="qrDecline()">nah i'll pass</button>
+  </div>`;
+}
+
+// ── STEP 1: Name ──
+function qrStepName(){
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">step 1 of 5</div>
+    <div class="qr-headline">what should we call you?</div>
+    <div class="qr-sub">first name or your @ — whatever. just so we can credit your training.</div>
+    <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or your @handle" maxlength="40" autocomplete="off" />
+    <button class="qr-primary-btn" id="qr-name-next" onclick="qrSubmitName()" disabled style="opacity:.5;cursor:not-allowed">continue →</button>
+  </div>`;
+}
+function qrSubmitName(){
+  const v=(document.getElementById('qr-name-input')?.value||'').trim();
+  if(v.length<2){return}
+  contribState.name=v;
+  qrAdvance();
+}
+
+// ── STEP 2: Gender ──
+function qrStepGender(){
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">step 2 of 5</div>
+    <div class="qr-headline">i identify as a...</div>
+    <div class="qr-sub">picks your path — boys WRITE replies for the AI to learn from, girls RATE replies to teach it what actually lands.</div>
+    <div class="qr-pick">
+      <button class="qr-pick-btn" onclick="qrPickGender('male')">👨 male<span class="sub">you'll write replies</span></button>
+      <button class="qr-pick-btn" onclick="qrPickGender('female')">👩 female<span class="sub">you'll rate AI replies</span></button>
+    </div>
+  </div>`;
+}
+function qrPickGender(g){
+  contribState.gender=g;
+  document.querySelectorAll('.qr-pick-btn').forEach(b=>b.classList.toggle('on',b.textContent.toLowerCase().startsWith(g==='male'?'👨':'👩')));
+  setTimeout(qrAdvance,250);
+}
+
+// ── STEP 3: DM experience ──
+function qrStepDmExperience(){
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">step 3 of 5 · warm-up</div>
+    <div class="qr-headline">ever DM'd someone first before? 👀</div>
+    <div class="qr-sub">no judgment either way — just helps us weight your answers right.</div>
+    <div class="qr-pick">
+      <button class="qr-pick-btn" onclick="qrPickDmExp(true)">😏 yeah<span class="sub">i shoot my shot</span></button>
+      <button class="qr-pick-btn" onclick="qrPickDmExp(false)">🥹 nope<span class="sub">never been brave enough</span></button>
+    </div>
+  </div>`;
+}
+function qrPickDmExp(yes){
+  contribState.dmExperience=yes;
+  qrAdvance();
+}
+
+// ── STEP 4: Loading joke ──
+function qrStepLoading(){
+  const pool=contribState.dmExperience?QR_LOADING_JOKES_YES:QR_LOADING_JOKES_NO;
+  const joke=pool[Math.floor(Math.random()*pool.length)];
+  return `<div class="qr-card">
+    <div class="qr-loading">
+      <div class="qr-loading-spinner"></div>
+      <div class="qr-loading-joke">${joke}</div>
+    </div>
+  </div>`;
+}
+
+// ── STEP 5: Skill rating ──
+function qrStepSkillRating(){
+  const buttons=[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="qr-skill-btn" data-n="${n}" onclick="qrPickSkill(${n})">${n}</button>`).join('');
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">step 4 of 5 · self-rating</div>
+    <div class="qr-headline">how would you rate your texting skills?</div>
+    <div class="qr-sub">be honest — this lets us weight your answers properly. higher = better DMs, smoother openers.</div>
+    <div class="qr-skill-grid">${buttons}</div>
+    <div class="qr-skill-anchor">5 = average · most people land here · 8+ means you actually pull</div>
+    <button class="qr-primary-btn" id="qr-skill-next" disabled style="opacity:.5;cursor:not-allowed" onclick="qrAdvance()">continue →</button>
+  </div>`;
+}
+function qrPickSkill(n){
+  contribState.skillRating=n;
+  document.querySelectorAll('.qr-skill-btn').forEach(b=>b.classList.toggle('on',Number(b.dataset.n)===n));
+  const btn=document.getElementById('qr-skill-next');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
+}
+
+// ── STEP 6: AI Homies slideshow ──
+let qrSlideshowState={slide:0};
+const QR_SLIDES=[
+  {
+    title:"meet the AI homies 🤖👑",
+    body:"behind every smooth reply is a crew of AIs working together — and you're about to help them get better.",
+    showHomies:true
+  },
+  {
+    title:"why we need YOU",
+    body:"the AI learns from real humans. males teach it how to write. females teach it what actually lands. <strong>both sides matter equally.</strong>",
+    showHomies:false
+  },
+  {
+    title:"how it works",
+    body:"you'll see real-feeling scenarios (a girl sends a message — what would you reply?). takes ~2 min. when you're done, you'll send the file straight to tris.<br><br>no account · no signup · 100% local until you export.",
+    showHomies:false
+  }
+];
+function qrStepSlideshow(){
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">step 5 of 5 · the intro</div>
+    <div id="qr-slide-content"></div>
+    <div class="qr-slide-dots" id="qr-slide-dots"></div>
+    <button class="qr-primary-btn" id="qr-slide-btn" onclick="qrSlideAdvance()">next →</button>
+  </div>`;
+}
+function qrRenderSlideshow(){
+  const s=QR_SLIDES[qrSlideshowState.slide];
+  const homies=s.showHomies?`
+    <div class="qr-homies">
+      <div class="qr-homie lead"><div class="qr-crown">👑</div><div class="qr-homie-pfp">🧔🏽</div><div class="qr-homie-name">Tris</div><div class="qr-homie-role">the creator</div></div>
+      <div class="qr-homie"><div class="qr-crown">👑</div><div class="qr-homie-pfp">🧠</div><div class="qr-homie-name">Claude</div><div class="qr-homie-role">the builder</div></div>
+      <div class="qr-homie"><div class="qr-crown">👑</div><div class="qr-homie-pfp">💬</div><div class="qr-homie-name">ChatGPT</div><div class="qr-homie-role">the homie</div></div>
+      <div class="qr-homie"><div class="qr-crown">👑</div><div class="qr-homie-pfp">⚡</div><div class="qr-homie-name">Grok</div><div class="qr-homie-role">the wildcard</div></div>
+    </div>`:'';
+  document.getElementById('qr-slide-content').innerHTML=`
+    <div class="qr-headline">${s.title}</div>
+    ${homies}
+    <div class="qr-sub">${s.body}</div>`;
+  document.getElementById('qr-slide-dots').innerHTML=QR_SLIDES.map((_,i)=>`<div class="qr-slide-dot${i===qrSlideshowState.slide?' on':''}"></div>`).join('');
+  document.getElementById('qr-slide-btn').textContent=qrSlideshowState.slide===QR_SLIDES.length-1?"let's do this 🚀":'next →';
+}
+function qrSlideAdvance(){
+  if(qrSlideshowState.slide<QR_SLIDES.length-1){
+    qrSlideshowState.slide++;
+    qrRenderSlideshow();
+  }else{
+    qrAdvance();
+  }
+}
+
+// ── STEP 7: Handoff to existing contributor question flow ──
+function qrStepHandoff(){
+  // Close QR overlay, open contributor overlay with state pre-populated.
+  // Build the shuffled question queue and skip the name/gender intake screen.
+  setTimeout(()=>{
+    document.getElementById('qr-overlay').classList.remove('open');
+    document.getElementById('contrib-overlay').classList.add('open');
+    // queue + intro popup (re-use existing flow)
+    contribState.queue=SCENARIO_BANK.map((_,i)=>i).sort(()=>Math.random()-0.5);
+    contribState.currentIdx=0;
+    showContribIntro();
+  },100);
+  return `<div class="qr-card"><div class="qr-loading"><div class="qr-loading-spinner"></div><div class="qr-loading-joke">loading your scenarios... 🎯</div></div></div>`;
+}
+
+// ── Decline path: GIF + cheeky farewell ──
+function qrDecline(){
+  const stage=document.getElementById('qr-stage');
+  const old=stage.querySelector('.qr-card');
+  if(old)old.classList.add('swap-out');
+  setTimeout(()=>{
+    stage.innerHTML=`<div class="qr-card" style="text-align:center">
+      <div class="qr-eyebrow" style="color:#e05580">ok... your loss</div>
+      <div class="qr-headline">cool, you didn't help train it 🤷‍♂️</div>
+      <div class="qr-gif-wrap"><div class="qr-bye-emoji">👋</div></div>
+      <div class="qr-sub">no hard feelings. if you change your mind, scan the code again and we'll be here.</div>
+      <button class="qr-secondary-btn" onclick="qrStep=0;renderQrStep()">wait, i'll do it →</button>
+    </div>`;
+  },260);
+}
+
+function qrAdvance(){
+  qrStep++;
+  renderQrStep();
+}
+
+
 // Two paths:
 //   Male path → see scenario (her message + context + tone) → write what HE'd send
 //   Female path → see scenario + a CANDIDATE AI reply → rate 1-10 + optional context
@@ -2933,6 +3261,9 @@ function clearIntelPanel(id){
 let contribState={
   name:'',
   gender:'',         // 'male' | 'female'
+  entrySource:'',    // 'qr' if scanned, '' if direct from login page CTA
+  skillRating:null,  // 1-10 self-rating (only collected via QR flow)
+  dmExperience:null, // bool (only collected via QR flow)
   answers:[],        // {scenarioIdx, tone, context, message, reply OR rating, feedback, ts}
   currentIdx:0,      // index into shuffled queue
   queue:[],          // shuffled scenario indexes
@@ -2948,8 +3279,17 @@ function openContribute(){
 function closeContribute(){
   if(contribState.answers.length>0&&!confirm('You have '+contribState.answers.length+' un-exported answers. Close anyway? They\'ll be lost.'))return;
   document.getElementById('contrib-overlay').classList.remove('open');
-  contribState={name:'',gender:'',answers:[],currentIdx:0,queue:[],promptShownAt:0};
+  const wasQr=contribState.entrySource==='qr';
+  contribState={name:'',gender:'',entrySource:'',skillRating:null,dmExperience:null,answers:[],currentIdx:0,queue:[],promptShownAt:0};
   document.getElementById('contrib-export-fab').style.display='none';
+  // QR users: hide the QR overlay too, restore the login screen so the app is usable
+  if(wasQr){
+    document.getElementById('qr-overlay').classList.remove('open');
+    const login=document.getElementById('login-screen');
+    if(login){login.style.display='';}
+    // Clear the hash so reload doesn't bounce back to QR onboarding
+    if(location.hash==='#contribute'){history.replaceState(null,'',location.pathname+location.search);}
+  }
 }
 function renderContribIntake(){
   const stage=document.getElementById('contrib-stage');
@@ -3331,6 +3671,52 @@ function dismissExportPrompt(){
 const TRIS_EMAIL='tristan.sooklal@icloud.com';
 const TRIS_IG='trislovesu.7';
 const TRIS_WHATSAPP='18683512442'; // wa.me format — country code + number, no plus/dashes
+
+// ── 🚀 AUTO-SEND VIA DISCORD WEBHOOK ──
+// Paste your Discord channel webhook URL here. Setup: Discord server → channel settings → Integrations → Webhooks → New Webhook → Copy URL.
+// Contributor taps "send to tris" → JSON file is POSTed straight to your Discord channel as an attachment. Zero friction.
+// IMPORTANT: this URL is public (visible in JS). If abused, delete the webhook and create a new one — takes 5 sec.
+const DISCORD_WEBHOOK_URL='https://discord.com/api/webhooks/1507674467172876338/veQ7ku90F_aEX_xOWBTvbqougcjU7MTJR31NgtR9ESwgV4FRCRPwJdkXc8DuaO_bkCh7';
+
+async function autoSendToDiscord(){
+  if(!DISCORD_WEBHOOK_URL||DISCORD_WEBHOOK_URL==='REPLACE_ME_WITH_YOUR_WEBHOOK_URL'){
+    return{ok:false,error:'auto-send not configured yet'};
+  }
+  if(!contribState.answers.length)return{ok:false,error:'no answers to send'};
+  const data={
+    type:'rizz_contrib',
+    contributor:contribState.name,
+    gender:contribState.gender,
+    entrySource:contribState.entrySource||'direct',
+    skillRating:contribState.skillRating,
+    dmExperience:contribState.dmExperience,
+    exportedAt:Date.now(),
+    count:contribState.answers.length,
+    answers:contribState.answers
+  };
+  const filename=`rizz-contrib-${contribState.gender}-${(contribState.name||'anon').replace(/[^a-z0-9]/gi,'_')}-${new Date().toISOString().slice(0,10)}.json`;
+  const json=JSON.stringify(data,null,2);
+  const file=new File([json],filename,{type:'application/json'});
+  // Build the message — Discord renders this above the attachment
+  const skillLine=contribState.skillRating?` · self-rated ${contribState.skillRating}/10`:'';
+  const sourceLine=contribState.entrySource==='qr'?' · 📲 via QR':'';
+  const dmExpLine=contribState.dmExperience===true?' · 😏 has DM\'d before':contribState.dmExperience===false?' · 🥹 first-timer':'';
+  // Quick stats for at-a-glance review
+  const wtfCount=contribState.answers.filter(a=>a.type==='female_wtf_flag').length;
+  const wtfLine=wtfCount?`  ·  🚩 ${wtfCount} WTF flags`:'';
+  const content=`📥 **new contrib** — **${contribState.name||'anon'}** (${contribState.gender})\n${contribState.answers.length} answers${skillLine}${sourceLine}${dmExpLine}${wtfLine}`;
+  const form=new FormData();
+  form.append('content',content.slice(0,1900));
+  form.append('file',file,filename);
+  try{
+    const res=await fetch(DISCORD_WEBHOOK_URL,{method:'POST',body:form});
+    if(res.ok||res.status===204)return{ok:true};
+    const txt=await res.text().catch(()=>'(no body)');
+    return{ok:false,error:`discord ${res.status}: ${txt.slice(0,140)}`};
+  }catch(e){
+    return{ok:false,error:e.message||String(e)};
+  }
+}
 // Keep the most recent export blob+file around so the "send via Instagram" button can re-share it
 let _lastExportFile=null;
 let _lastExportFilename='';
@@ -3341,6 +3727,9 @@ function exportContribAnswers(){
     type:'rizz_contrib',
     contributor:contribState.name,
     gender:contribState.gender,
+    entrySource:contribState.entrySource||'direct',
+    skillRating:contribState.skillRating,
+    dmExperience:contribState.dmExperience,
     exportedAt:Date.now(),
     count:contribState.answers.length,
     answers:contribState.answers
@@ -3465,9 +3854,44 @@ function renderContribDone(){
     <div class="contrib-card" style="text-align:center">
       <div style="font-size:46px;margin-bottom:10px">🎉</div>
       <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">you finished every scenario</h2>
-      <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:16px">you answered <strong style="color:var(--text)">${contribState.answers.length}</strong> — absolute legend. export now and send the file to tris.</p>
-      <button onclick="exportContribAnswers()" style="width:100%;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer">📤 export my answers</button>
-      <button onclick="closeContribute()" style="width:100%;margin-top:10px;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">all done — close</button>
+      <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:16px">you answered <strong style="color:var(--text)">${contribState.answers.length}</strong> — absolute legend. one tap and you're done.</p>
+      <button id="contrib-autosend-btn" onclick="contribAutoSend()" style="width:100%;padding:15px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 0 36px rgba(155,110,224,0.4)">🚀 send it to tris — one tap</button>
+      <button onclick="exportContribAnswers()" style="width:100%;margin-top:10px;padding:11px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer">or download + send manually →</button>
+    </div>`;
+}
+
+// Universal "send to tris" handler — also called from the export prompt + floating FAB
+async function contribAutoSend(){
+  const btn=document.getElementById('contrib-autosend-btn');
+  if(btn){btn.disabled=true;btn.textContent='📡 sending...';btn.style.opacity='.7';}
+  const r=await autoSendToDiscord();
+  if(r.ok){
+    showContribSuccess();
+    return;
+  }
+  // Auto-send failed — fall back to manual export flow with a friendly heads-up
+  if(btn){btn.disabled=false;btn.textContent='🚀 send it to tris — one tap';btn.style.opacity='1';}
+  console.warn('Auto-send failed:',r.error);
+  showToast('auto-send hiccup — using manual share');
+  // Trigger the manual export + tutorial as the safety net
+  exportContribAnswers();
+}
+
+function showContribSuccess(){
+  const stage=document.getElementById('contrib-stage');
+  // FAB no longer needed
+  const fab=document.getElementById('contrib-export-fab');if(fab)fab.style.display='none';
+  // Suppress the auto-export-prompt too
+  const prompt=document.getElementById('contrib-export-prompt');if(prompt)prompt.classList.remove('show');
+  stage.innerHTML=`
+    <div class="contrib-card" style="text-align:center;padding:38px 24px">
+      <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#4db37a,#3a9a64);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 0 50px rgba(77,179,122,0.5);animation:saveCirclePop .55s cubic-bezier(.34,1.56,.64,1)">
+        <svg viewBox="0 0 24 24" style="width:46px;height:46px" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5L10 17.5L19 7.5"/></svg>
+      </div>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;color:var(--text)">sent to tris ✓</h2>
+      <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:6px">your ${contribState.answers.length} answers are in his hands now — thank you 💜</p>
+      <p style="font-size:12px;color:var(--text3);line-height:1.55;margin-bottom:22px">he'll bake the winners into the AI's training. you literally helped build it.</p>
+      <button onclick="closeContribute()" style="width:100%;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">all done — close</button>
     </div>`;
 }
 
@@ -5581,8 +6005,12 @@ function showToast(m){
   const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);
 }
-// Boot the auth flow (resume session or show sign-in)
-initAuth();
+// Boot — if the user landed via the QR code, route to the special onboarding instead of the login screen
+if(!maybeOpenQrOnboarding()){
+  initAuth();
+}
+// Also listen for hash changes (in case they navigate to #contribute without a full reload)
+window.addEventListener('hashchange',()=>{maybeOpenQrOnboarding();});
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');</script>
 </body>
