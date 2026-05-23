@@ -1062,6 +1062,10 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-scan-btn" id="live-scan-btn" onclick="scanLive()">📸 Scan chat &amp; get replies</button>
         <button class="live-stop-btn" onclick="stopLiveShare()">Stop</button>
       </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="live-stop-btn" style="flex:1" onclick="profileScanLive()">👤 Profile scan</button>
+        <button class="live-stop-btn" style="flex:1" onclick="storyReplyLive()">📖 Story reply</button>
+      </div>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
@@ -1384,24 +1388,119 @@ function robustCopy(text){
   try{(inPip?pipWindow.navigator:navigator).clipboard.writeText(text).then(()=>showToast('Copied')).catch(()=>showToast('Press Ctrl+C to copy'));}
   catch(e){showToast('Couldn\'t copy automatically');}
 }
-function markGoodLive(i,btn){const r=currentReplies[i];if(!r)return;savedGoodReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',ts:Date.now()});saveGoods();renderGoods();if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}showToast('⭐ Saved');}
-function reportLive(i,btn){const r=currentReplies[i];if(!r)return;const reason=prompt('What\'s wrong with this reply? (e.g. doesn\'t fit, cringe, wrong tone, off-topic)');if(!reason||!reason.trim())return;reportedReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',reason:reason.trim(),ts:Date.now()});saveReports();renderReports();if(btn){btn.classList.add('reported');btn.textContent='🚩 Reported'}showToast('🚩 Reported');}
+function markGoodLive(i,btn){const r=currentReplies[i];if(!r)return;savedGoodReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',ts:Date.now()});saveGoods();renderGoods();if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}}
+function reportLive(i,btn){
+  const r=currentReplies[i];if(!r)return;
+  // use the window the button actually lives in (works in the pop-out too)
+  const win=(btn&&btn.ownerDocument&&btn.ownerDocument.defaultView)||window;
+  const reason=win.prompt('What\'s wrong with this reply? (e.g. doesn\'t fit, cringe, wrong tone, off-topic)');
+  if(!reason||!reason.trim())return;
+  reportedReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',reason:reason.trim(),ts:Date.now()});
+  saveReports();renderReports();
+  if(btn){btn.classList.add('reported');btn.textContent='🚩 Reported'}
+}
 
 let liveTones=[];      // up to 2 tones the user wants the replies to lean toward
 let lastLiveFrame=null; // last captured frame (for the "not this message" correction)
 
-async function scanLive(targetDoc){
-  targetDoc=targetDoc||document;
-  if(!liveStream){showToast('Start screen share first');return}
+function captureLiveFrame(){
+  if(!liveStream){showToast('Start screen share first');return null;}
   const v=document.getElementById('live-video');
   const vw=v.videoWidth||1280, vh=v.videoHeight||720;
-  if(!vw){showToast('Give the share a second to start');return}
+  if(!vw){showToast('Give the share a second to start');return null;}
   const scale=Math.min(1,1100/Math.max(vw,vh));
-  const canvas=document.createElement('canvas');
-  canvas.width=Math.round(vw*scale);canvas.height=Math.round(vh*scale);
-  canvas.getContext('2d').drawImage(v,0,0,canvas.width,canvas.height);
-  lastLiveFrame=canvas.toDataURL('image/jpeg',0.72).split(',')[1];
-  doLiveGenerate(targetDoc,lastLiveFrame,'');
+  const c=document.createElement('canvas');
+  c.width=Math.round(vw*scale);c.height=Math.round(vh*scale);
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.72).split(',')[1];
+}
+
+async function scanLive(targetDoc){
+  targetDoc=targetDoc||document;
+  const b64=captureLiveFrame();if(!b64)return;
+  lastLiveFrame=b64;
+  doLiveGenerate(targetDoc,b64,'');
+}
+
+// 👤 PROFILE SCAN — is this account follow-worthy?
+async function profileScanLive(targetDoc){
+  targetDoc=targetDoc||document;
+  const b64=captureLiveFrame();if(!b64)return;
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(!checkCallLimit())return;
+  const btn=targetDoc.getElementById('pip-profile')||document.getElementById('live-profile-btn');
+  if(btn){btn.disabled=true;btn.textContent='📡 Scanning profile...';}
+  const system=`You are evaluating an Instagram PROFILE screenshot for a confident guy deciding whether she's worth following / pursuing. Focus ONLY on: the profile picture, the bio text, the follower/following counts, and the post grid if any. IGNORE the left nav rail, the "suggested for you" row, search bars, and anything that isn't her profile.
+Judge like a guy with standards but be fair and honest. Consider: does she look attractive/interesting, is the bio a green or red flag, follower/following ratio, does the grid show a real life/personality or thirst-trap/empty.
+Return ONLY raw JSON, no markdown:
+{"verdict":"follow|maybe|skip","score":<1-10>,"vibe":"one short honest read of her vibe","reasons":["specific reason from what you see","..."],"move":"one line — should he follow/dm and how to play it"}`;
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:450,temperature:0.7,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'This is an Instagram profile. Judge if she\'s follow-worthy based on her pic, bio, counts and posts. Ignore the nav and suggestions. Return the JSON.'}]}]})
+    });
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
+    const data=await res.json();
+    const d=parseJsonLoose(data.choices?.[0]?.message?.content?.trim()||'');
+    if(!d)throw new Error('Could not read the profile — try again');
+    renderProfileResult(targetDoc,d);
+  }catch(err){showToast(err.message&&err.message.length<90?err.message:'Profile scan failed');console.error(err);}
+  finally{if(btn){btn.disabled=false;btn.textContent='👤 Profile scan';}}
+}
+
+function renderProfileResult(targetDoc,d){
+  const cont=targetDoc.getElementById('live-reply-cards');if(!cont)return;
+  const det=targetDoc.getElementById('live-detected');if(det)det.classList.remove('show');
+  const v=(d.verdict||'maybe').toLowerCase();
+  const color=v==='follow'?'var(--green)':v==='skip'?'var(--red)':'var(--amber)';
+  const esc=s=>(s||'').replace(/</g,'&lt;');
+  cont.innerHTML=`<div class="reply-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${color};border:1px solid ${color};border-radius:100px;padding:4px 12px">${esc(v)}</span>
+      <span style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:${color}">${d.score||'?'}/10</span>
+    </div>
+    ${d.vibe?`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${esc(d.vibe)}</div>`:''}
+    ${(d.reasons||[]).length?`<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${d.reasons.map(r=>`<div style="font-size:12px;color:var(--text2);padding-left:10px;border-left:2px solid var(--border2)">${esc(r)}</div>`).join('')}</div>`:''}
+    ${d.move?`<div style="font-size:13px;color:var(--text);font-style:italic">→ ${esc(d.move)}</div>`:''}
+  </div>`;
+}
+
+// 📖 STORY REPLY — slide into her DMs reacting to the story she's viewing
+async function storyReplyLive(targetDoc){
+  targetDoc=targetDoc||document;
+  const b64=captureLiveFrame();if(!b64)return;
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(!checkCallLimit())return;
+  const btn=targetDoc.getElementById('pip-story')||document.getElementById('live-story-btn');
+  if(btn){btn.disabled=true;btn.textContent='📡 Reading the story...';}
+  let toneLine='';
+  if(liveTones.length>=2)toneLine=`\nReply 1 = ${liveTones[0]} tone, Reply 2 = ${liveTones[1]} tone, Reply 3 = your best call. All must fit the story.`;
+  else if(liveTones.length===1)toneLine=`\nReply 1 = ${liveTones[0]} tone; 2 & 3 = your best call.`;
+  const system=`You are helping a confident guy slide into a girl's DMs by reacting to her Instagram STORY.${getRefinedContext('',3)}${getGoodsContext('',3)}${getReportsContext('',3)}${toneLine}
+
+WHICH STORY: the screen shows a story viewer. The story the user is WATCHING is the ONE BIG, BRIGHT, IN-FOCUS panel in the centre. The smaller, dimmed, greyed-out panels to the sides are OTHER people's stories (next/previous previews) — IGNORE them completely. Read ONLY the big central story.
+
+Look at the central story carefully: what she's wearing, her expression, what she's doing, the setting, any text overlay or song. Then write 3 different DM openers reacting to THIS story specifically — like he actually noticed HER, not generic. Confident, natural, never thirsty or creepy. You are the man.
+
+RULES: zero exclamation marks, lowercase, short, each opener genuinely different, reference something real from the story.
+Return ONLY JSON: {"her_message":"brief description of what the story shows","replies":[{"text":"dm opener","tone":"label","why":"short reason"}]}`;
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Write 3 different DM openers reacting to it. Return the JSON.'}]}]})
+    });
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
+    const data=await res.json();
+    const parsed=parseRepliesResponse(data.choices?.[0]?.message?.content?.trim()||'');
+    if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the story — try again');
+    currentReplies=dedupeReplies(parsed.replies);
+    lastGenMessage='[Story] '+(parsed.her_message||'');
+    const det=targetDoc.getElementById('live-detected');
+    if(det){det.innerHTML=`📖 her story: <strong>"${(parsed.her_message||'').replace(/</g,'&lt;')}"</strong>`;det.classList.add('show');}
+    renderLiveCards(currentReplies,targetDoc);
+    currentReplies.forEach(r=>addToHistory(r.tone||'story','[Story]',r.text,'story',null));
+  }catch(err){showToast(err.message&&err.message.length<90?err.message:'Story scan failed');console.error(err);}
+  finally{if(btn){btn.disabled=false;btn.textContent='📖 Story reply';}}
 }
 
 // User correction: they type her exact latest message, AI regenerates anchored on it
@@ -1436,40 +1535,39 @@ async function doLiveGenerate(targetDoc,b64,overrideMsg){
 
   const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${toneLine}${overrideBlock}
 
-STEP 1 — FIND THE ACTIVE CHAT (this is where it usually goes wrong):
-- Messaging apps like Instagram/Messenger have a LEFT SIDEBAR listing OTHER conversations (names + tiny one-line previews of past chats with DIFFERENT people, a search bar, story circles). This sidebar is NOT the conversation — those preview snippets are from other people. COMPLETELY IGNORE the entire left sidebar.
-- The ACTIVE conversation is the large panel on the RIGHT, with a person's name/header at the top and full chat bubbles below. ONLY read this right-hand panel.
-- Also ignore: the app's nav rail, browser tabs, the desktop, notifications, timestamps, "New messages" dividers, reaction icons, the message input box at the bottom.
-- If you accidentally read a one-line preview from the left list, you'll reply to the wrong thing — so anchor only on the big right-side conversation.
+STEP 1 — ONLY look at the active conversation:
+- Ignore the LEFT SIDEBAR (the list of other chats with previews, search, story circles), the nav rail, browser chrome, the desktop, notifications. Read ONLY the big active conversation panel on the right.
 
-STEP 2 — WHO SAID WHAT (critical, do not mix this up):
-- Go by POSITION / alignment, NOT colour. Bubbles aligned to the RIGHT side = MY messages (the guy's). Bubbles aligned to the LEFT side = HER messages.
-- Colour is only a weak hint and changes per app: iMessage = blue (mine) / grey (hers); Instagram = purple or a gradient (mine) / grey or dark (hers), and Instagram's colour can change. ALWAYS trust the left/right alignment over the colour.
+STEP 2 — IDENTIFY WHO SENT EACH BUBBLE (use BOTH colour and position):
+- MY messages (the guy's) = bubbles on the RIGHT side AND coloured BLUE or PURPLE.
+- HER messages (the girl's) = bubbles on the LEFT side AND coloured GREY / dark.
+- Rule of thumb: a blue/purple bubble is ALWAYS mine. A grey bubble is ALWAYS hers. If colour and side ever seem to disagree, TRUST THE COLOUR (blue/purple = me, grey = her).
 
-STEP 3 — REPLY TO THE NEWEST MESSAGE (this matters most):
-- The conversation runs top = OLDEST, bottom = NEWEST. The messages at the very BOTTOM of the panel are the most recent.
-- Reply ONLY to the LATEST thing in the convo — the bottom-most messages. Messages higher up are old context; the conversation has MOVED ON from them. Do NOT reply to something from earlier just because it stood out.
-- Timestamps ("7:11 PM", "8:40 PM") are just time labels — NOT messages, ignore them as content, but lower on screen = more recent.
-- A "New messages" divider line is the most important signal: EVERYTHING BELOW IT is brand new/unread. Reply to the newest message BELOW that divider — that is the live edge of the conversation. Ignore the divider text itself.
-- Find HER newest message at the very bottom and respond to THAT, in the current flow of the convo. If her newest line is short ("ou", "lol", "k"), reply to that short line — don't dig back up for something meatier or older.
+STEP 3 — IGNORE TIMESTAMPS AND DIVIDERS ENTIRELY:
+- "10:05 PM", "Tue 10:22 PM", "6:12 PM", "Seen", "Seen 8m ago", "Active now", "New messages" — these are TIME LABELS and STATUS, NOT messages. Never read them as content, never reply to them, never let them confuse the order. Just skip them.
 
-STEP 4 — HOW TO USE EACH SIDE:
-- Read MY recent messages ONLY for context and to match the tone/energy/flow of the conversation (how formal, how flirty, how playful it's been). Do NOT reply to my own messages.
-- Focus mainly on HER latest message — the reply must directly answer what SHE just said, in the established tone of the convo.
+STEP 4 — WHAT YOU REPLY TO (the single most important rule — getting this wrong makes the whole reply useless):
+- You ONLY ever reply to HER messages (the GREY / left bubbles). NEVER, EVER reply to MY messages (blue/purple/right). My messages are CONTEXT ONLY.
+- Your reply target = HER MOST RECENT message = the LOWEST grey bubble on the screen (the grey bubble closest to the bottom / message box).
+- CRITICAL: even if one of MY blue/purple messages appears BELOW her latest grey one (i.e. I sent the last message), you STILL reply to her latest GREY message. Do not reply to my blue message, do not skip her grey message.
+- Do NOT wander upward to older messages to reply to them. Lock onto her single newest grey bubble near the bottom and answer THAT exact message. (If her newest grey message is short like "ou", "lol", "k" — reply to that, don't dig up an older one.)
+- If you genuinely cannot tell which grey message is newest, pick the grey bubble physically closest to the message input box at the very bottom.
+
+STEP 5 — HOW TO USE THE REST:
+- After you've locked onto her newest grey message, read the messages above it (mine in blue + hers in grey) ONLY to understand the topic, tone, and flow — so your reply fits the conversation. Never reply to any of those older messages.
 
 RULES:
-- Every reply must DIRECTLY answer HER latest message — never off-topic, never a reply to my own message
-- You are the man replying to her — never write from her POV
-- Match the existing tone of the conversation (read the back-and-forth, don't reset the vibe)
-- Zero exclamation marks, lowercase, short and punchy
-- 3 genuinely different replies, confident and natural, never cringe or thirsty
+- The reply MUST directly answer HER newest grey message — never my own message, never an older message, never off-topic.
+- You are the man replying to her — never write from her point of view.
+- Match the conversation's established tone and energy.
+- Zero exclamation marks, lowercase, short and punchy. 3 genuinely different replies, confident and natural, never cringe or thirsty.
 
-Return ONLY valid JSON: {"her_message":"her latest message, quoted exactly","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+Return ONLY valid JSON: {"her_message":"HER newest grey message, quoted exactly","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that, matching the convo's tone from the screenshot. Return EXACTLY 3 distinct replies in the JSON.`:'This is my full screen. Ignore everything that is not the chat (especially the left sidebar of other chats). Find the active conversation on the right, separate MY messages (right) from HERS (left), and reply to HER newest message at the very bottom. Return EXACTLY 3 distinct replies in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that, matching the convo's tone from the screenshot. Return EXACTLY 3 distinct replies in the JSON.`:'Ignore the left sidebar and all timestamps. MY messages = blue/purple bubbles on the right. HER messages = grey bubbles on the left. Find HER newest GREY message (the grey bubble closest to the bottom) and reply to THAT — never reply to my blue/purple messages even if mine is the most recent. Read the messages above only for tone/context. Return EXACTLY 3 distinct replies in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -1511,12 +1609,18 @@ async function popOutLive(){
   pipWindow.document.body.style.cssText='margin:0;padding:14px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;overflow-y:auto';
   pipWindow.document.body.innerHTML=`
     <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">🟢 Live Help</div>
-    <button class="live-scan-btn" id="pip-scan" style="width:100%;padding:13px;margin-bottom:12px">📸 Scan chat &amp; get replies</button>
+    <button class="live-scan-btn" id="pip-scan" style="width:100%;padding:13px;margin-bottom:8px">📸 Scan chat &amp; get replies</button>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="live-stop-btn" id="pip-profile" style="flex:1;padding:10px">👤 Profile scan</button>
+      <button class="live-stop-btn" id="pip-story" style="flex:1;padding:10px">📖 Story reply</button>
+    </div>
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
+  pipWindow.document.getElementById('pip-profile').addEventListener('click',()=>profileScanLive(pipWindow.document));
+  pipWindow.document.getElementById('pip-story').addEventListener('click',()=>storyReplyLive(pipWindow.document));
   pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
   showToast('Popped out — keep it over your chat and scan from there');
 }
@@ -2941,9 +3045,109 @@ const GROK_SEED=[
   {tone:"dry",message:"ok and",userReply:"and nothing, just saying"},
 ];
 
+// Tris's own training replies — the truest signal of his voice
+const TRIS_SEED=[
+  {tone:"flirty",message:"stop making me laugh at work",userReply:"I wanna make you do more than just laugh 😛"},
+  {tone:"funny",message:"I just fell in front of like 20 people I want to disappear",userReply:"LMAO AINT NO WAY, I would run away"},
+  {tone:"chill",message:"how was your day",userReply:"It was chill what about you?"},
+  {tone:"savage",message:"you think you're that guy huh",userReply:"I know im that guy"},
+  {tone:"mysterious",message:"you seem like you have layers",userReply:"maybe that's for you to find out 🤷‍♂️"},
+  {tone:"bold",message:"I'm not gonna chase you",userReply:"Good, who said I wanted you too"},
+  {tone:"wholesome",message:"you're actually one of the good ones I think",userReply:"I appreciate that it means a lot, I can also say that about you too"},
+  {tone:"spicy",message:"you're dangerous and I think you know it",userReply:"Why don't you come and find out lova"},
+  {tone:"plans",message:"you've never actually taken me anywhere 😒",userReply:"i've been busy im sorry, what if we go out this Saturday?"},
+  {tone:"dry",message:"you're so much",userReply:"lol"},
+  {tone:"flirty",message:"why do you look so serious in all your pics",userReply:"I'm just a serious guy what can I say"},
+  {tone:"funny",message:"I burned my food AGAIN send help",userReply:"LMFAOOO just stop cooking at this point 😭"},
+  {tone:"chill",message:"you never text first 🙄",userReply:"I just wanna make sure you're still thinking of me"},
+  {tone:"savage",message:"I'm not one of those girls who waits around fyi",userReply:"great? So why are you still here then?"},
+  {tone:"mysterious",message:"do you ever feel like you're supposed to be somewhere else",userReply:"I do get that feeling sometimes, you just gotta chase it and see where it carries you"},
+  {tone:"bold",message:"I don't do the back and forth thing just so you know",userReply:"And neither do I, I like that about you"},
+  {tone:"wholesome",message:"you're different from who I thought you were (in a good way)",userReply:"lol I'm glad I could've surprised you. What did you think of me before 😭"},
+  {tone:"spicy",message:"I've been thinking about that conversation we had...",userReply:"what part so i'll know where to start from again lova"},
+  {tone:"plans",message:"we should actually hang out one day",userReply:"I'm actually down, are you free Saturday?"},
+  {tone:"dry",message:"k",userReply:"Wrd"},
+  {tone:"flirty",message:"you're literally everywhere on my explore page 😭",userReply:"maybe that's a sign love"},
+  {tone:"funny",message:"I just saw the most unhinged thing at the mall",userReply:"you're always seeing the craziest things 😭"},
+  {tone:"chill",message:"what you up to",userReply:"nothing much just chilling"},
+  {tone:"savage",message:"do you treat everyone like this or just me",userReply:"Just you 🤷‍♂️"},
+  {tone:"mysterious",message:"I can't figure you out and it's lowkey annoying",userReply:"that's good need to keep you invested"},
+  {tone:"bold",message:"what do you actually want from me",userReply:"tryna take you out"},
+  {tone:"wholesome",message:"I told my mum about you lol",userReply:"Lol have me feeling super special"},
+  {tone:"spicy",message:"I had a dream about you last night 👀",userReply:"sounds like you had a fun time with me 😛"},
+  {tone:"plans",message:"we could just stay in and watch something",userReply:"I actually don't mind at all, want me grab something?"},
+  {tone:"dry",message:"lol",userReply:"bet"},
+  {tone:"flirty",message:"you give me a vibe I can't figure out yet",userReply:"That's to keep you intrigued"},
+  {tone:"funny",message:"this is literally the worst day of my entire life",userReply:"LMAOOO be so fr"},
+  {tone:"chill",message:"randomly thought about you",userReply:"I do that sometimes 😛"},
+  {tone:"savage",message:"you left me on read for 3 days and NOW you text",userReply:"Wanted to see if you cared"},
+  {tone:"mysterious",message:"what do you think about at 3am",userReply:"How to be buff asf and rich asf"},
+  {tone:"bold",message:"are you actually interested or just bored",userReply:"I am definitely interested, ill make it more clear"},
+  {tone:"wholesome",message:"I got the job btw 🥹",userReply:"WOOOOOO im sososo proud of you"},
+  {tone:"spicy",message:"I literally cannot stop thinking about you",userReply:"Guess we gotta make those thoughts into a reality"},
+  {tone:"plans",message:"okay so when are we actually doing something",userReply:"if you're free saturday im actually down, c3?"},
+  {tone:"dry",message:"I guess",userReply:"welp"},
+  {tone:"flirty",message:"okay I looked at your profile... you seem interesting",userReply:"you seem more interesting from what ive seen already"},
+  {tone:"funny",message:"what was that story you just posted 😭",userReply:"LISTEN RIGHT I WAS SOOO DRUNK 😭"},
+  {tone:"chill",message:"morning",userReply:"morning"},
+  {tone:"savage",message:"wow finally a reply",userReply:"you've been chosen 🤷‍♂️"},
+  {tone:"mysterious",message:"no but how are you actually",userReply:"i've been good just chilling"},
+  {tone:"bold",message:"stop being weird about it just tell me",userReply:"It's just been a lot if you have time I could tell you everything"},
+  {tone:"wholesome",message:"you genuinely made my day better today",userReply:"Same with you, I feel so much better thanks to you"},
+  {tone:"spicy",message:"I should not be texting you right now",userReply:"But you can't help yourself and neither can I"},
+  {tone:"plans",message:"I really wanna go somewhere this week",userReply:"I'm actually free so if you want I could pick you up"},
+  {tone:"dry",message:"mmm okay",userReply:"yeahh"},
+  {tone:"flirty",message:"talking to you is actually too easy which is annoying",userReply:"Guess we align too perfectly"},
+  {tone:"funny",message:"what are you actually doing right now be honest",userReply:"Listen ill have to kill you if I told you"},
+  {tone:"chill",message:"been a while",userReply:"it has though you disappeared"},
+  {tone:"savage",message:"I don't really see this going anywhere",userReply:"It be like that tbh"},
+  {tone:"mysterious",message:"what's your dating history actually like",userReply:"Just had a relationship that didn't work out and been chilling since"},
+  {tone:"bold",message:"if you like me just say it",userReply:"I don't wanna give you the satisfaction, but I do like you"},
+  {tone:"wholesome",message:"thanks for actually listening earlier",userReply:"Of course you don't even need to thank me, i'm always here for you"},
+  {tone:"spicy",message:"I need to see you soon",userReply:"Let's go out Saturday need to see you more"},
+  {tone:"plans",message:"what are you tryna do tonight",userReply:"maybe watch a movie could just chill and have some food"},
+  {tone:"dry",message:"maybe",userReply:"welp"},
+  {tone:"flirty",message:"my friend thinks you're cute btw",userReply:"Really? I find her friend is the cute one"},
+  {tone:"funny",message:"be honest, were you always this weird or is it just with me",userReply:"LMAO NAHH LISTEN RIGHT ITS CHILL IDK WHAT YOU'RE TALKING ABOUT 😭"},
+  {tone:"chill",message:"you're quiet today",userReply:"It's nothing"},
+  {tone:"savage",message:"so I heard you've been talking to other girls",userReply:"is that so?"},
+  {tone:"mysterious",message:"what are you like when nobody's watching",userReply:"I am just how I seem, just a couple extra steps its for you to find out"},
+  {tone:"bold",message:"would you stand up for me if it came to it",userReply:"yes without a doubt"},
+  {tone:"wholesome",message:"I had so much fun with you today",userReply:"I did too, I miss you already"},
+  {tone:"spicy",message:"I keep thinking about your hands tbh",userReply:"tell me, what exactly you missed about my hands lova"},
+  {tone:"plans",message:"I can't friday but how about saturday",userReply:"that's honestly better for me, we could definitely do that instead"},
+  {tone:"dry",message:"wow.",userReply:"that's crazy"},
+  {tone:"flirty",message:"wait you know them too? small world",userReply:"lol yeah, knew them for a while how do you know them"},
+  {tone:"funny",message:"my group chat is genuinely unwell today",userReply:"what's even happening 😭"},
+  {tone:"chill",message:"we never do anything fun anymore",userReply:"sighh don't worry as soon as you're free lmk and we could do something"},
+  {tone:"savage",message:"still mad about what you said btw",userReply:"my fault but you gotta look ahead instead of the past"},
+  {tone:"mysterious",message:"I feel like you're hiding something",userReply:"hmm maybe, maybe not you just gotta find out"},
+  {tone:"bold",message:"would you actually be loyal or nah",userReply:"I would be loyal, that's bare minimum once we share the same views on it"},
+  {tone:"wholesome",message:"I feel like I can talk to you about anything",userReply:"that actually means a lot to me and as you said, you could talk to me about anything that's on your mind"},
+  {tone:"spicy",message:"just got out the shower 👀",userReply:"👀 is that so beautiful?"},
+  {tone:"plans",message:"okay you're cooking for me when",userReply:"honestly im free on sunday if you wanna come over, what would you like?"},
+  {tone:"dry",message:"sure",userReply:"bet"},
+  {tone:"flirty",message:"I was gonna wait for you to text but here we are",userReply:"I admire your confidence I like where this is going already"},
+  {tone:"funny",message:"I cannot do today I need a redo",userReply:"😭 alright im gonna go back and rewind time let's run it back"},
+  {tone:"chill",message:"eating and texting you what do you want",userReply:"nothing was just curious at the gym rn"},
+  {tone:"savage",message:"you're honestly so annoying sometimes",userReply:"but yet you keep talking to me"},
+  {tone:"mysterious",message:"tell me something nobody else knows about you",userReply:"I actually love the gym, you'll get to know more as we keep talking 👀"},
+  {tone:"bold",message:"are we doing this or are we not",userReply:"Yes we are"},
+  {tone:"wholesome",message:"you're so patient with me I don't deserve it",userReply:"Yes you do deserve it, you deserve everything good that happens to you"},
+  {tone:"spicy",message:"my roommate's out till late btw",userReply:"all I need to hear, on my way over 😜"},
+  {tone:"dry",message:"and?",userReply:"That's it"},
+  {tone:"flirty",message:"okay that last post was actually a vibe",userReply:"I appreciate it tried my best"},
+  {tone:"plans",message:"I want to do something but idk what",userReply:"We could go watch a movie on saturday once you're free"},
+  {tone:"funny",message:"you're actually so random lol",userReply:"that's just my whimsy"},
+  {tone:"chill",message:"I'm bored",userReply:"Maybe you could go make something to eat"},
+  {tone:"savage",message:"prove it then if you supposedly care so much",userReply:"I will when we go out you'll see"},
+  {tone:"mysterious",message:"what do you actually want from your life like end goal",userReply:"be rich and drive around in a tycan"},
+  {tone:"bold",message:"do you actually see a future with me or nah",userReply:"yes I do, do you?"},
+].map(e=>({...e,trainer:'Tris'}));
+
 function getTrainingExamples(tone='',limit=3){
-  // Combine the user's own saved data with the baked-in crew seed + refined library
-  const pool=[...trainingData,...SEED_TRAINING,...GROK_SEED];
+  // Combine the user's own saved data with the baked-in crew seed + refined library + Tris's own voice
+  const pool=[...trainingData,...SEED_TRAINING,...GROK_SEED,...TRIS_SEED];
   if(!pool.length)return'';
   const matching=pool.filter(d=>d.tone===tone).sort(()=>Math.random()-.5);
   const others=pool.filter(d=>d.tone!==tone).sort(()=>Math.random()-.5);
