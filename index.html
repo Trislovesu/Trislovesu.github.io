@@ -434,10 +434,10 @@ input[type="text"]::placeholder{color:var(--text3)}
 @keyframes cardFloatIn{0%{opacity:0;transform:translateY(20px) scale(.96);filter:blur(8px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 
 /* ── CONTRIBUTOR / "answer questions" attention-grabber ── */
-@keyframes contribPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(155,110,224,0.55),0 0 36px rgba(155,110,224,0.45)}50%{transform:scale(1.06);box-shadow:0 0 0 14px rgba(155,110,224,0),0 0 60px rgba(155,110,224,0.85)}}
-.contrib-cta{display:block;width:100%;margin-top:18px;padding:15px 18px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;letter-spacing:.02em;cursor:pointer;animation:contribPulse 2s ease-in-out infinite;position:relative;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,0.35)}
-.contrib-cta:hover{filter:brightness(1.1)}
-.contrib-cta-sub{font-size:11px;font-weight:500;opacity:.9;margin-top:3px;display:block}
+@keyframes contribPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,0.35),0 0 28px rgba(255,255,255,0.18)}50%{transform:scale(1.04);box-shadow:0 0 0 12px rgba(255,255,255,0),0 0 48px rgba(255,255,255,0.45)}}
+.contrib-cta{display:block;width:100%;margin-top:18px;padding:15px 18px;background:linear-gradient(170deg,#2a2a2e,#1a1a1c);color:#fff;border:1px solid rgba(255,255,255,0.18);border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;letter-spacing:.02em;cursor:pointer;animation:contribPulse 2.4s ease-in-out infinite;position:relative;overflow:hidden}
+.contrib-cta:hover{background:linear-gradient(170deg,#34343a,#202024);border-color:rgba(255,255,255,0.3)}
+.contrib-cta-sub{font-size:11px;font-weight:500;opacity:.6;margin-top:3px;display:block;color:rgba(255,255,255,0.7)}
 .signup-disabled-note{margin-top:8px;font-size:11px;color:var(--text3);text-align:center;font-style:italic;line-height:1.45}
 .auth-toggle button.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 
@@ -447,7 +447,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .contrib-header{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .contrib-title{font-size:18px;font-weight:700;color:var(--text);font-family:'DM Sans',sans-serif}
 .contrib-progress{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
-.contrib-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 12px 50px rgba(0,0,0,0.4),0 0 60px rgba(155,110,224,0.12);animation:cardFloatIn .35s ease-out}
+.contrib-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 12px 50px rgba(0,0,0,0.45),0 0 60px rgba(255,255,255,0.04);animation:cardFloatIn .35s ease-out}
 .contrib-intro-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1600;display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));backdrop-filter:blur(10px)}
 .contrib-intro-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px 26px;max-width:420px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7)}
 .contrib-intro-box h2{font-size:18px;margin-bottom:12px;color:var(--text)}
@@ -457,7 +457,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .contrib-intro-close.ready{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .contrib-export-fab{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1550;padding:11px 20px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
 .contrib-export-fab:hover{color:var(--text);border-color:var(--text2)}
-.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1700;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:calc(14px + env(safe-area-inset-top)) 20px 18px;box-shadow:0 12px 48px rgba(0,0,0,0.55),0 0 60px rgba(155,110,224,0.2);transition:transform .4s cubic-bezier(.22,1,.36,1)}
+.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1700;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:calc(14px + env(safe-area-inset-top)) 20px 18px;box-shadow:0 12px 48px rgba(0,0,0,0.6),0 0 60px rgba(255,255,255,0.06);transition:transform .4s cubic-bezier(.22,1,.36,1)}
 .contrib-export-prompt.show{transform:translate(-50%,0)}
 .contrib-export-prompt h3{font-size:14.5px;font-weight:700;margin-bottom:4px}
 .contrib-export-prompt p{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:12px}
@@ -473,7 +473,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .fem-rating-buttons{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
 .fem-rating-btn{flex:1;min-width:32px;padding:9px 0;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .12s}
 .fem-rating-btn:hover{border-color:var(--text2);color:var(--text)}
-.fem-rating-btn.on{background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border-color:transparent;transform:scale(1.05)}
+.fem-rating-btn.on{background:#fff;color:#0a0a0c;border-color:#fff;transform:scale(1.08);box-shadow:0 0 18px rgba(255,255,255,0.3)}
 .fem-wtf-btn{display:block;width:100%;margin-bottom:14px;padding:11px;background:rgba(224,85,85,0.08);border:1.5px solid var(--red);border-radius:10px;color:var(--red);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.01em}
 .fem-wtf-btn:hover{background:rgba(224,85,85,0.18);transform:scale(1.01);box-shadow:0 0 24px rgba(224,85,85,0.25)}
 .fem-wtf-btn:active{transform:scale(.98)}
@@ -506,7 +506,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .gender-pick{display:flex;gap:10px;margin-top:14px}
 .gender-btn{flex:1;padding:18px;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
 .gender-btn:hover{border-color:var(--text2);color:var(--text)}
-.gender-btn.on{border-color:#9b6ee0;background:rgba(155,110,224,0.12);color:var(--text);box-shadow:0 0 24px rgba(155,110,224,0.25)}
+.gender-btn.on{border-color:rgba(255,255,255,0.55);background:rgba(255,255,255,0.08);color:var(--text);box-shadow:0 0 24px rgba(255,255,255,0.12)}
 
 /* ── 📲 QR ONBOARDING (special flow for users who scan the QR code) ──
    Lives on top of everything. Radiant glow background. Smooth slide transitions per step. */
@@ -563,9 +563,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 .qr-homie-pfp.mystery::before{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.18) 0%,transparent 60%);pointer-events:none;animation:mysteryBreath 3.6s ease-in-out infinite;mix-blend-mode:screen}
 .qr-homie-pfp.mystery::after{content:'';position:absolute;left:50%;top:0;width:1px;height:24%;background:linear-gradient(180deg,rgba(255,255,255,0.4),transparent);transform:translateX(-50%);pointer-events:none}
 .qr-homie.lead .qr-homie-pfp.mystery{box-shadow:0 8px 24px rgba(0,0,0,0.7),0 0 32px rgba(255,255,255,0.22),inset 0 0 12px rgba(0,0,0,0.5)}
-.qr-mono{font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:400;color:rgba(255,255,255,0.92);letter-spacing:-.02em;line-height:1;text-shadow:0 0 14px rgba(255,255,255,0.25),0 1px 0 rgba(0,0,0,0.6);position:relative;z-index:1;animation:monoFlicker 5.5s ease-in-out infinite}
+.qr-mono{font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:500;color:#fff;letter-spacing:-.02em;line-height:1;text-shadow:0 0 18px rgba(255,255,255,0.45),0 0 32px rgba(255,255,255,0.15),0 1px 0 rgba(0,0,0,0.7);position:relative;z-index:1;animation:monoFlicker 5.5s ease-in-out infinite}
 @keyframes mysteryBreath{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
-@keyframes monoFlicker{0%,100%{opacity:.92}50%{opacity:.7}96%{opacity:.55}98%{opacity:1}}
+@keyframes monoFlicker{0%,100%{opacity:1}50%{opacity:.88}96%{opacity:.75}98%{opacity:1}}
 .qr-homie .qr-crown{position:absolute;top:-20px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:22px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));animation:crownBob 2.6s ease-in-out infinite}
 .qr-homie.lead .qr-crown{font-size:28px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(255,215,128,0.45))}
 @keyframes crownBob{0%,100%{transform:translateX(-50%) rotate(-8deg) translateY(0)}50%{transform:translateX(-50%) rotate(-8deg) translateY(-3px)}}
@@ -818,7 +818,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 <!-- 🎯 CONTRIBUTOR OVERLAY — minimal training UI for crew on Instagram -->
 <div class="contrib-overlay" id="contrib-overlay">
   <div class="contrib-header">
-    <div class="contrib-title">💜 Train Don't Miss</div>
+    <div class="contrib-title">Train Don't Miss</div>
     <button onclick="closeContribute()" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:6px 12px;font-family:'DM Sans',sans-serif">✕ Close</button>
   </div>
   <div id="contrib-stage" style="width:100%;max-width:520px"></div>
@@ -3089,7 +3089,7 @@ function actuallyRenderStep(stage){
 function qrStepWelcome(){
   return `<div class="qr-card">
     <div class="qr-eyebrow">invitation</div>
-    <div style="text-align:center;font-size:48px;margin-bottom:10px;filter:grayscale(1) brightness(1.4);opacity:.85">🤍</div>
+    <div style="text-align:center;font-size:48px;margin-bottom:10px;opacity:.95">👀</div>
     <div class="qr-headline">you found something.</div>
     <div class="qr-sub">help shape what comes next.<br>two minutes. no signup.</div>
     <button class="qr-primary-btn" onclick="qrAdvance()">i'm in →</button>
@@ -3188,7 +3188,7 @@ const QR_HOMIES=[
   {monogram:'T',name:'Tris',role:'the architect',handle:'@trislovesu.7',lead:true,tagline:'the one behind it.'},
   {emoji:'🧠',name:'Claude',role:'the builder',handle:'anthropic',tagline:'wrote every line of this.'},
   {emoji:'💬',name:'ChatGPT',role:'the homie',handle:'openai',tagline:'the second opinion.'},
-  {emoji:'⚡',name:'Grok',role:'the wildcard',handle:'xai',tagline:'kept it from getting boring.'}
+  {emoji:'⚡',name:'Grok',role:'the horny one',handle:'xai',tagline:"kept it from getting boring 😏"}
 ];
 const QR_FINAL_TAGLINE='your move.';
 
@@ -3207,13 +3207,12 @@ function qrRenderSlideshow(){
   const stage=document.getElementById('qr-homies-stage');
   if(!stage)return;
   const revealedCount=qrSlideshowState.slide; // 0 = none yet, 1 = first revealed, etc.
-  // Build all 4 homies but only mark first N as revealed
-  stage.innerHTML=QR_HOMIES.map((h,i)=>{
-    const isRevealed=i<revealedCount;
-    const isFresh=i===revealedCount-1; // the one just revealed gets the drop animation
-    const classes=['qr-homie'];
+  // Only render homies that have been revealed — keeps flex centering clean so the lead doesn't sit off to the left.
+  // The newly added one gets the .fresh class → triggers homieDrop animation.
+  stage.innerHTML=QR_HOMIES.slice(0,revealedCount).map((h,i)=>{
+    const isFresh=i===revealedCount-1;
+    const classes=['qr-homie','revealed'];
     if(h.lead)classes.push('lead');
-    if(isRevealed)classes.push('revealed');
     if(isFresh)classes.push('fresh');
     const pfpInner=h.monogram
       ?`<div class="qr-homie-pfp mystery"><span class="qr-mono">${h.monogram}</span></div>`
@@ -3379,7 +3378,7 @@ function updateStartBtn(){
   btn.disabled=!ok;
   btn.style.cursor=ok?'pointer':'not-allowed';
   btn.textContent=ok?(contribState.gender==='male'?"let's go — i'll write replies":"let's go — i'll rate AI replies"):'pick name + gender to start';
-  if(ok){btn.style.background='linear-gradient(135deg,#9b6ee0,#5b9ef5)';btn.style.color='#fff';btn.style.borderColor='transparent';btn.style.boxShadow='0 0 40px rgba(155,110,224,0.35)';}
+  if(ok){btn.style.background='linear-gradient(180deg,#f5f5f5,#d8d8d8)';btn.style.color='#0a0a0c';btn.style.borderColor='transparent';btn.style.boxShadow='0 8px 24px rgba(0,0,0,0.5),0 0 28px rgba(255,255,255,0.18)';}
 }
 function startContribSession(){
   if(!contribState.name||!contribState.gender)return;
@@ -3615,10 +3614,10 @@ function renderContribQuestion(){
   let body='';
   if(contribState.gender==='male'){
     body=`
-      <div style="display:inline-block;padding:6px 14px;background:rgba(155,110,224,0.12);border:1px solid ${toneObj.color};border-radius:100px;font-size:11.5px;font-weight:700;color:${toneObj.color};letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">${toneObj.emoji} reply ${toneObj.label}</div>
+      <div style="display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid ${toneObj.color};border-radius:100px;font-size:11.5px;font-weight:700;color:${toneObj.color};letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">${toneObj.emoji} reply ${toneObj.label}</div>
       <div style="font-size:13px;color:var(--text3);font-style:italic;margin-bottom:12px;line-height:1.55">${(s.context||'').replace(/</g,'&lt;')}</div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:15px;color:var(--text);line-height:1.5;margin-bottom:12px">"${(s.message||'').replace(/</g,'&lt;')}"</div>
-      ${s.hint?`<div style="background:rgba(91,158,245,0.08);border:1px dashed rgba(91,158,245,0.3);border-radius:10px;padding:10px 13px;font-size:12px;color:var(--text2);margin-bottom:14px">💡 ${s.hint.replace(/</g,'&lt;')}</div>`:''}
+      ${s.hint?`<div style="background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.18);border-radius:10px;padding:10px 13px;font-size:12px;color:var(--text2);margin-bottom:14px">💡 ${s.hint.replace(/</g,'&lt;')}</div>`:''}
       <textarea id="contrib-reply-input" placeholder="type your reply..." rows="3" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:vertical;margin-bottom:12px" autocomplete="off"></textarea>
       <div style="display:flex;gap:8px">
         <button onclick="skipContribQuestion()" style="flex:none;padding:11px 18px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">skip →</button>
@@ -3630,7 +3629,7 @@ function renderContribQuestion(){
     const cand=contribState._currentCandidate;
     const ratings=[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="fem-rating-btn" data-r="${n}" onclick="setFemRating(${n})">${n}</button>`).join('');
     body=`
-      <div style="display:inline-block;padding:6px 14px;background:rgba(155,110,224,0.12);border:1px solid ${toneObj.color};border-radius:100px;font-size:11.5px;font-weight:700;color:${toneObj.color};letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">${toneObj.emoji} ${toneObj.label} situation</div>
+      <div style="display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid ${toneObj.color};border-radius:100px;font-size:11.5px;font-weight:700;color:${toneObj.color};letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">${toneObj.emoji} ${toneObj.label} situation</div>
       <div style="font-size:13px;color:var(--text3);font-style:italic;margin-bottom:12px;line-height:1.55">she said this to him:</div>
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:15px;color:var(--text);line-height:1.5;margin-bottom:12px">"${(s.message||'').replace(/</g,'&lt;')}"</div>
       <div class="fem-reply-label">🤖 the AI told him to reply with:</div>
@@ -3870,7 +3869,7 @@ function showSendBackTutorial(filename){
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text2);margin-bottom:14px;word-break:break-all">${filename}</div>
 
       <p style="color:var(--text);margin-bottom:6px"><strong>📤 fastest: share it (whatsapp / mail / airdrop)</strong></p>
-      <button onclick="shareFileNow()" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 0 32px rgba(155,110,224,0.32);margin-bottom:6px">📤 share the file →</button>
+      <button onclick="shareFileNow()" style="display:block;width:100%;padding:13px;background:linear-gradient(180deg,#f5f5f5,#d8d8d8);color:#0a0a0c;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.5),0 0 28px rgba(255,255,255,0.15);margin-bottom:6px">📤 share the file →</button>
       <div style="font-size:10.5px;color:var(--text3);text-align:center;margin-bottom:14px;font-style:italic;line-height:1.4">${canShare?'opens share sheet — pick <strong>whatsapp / mail / airdrop / save to files</strong> and send to tris':'share sheet not supported here — use the buttons below'}</div>
 
       <p style="color:var(--text);margin-bottom:6px"><strong>💬 jump straight to tris on whatsapp</strong></p>
@@ -3910,7 +3909,7 @@ function renderContribDone(){
       <div style="font-size:46px;margin-bottom:10px">🎉</div>
       <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">you finished every scenario</h2>
       <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:16px">you answered <strong style="color:var(--text)">${contribState.answers.length}</strong> — absolute legend. one tap and you're done.</p>
-      <button id="contrib-autosend-btn" onclick="contribAutoSend()" style="width:100%;padding:15px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 0 36px rgba(155,110,224,0.4)">🚀 send it to tris — one tap</button>
+      <button id="contrib-autosend-btn" onclick="contribAutoSend()" style="width:100%;padding:15px;background:linear-gradient(180deg,#f5f5f5,#d8d8d8);color:#0a0a0c;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.5),0 0 32px rgba(255,255,255,0.18)">🚀 send it to tris — one tap</button>
       <button onclick="exportContribAnswers()" style="width:100%;margin-top:10px;padding:11px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer">or download + send manually →</button>
     </div>`;
 }
