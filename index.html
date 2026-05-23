@@ -510,58 +510,74 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 /* ── 📲 QR ONBOARDING (special flow for users who scan the QR code) ──
    Lives on top of everything. Radiant glow background. Smooth slide transitions per step. */
-.qr-overlay{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(155,110,224,0.22) 0%,rgba(91,158,245,0.12) 35%,var(--bg) 75%),radial-gradient(ellipse 60% 40% at 50% 85%,rgba(224,85,128,0.14) 0%,transparent 60%),var(--bg)}
+/* Darker monochrome theme — dark gray + white aesthetic, minimal colour */
+.qr-overlay{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse 70% 50% at 50% 40%,rgba(255,255,255,0.04) 0%,rgba(0,0,0,0) 70%),#0a0a0c}
 .qr-overlay.open{display:flex;animation:screenFadeIn .5s cubic-bezier(.22,1,.36,1)}
-.qr-overlay::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(155,110,224,0.18),transparent 40%),radial-gradient(circle at 80% 80%,rgba(91,158,245,0.18),transparent 40%);animation:qrGlowPulse 8s ease-in-out infinite;pointer-events:none}
-@keyframes qrGlowPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.qr-overlay::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,0.045),transparent 50%),radial-gradient(circle at 75% 80%,rgba(255,255,255,0.03),transparent 55%);animation:qrGlowPulse 9s ease-in-out infinite;pointer-events:none}
+@keyframes qrGlowPulse{0%,100%{opacity:.55}50%{opacity:1}}
 .qr-stage{width:100%;max-width:440px;position:relative;z-index:1}
-.qr-card{background:linear-gradient(165deg,rgba(34,28,54,0.85),rgba(20,18,32,0.92));border:1px solid rgba(155,110,224,0.32);border-radius:22px;padding:34px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.55),0 0 80px rgba(155,110,224,0.22),inset 0 1px 0 rgba(255,255,255,0.06);backdrop-filter:blur(14px);animation:qrCardIn .55s cubic-bezier(.22,1,.36,1)}
-@keyframes qrCardIn{0%{opacity:0;transform:translateY(24px) scale(.96);filter:blur(6px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
-.qr-card.swap-out{animation:qrCardOut .28s cubic-bezier(.55,0,.7,.4) forwards}
-@keyframes qrCardOut{to{opacity:0;transform:translateX(-20px) scale(.97);filter:blur(4px)}}
-.qr-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9b6ee0;margin-bottom:10px;text-align:center;text-shadow:0 0 14px rgba(155,110,224,0.5)}
-.qr-headline{font-size:22px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:10px;text-align:center}
-.qr-sub{font-size:13.5px;color:var(--text2);line-height:1.55;margin-bottom:24px;text-align:center}
-.qr-primary-btn{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 36px rgba(155,110,224,0.4),0 6px 18px rgba(0,0,0,0.35);letter-spacing:.01em;transition:transform .15s;margin-bottom:10px}
-.qr-primary-btn:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(155,110,224,0.55),0 10px 24px rgba(0,0,0,0.35)}
+.qr-card{background:linear-gradient(170deg,rgba(28,28,32,0.92),rgba(14,14,18,0.96));border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:34px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 60px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.05);backdrop-filter:blur(14px);animation:qrCardIn .55s cubic-bezier(.22,1,.36,1)}
+@keyframes qrCardIn{0%{opacity:0;transform:translateY(20px) scale(.97);filter:blur(4px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+.qr-card.swap-out{animation:qrCardOut .26s cubic-bezier(.55,0,.7,.4) forwards}
+@keyframes qrCardOut{to{opacity:0;transform:translateX(-16px) scale(.98);filter:blur(3px)}}
+.qr-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:12px;text-align:center}
+.qr-headline{font-size:22px;font-weight:700;color:#fff;line-height:1.25;margin-bottom:10px;text-align:center;letter-spacing:-.01em}
+.qr-sub{font-size:13.5px;color:rgba(255,255,255,0.55);line-height:1.55;margin-bottom:24px;text-align:center}
+.qr-primary-btn{display:block;width:100%;padding:15px;background:linear-gradient(180deg,#f5f5f5,#d8d8d8);color:#0a0a0c;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);letter-spacing:.01em;transition:transform .15s,box-shadow .15s;margin-bottom:10px}
+.qr-primary-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,0.6),0 0 24px rgba(255,255,255,0.12),inset 0 1px 0 rgba(255,255,255,0.5)}
 .qr-primary-btn:active{transform:scale(.98)}
-.qr-secondary-btn{display:block;width:100%;padding:13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
-.qr-secondary-btn:hover{color:var(--text);border-color:var(--text3)}
-.qr-input{width:100%;background:rgba(0,0,0,0.32);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14.5px;color:var(--text);outline:none;margin-bottom:18px;transition:border-color .2s,box-shadow .2s}
-.qr-input:focus{border-color:#9b6ee0;box-shadow:0 0 0 4px rgba(155,110,224,0.18)}
+.qr-secondary-btn{display:block;width:100%;padding:13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.55);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.qr-secondary-btn:hover{color:#fff;border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.06)}
+.qr-input{width:100%;background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14.5px;color:#fff;outline:none;margin-bottom:18px;transition:border-color .2s,box-shadow .2s}
+.qr-input:focus{border-color:rgba(255,255,255,0.4);box-shadow:0 0 0 4px rgba(255,255,255,0.06)}
 .qr-pick{display:flex;gap:10px;margin-bottom:18px}
-.qr-pick-btn{flex:1;padding:18px 12px;background:rgba(255,255,255,0.03);border:1.5px solid var(--border);border-radius:14px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;text-align:center}
-.qr-pick-btn:hover{border-color:var(--text3);color:var(--text)}
-.qr-pick-btn.on{border-color:#9b6ee0;background:linear-gradient(135deg,rgba(155,110,224,0.18),rgba(91,158,245,0.1));color:var(--text);box-shadow:0 0 24px rgba(155,110,224,0.32);transform:scale(1.02)}
-.qr-pick-btn .sub{display:block;font-size:11px;font-weight:400;color:var(--text3);margin-top:5px}
+.qr-pick-btn{flex:1;padding:18px 12px;background:rgba(255,255,255,0.02);border:1.5px solid rgba(255,255,255,0.08);border-radius:14px;color:rgba(255,255,255,0.6);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s cubic-bezier(.22,1,.36,1);text-align:center}
+.qr-pick-btn:hover{border-color:rgba(255,255,255,0.22);color:#fff;background:rgba(255,255,255,0.04)}
+.qr-pick-btn.on{border-color:rgba(255,255,255,0.55);background:rgba(255,255,255,0.08);color:#fff;box-shadow:0 0 24px rgba(255,255,255,0.1);transform:scale(1.02)}
+.qr-pick-btn .sub{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,0.4);margin-top:5px}
 .qr-skill-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:14px 0 8px}
-.qr-skill-btn{padding:11px 0;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s}
-.qr-skill-btn:hover{color:var(--text);border-color:var(--text2)}
-.qr-skill-btn.on{background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border-color:transparent;transform:scale(1.08);box-shadow:0 0 18px rgba(155,110,224,0.45)}
-.qr-skill-anchor{font-size:11px;color:var(--text3);text-align:center;font-style:italic;margin-bottom:18px}
+.qr-skill-btn{padding:11px 0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.6);font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s cubic-bezier(.22,1,.36,1)}
+.qr-skill-btn:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
+.qr-skill-btn.on{background:#fff;color:#0a0a0c;border-color:#fff;transform:scale(1.1);box-shadow:0 0 18px rgba(255,255,255,0.3)}
+.qr-skill-anchor{font-size:11px;color:rgba(255,255,255,0.35);text-align:center;font-style:italic;margin-bottom:18px}
 .qr-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 10px;min-height:200px}
-.qr-loading-spinner{width:46px;height:46px;border:3px solid rgba(155,110,224,0.18);border-top-color:#9b6ee0;border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:18px}
+.qr-loading-spinner{width:42px;height:42px;border:2.5px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.8);border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:18px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.qr-loading-joke{font-size:14px;color:var(--text);text-align:center;line-height:1.5;font-style:italic;max-width:300px;opacity:0;animation:fadeIn .4s ease-out forwards}
+.qr-loading-joke{font-size:14px;color:rgba(255,255,255,0.7);text-align:center;line-height:1.5;font-style:italic;max-width:300px;opacity:0;animation:fadeIn .4s ease-out forwards}
 @keyframes fadeIn{to{opacity:1}}
 
-/* Slideshow with crowns — "AI Homies" */
-.qr-slideshow{padding:6px 0}
-.qr-slide-dots{display:flex;justify-content:center;gap:7px;margin-bottom:18px}
-.qr-slide-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .25s}
-.qr-slide-dot.on{background:#9b6ee0;width:22px;border-radius:4px;box-shadow:0 0 8px rgba(155,110,224,0.6)}
-.qr-homies{display:flex;gap:14px;justify-content:center;margin:18px 0 22px;flex-wrap:wrap}
-.qr-homie{position:relative;width:74px;text-align:center}
-.qr-homie-pfp{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--surface2),var(--surface));border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 6px;box-shadow:0 6px 18px rgba(0,0,0,0.4);position:relative}
-.qr-homie.lead .qr-homie-pfp{border-color:#ffcd46;box-shadow:0 6px 18px rgba(0,0,0,0.4),0 0 28px rgba(255,205,70,0.45)}
-.qr-homie .qr-crown{position:absolute;top:-22px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:24px;filter:drop-shadow(0 0 8px rgba(255,205,70,0.7));animation:crownBob 2.4s ease-in-out infinite}
-.qr-homie.lead .qr-crown{font-size:30px;animation-delay:.1s}
-@keyframes crownBob{0%,100%{transform:translateX(-50%) rotate(-8deg) translateY(0)}50%{transform:translateX(-50%) rotate(-8deg) translateY(-4px)}}
-.qr-homie-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.2}
-.qr-homie-role{font-size:9.5px;color:var(--text3);margin-top:2px;line-height:1.2}
+/* AI Homies — sequential reveal slideshow, monochrome */
+.qr-slide-dots{display:flex;justify-content:center;gap:6px;margin-bottom:18px}
+.qr-slide-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.15);transition:all .35s cubic-bezier(.22,1,.36,1)}
+.qr-slide-dot.on{background:rgba(255,255,255,0.95);width:22px;border-radius:4px;box-shadow:0 0 12px rgba(255,255,255,0.35)}
+.qr-homies-stage{display:flex;gap:14px;justify-content:center;margin:22px 0 18px;flex-wrap:wrap;min-height:118px;align-items:flex-start}
+.qr-homie{position:relative;width:74px;text-align:center;opacity:0;transform:translateY(12px) scale(.86);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.34,1.56,.64,1)}
+.qr-homie.revealed{opacity:1;transform:translateY(0) scale(1)}
+.qr-homie.fresh{animation:homieDrop .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes homieDrop{0%{opacity:0;transform:translateY(-18px) scale(.6) rotate(-12deg);filter:blur(4px)}55%{opacity:1;transform:translateY(2px) scale(1.08) rotate(2deg);filter:blur(0)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+.qr-homie-pfp{width:62px;height:62px;border-radius:50%;background:linear-gradient(160deg,#2a2a30,#16161a);border:1.5px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 6px;box-shadow:0 8px 22px rgba(0,0,0,0.6);position:relative;overflow:hidden}
+.qr-homie.lead .qr-homie-pfp{border-color:rgba(255,255,255,0.7);box-shadow:0 8px 24px rgba(0,0,0,0.6),0 0 28px rgba(255,255,255,0.18)}
+
+/* 🕯️ MYSTERIOUS MARK — void circle with a ghostly serif monogram + breathing halo */
+.qr-homie-pfp.mystery{background:radial-gradient(circle at 50% 35%,#1c1c20 0%,#050507 100%);border-color:rgba(255,255,255,0.55);position:relative}
+.qr-homie-pfp.mystery::before{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.18) 0%,transparent 60%);pointer-events:none;animation:mysteryBreath 3.6s ease-in-out infinite;mix-blend-mode:screen}
+.qr-homie-pfp.mystery::after{content:'';position:absolute;left:50%;top:0;width:1px;height:24%;background:linear-gradient(180deg,rgba(255,255,255,0.4),transparent);transform:translateX(-50%);pointer-events:none}
+.qr-homie.lead .qr-homie-pfp.mystery{box-shadow:0 8px 24px rgba(0,0,0,0.7),0 0 32px rgba(255,255,255,0.22),inset 0 0 12px rgba(0,0,0,0.5)}
+.qr-mono{font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:400;color:rgba(255,255,255,0.92);letter-spacing:-.02em;line-height:1;text-shadow:0 0 14px rgba(255,255,255,0.25),0 1px 0 rgba(0,0,0,0.6);position:relative;z-index:1;animation:monoFlicker 5.5s ease-in-out infinite}
+@keyframes mysteryBreath{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+@keyframes monoFlicker{0%,100%{opacity:.92}50%{opacity:.7}96%{opacity:.55}98%{opacity:1}}
+.qr-homie .qr-crown{position:absolute;top:-20px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:22px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));animation:crownBob 2.6s ease-in-out infinite}
+.qr-homie.lead .qr-crown{font-size:28px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(255,215,128,0.45))}
+@keyframes crownBob{0%,100%{transform:translateX(-50%) rotate(-8deg) translateY(0)}50%{transform:translateX(-50%) rotate(-8deg) translateY(-3px)}}
+.qr-homie-name{font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.2}
+.qr-homie-role{font-size:9.5px;color:rgba(255,255,255,0.4);margin-top:2px;line-height:1.2;letter-spacing:.04em;text-transform:uppercase}
+.qr-homie-handle{font-size:9px;color:rgba(255,255,255,0.55);margin-top:2px;line-height:1.2;font-family:'DM Mono',monospace}
+/* tagline that fades in below the homies */
+.qr-tagline{font-size:14.5px;color:rgba(255,255,255,0.75);text-align:center;font-style:italic;letter-spacing:.01em;margin-bottom:18px;min-height:22px;opacity:0;animation:taglineRise .55s cubic-bezier(.22,1,.36,1) .2s forwards}
+@keyframes taglineRise{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
 
 /* No-thanks GIF panel */
-.qr-gif-wrap{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:var(--surface2);margin:16px 0 20px;display:flex;align-items:center;justify-content:center;font-size:74px}
+.qr-gif-wrap{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);margin:16px 0 20px;display:flex;align-items:center;justify-content:center;font-size:74px}
 .qr-gif-wrap::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,transparent 50%,rgba(0,0,0,0.4));pointer-events:none}
 .qr-bye-emoji{animation:byeWave 1.6s ease-in-out infinite;display:inline-block;transform-origin:70% 80%}
 @keyframes byeWave{0%,100%{transform:rotate(0)}25%{transform:rotate(14deg)}75%{transform:rotate(-10deg)}}
@@ -3072,23 +3088,23 @@ function actuallyRenderStep(stage){
 // ── STEP 0: Welcome ──
 function qrStepWelcome(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">📲 invitation</div>
-    <div style="text-align:center;font-size:54px;margin-bottom:6px">💜</div>
-    <div class="qr-headline">wanna contribute to the future?</div>
-    <div class="qr-sub">you scanned a special code 👀 help train Don't Miss™ — the AI wingman built in Trinidad. takes 2 minutes. no signup. anonymous if you want.</div>
-    <button class="qr-primary-btn" onclick="qrAdvance()">yes, let's go ✨</button>
-    <button class="qr-secondary-btn" onclick="qrDecline()">nah i'll pass</button>
+    <div class="qr-eyebrow">invitation</div>
+    <div style="text-align:center;font-size:48px;margin-bottom:10px;filter:grayscale(1) brightness(1.4);opacity:.85">🤍</div>
+    <div class="qr-headline">you found something.</div>
+    <div class="qr-sub">help shape what comes next.<br>two minutes. no signup.</div>
+    <button class="qr-primary-btn" onclick="qrAdvance()">i'm in →</button>
+    <button class="qr-secondary-btn" onclick="qrDecline()">not today</button>
   </div>`;
 }
 
 // ── STEP 1: Name ──
 function qrStepName(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">step 1 of 5</div>
-    <div class="qr-headline">what should we call you?</div>
-    <div class="qr-sub">first name or your @ — whatever. just so we can credit your training.</div>
-    <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or your @handle" maxlength="40" autocomplete="off" />
-    <button class="qr-primary-btn" id="qr-name-next" onclick="qrSubmitName()" disabled style="opacity:.5;cursor:not-allowed">continue →</button>
+    <div class="qr-eyebrow">01 / 05</div>
+    <div class="qr-headline">what do we call you?</div>
+    <div class="qr-sub">name or @. anonymous is fine.</div>
+    <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or @handle" maxlength="40" autocomplete="off" />
+    <button class="qr-primary-btn" id="qr-name-next" onclick="qrSubmitName()" disabled style="opacity:.4;cursor:not-allowed">next →</button>
   </div>`;
 }
 function qrSubmitName(){
@@ -3101,12 +3117,12 @@ function qrSubmitName(){
 // ── STEP 2: Gender ──
 function qrStepGender(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">step 2 of 5</div>
-    <div class="qr-headline">i identify as a...</div>
-    <div class="qr-sub">picks your path — boys WRITE replies for the AI to learn from, girls RATE replies to teach it what actually lands.</div>
+    <div class="qr-eyebrow">02 / 05</div>
+    <div class="qr-headline">you're a...</div>
+    <div class="qr-sub">picks your path.</div>
     <div class="qr-pick">
-      <button class="qr-pick-btn" onclick="qrPickGender('male')">👨 male<span class="sub">you'll write replies</span></button>
-      <button class="qr-pick-btn" onclick="qrPickGender('female')">👩 female<span class="sub">you'll rate AI replies</span></button>
+      <button class="qr-pick-btn" onclick="qrPickGender('male')">man<span class="sub">you'll write</span></button>
+      <button class="qr-pick-btn" onclick="qrPickGender('female')">woman<span class="sub">you'll rate</span></button>
     </div>
   </div>`;
 }
@@ -3119,12 +3135,12 @@ function qrPickGender(g){
 // ── STEP 3: DM experience ──
 function qrStepDmExperience(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">step 3 of 5 · warm-up</div>
-    <div class="qr-headline">ever DM'd someone first before? 👀</div>
-    <div class="qr-sub">no judgment either way — just helps us weight your answers right.</div>
+    <div class="qr-eyebrow">03 / 05</div>
+    <div class="qr-headline">ever DM'd first?</div>
+    <div class="qr-sub">be honest.</div>
     <div class="qr-pick">
-      <button class="qr-pick-btn" onclick="qrPickDmExp(true)">😏 yeah<span class="sub">i shoot my shot</span></button>
-      <button class="qr-pick-btn" onclick="qrPickDmExp(false)">🥹 nope<span class="sub">never been brave enough</span></button>
+      <button class="qr-pick-btn" onclick="qrPickDmExp(true)">yeah<span class="sub">i shoot</span></button>
+      <button class="qr-pick-btn" onclick="qrPickDmExp(false)">never<span class="sub">too scared</span></button>
     </div>
   </div>`;
 }
@@ -3149,12 +3165,12 @@ function qrStepLoading(){
 function qrStepSkillRating(){
   const buttons=[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="qr-skill-btn" data-n="${n}" onclick="qrPickSkill(${n})">${n}</button>`).join('');
   return `<div class="qr-card">
-    <div class="qr-eyebrow">step 4 of 5 · self-rating</div>
-    <div class="qr-headline">how would you rate your texting skills?</div>
-    <div class="qr-sub">be honest — this lets us weight your answers properly. higher = better DMs, smoother openers.</div>
+    <div class="qr-eyebrow">04 / 05</div>
+    <div class="qr-headline">rate your texting.</div>
+    <div class="qr-sub">scale of ten. don't lowball.</div>
     <div class="qr-skill-grid">${buttons}</div>
-    <div class="qr-skill-anchor">5 = average · most people land here · 8+ means you actually pull</div>
-    <button class="qr-primary-btn" id="qr-skill-next" disabled style="opacity:.5;cursor:not-allowed" onclick="qrAdvance()">continue →</button>
+    <div class="qr-skill-anchor">5 = mid · 8+ = you actually pull</div>
+    <button class="qr-primary-btn" id="qr-skill-next" disabled style="opacity:.4;cursor:not-allowed" onclick="qrAdvance()">next →</button>
   </div>`;
 }
 function qrPickSkill(n){
@@ -3164,51 +3180,90 @@ function qrPickSkill(n){
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
 }
 
-// ── STEP 6: AI Homies slideshow ──
+// ── STEP 6: AI Homies — sequential reveal, one per tap ──
+// Each homie gets revealed one at a time with a mysterious one-liner tagline.
+// Previously revealed homies stay on screen.
 let qrSlideshowState={slide:0};
-const QR_SLIDES=[
-  {
-    title:"meet the AI homies 🤖👑",
-    body:"behind every smooth reply is a crew of AIs working together — and you're about to help them get better.",
-    showHomies:true
-  },
-  {
-    title:"why we need YOU",
-    body:"the AI learns from real humans. males teach it how to write. females teach it what actually lands. <strong>both sides matter equally.</strong>",
-    showHomies:false
-  },
-  {
-    title:"how it works",
-    body:"you'll see real-feeling scenarios (a girl sends a message — what would you reply?). takes ~2 min. when you're done, you'll send the file straight to tris.<br><br>no account · no signup · 100% local until you export.",
-    showHomies:false
-  }
+const QR_HOMIES=[
+  {monogram:'T',name:'Tris',role:'the architect',handle:'@trislovesu.7',lead:true,tagline:'the one behind it.'},
+  {emoji:'🧠',name:'Claude',role:'the builder',handle:'anthropic',tagline:'wrote every line of this.'},
+  {emoji:'💬',name:'ChatGPT',role:'the homie',handle:'openai',tagline:'the second opinion.'},
+  {emoji:'⚡',name:'Grok',role:'the wildcard',handle:'xai',tagline:'kept it from getting boring.'}
 ];
+const QR_FINAL_TAGLINE='your move.';
+
 function qrStepSlideshow(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">step 5 of 5 · the intro</div>
-    <div id="qr-slide-content"></div>
+    <div class="qr-eyebrow">05 / 05 · the crew</div>
+    <div class="qr-headline" id="qr-slide-headline">meet who built it.</div>
+    <div class="qr-homies-stage" id="qr-homies-stage"></div>
+    <div class="qr-tagline" id="qr-tagline">tap to reveal.</div>
     <div class="qr-slide-dots" id="qr-slide-dots"></div>
-    <button class="qr-primary-btn" id="qr-slide-btn" onclick="qrSlideAdvance()">next →</button>
+    <button class="qr-primary-btn" id="qr-slide-btn" onclick="qrSlideAdvance()">reveal →</button>
   </div>`;
 }
+
 function qrRenderSlideshow(){
-  const s=QR_SLIDES[qrSlideshowState.slide];
-  const homies=s.showHomies?`
-    <div class="qr-homies">
-      <div class="qr-homie lead"><div class="qr-crown">👑</div><div class="qr-homie-pfp">🧔🏽</div><div class="qr-homie-name">Tris</div><div class="qr-homie-role">the creator</div></div>
-      <div class="qr-homie"><div class="qr-crown">👑</div><div class="qr-homie-pfp">🧠</div><div class="qr-homie-name">Claude</div><div class="qr-homie-role">the builder</div></div>
-      <div class="qr-homie"><div class="qr-crown">👑</div><div class="qr-homie-pfp">💬</div><div class="qr-homie-name">ChatGPT</div><div class="qr-homie-role">the homie</div></div>
-      <div class="qr-homie"><div class="qr-crown">👑</div><div class="qr-homie-pfp">⚡</div><div class="qr-homie-name">Grok</div><div class="qr-homie-role">the wildcard</div></div>
-    </div>`:'';
-  document.getElementById('qr-slide-content').innerHTML=`
-    <div class="qr-headline">${s.title}</div>
-    ${homies}
-    <div class="qr-sub">${s.body}</div>`;
-  document.getElementById('qr-slide-dots').innerHTML=QR_SLIDES.map((_,i)=>`<div class="qr-slide-dot${i===qrSlideshowState.slide?' on':''}"></div>`).join('');
-  document.getElementById('qr-slide-btn').textContent=qrSlideshowState.slide===QR_SLIDES.length-1?"let's do this 🚀":'next →';
+  const stage=document.getElementById('qr-homies-stage');
+  if(!stage)return;
+  const revealedCount=qrSlideshowState.slide; // 0 = none yet, 1 = first revealed, etc.
+  // Build all 4 homies but only mark first N as revealed
+  stage.innerHTML=QR_HOMIES.map((h,i)=>{
+    const isRevealed=i<revealedCount;
+    const isFresh=i===revealedCount-1; // the one just revealed gets the drop animation
+    const classes=['qr-homie'];
+    if(h.lead)classes.push('lead');
+    if(isRevealed)classes.push('revealed');
+    if(isFresh)classes.push('fresh');
+    const pfpInner=h.monogram
+      ?`<div class="qr-homie-pfp mystery"><span class="qr-mono">${h.monogram}</span></div>`
+      :`<div class="qr-homie-pfp">${h.emoji}</div>`;
+    return `<div class="${classes.join(' ')}">
+      <div class="qr-crown">👑</div>
+      ${pfpInner}
+      <div class="qr-homie-name">${h.name}</div>
+      <div class="qr-homie-role">${h.role}</div>
+      ${h.handle?`<div class="qr-homie-handle">${h.handle}</div>`:''}
+    </div>`;
+  }).join('');
+  // Update tagline
+  const taglineEl=document.getElementById('qr-tagline');
+  if(taglineEl){
+    let newTagline='tap to reveal.';
+    if(revealedCount>0&&revealedCount<=QR_HOMIES.length){
+      newTagline=QR_HOMIES[revealedCount-1].tagline;
+    }
+    if(revealedCount>QR_HOMIES.length){
+      newTagline=QR_FINAL_TAGLINE;
+    }
+    // re-trigger the rise animation
+    taglineEl.style.animation='none';
+    taglineEl.offsetHeight; // reflow
+    taglineEl.textContent=newTagline;
+    taglineEl.style.animation='';
+  }
+  // Dots: one per homie + final start state
+  const totalDots=QR_HOMIES.length+1;
+  const dotsHtml=Array.from({length:totalDots},(_,i)=>`<div class="qr-slide-dot${i<=revealedCount?' on':''}"></div>`).join('');
+  document.getElementById('qr-slide-dots').innerHTML=dotsHtml;
+  // Update button text
+  const btn=document.getElementById('qr-slide-btn');
+  if(btn){
+    if(revealedCount===0)btn.textContent='reveal →';
+    else if(revealedCount<QR_HOMIES.length)btn.textContent='next →';
+    else btn.textContent="let's go →";
+  }
+  // Update headline
+  const headlineEl=document.getElementById('qr-slide-headline');
+  if(headlineEl&&revealedCount>=QR_HOMIES.length){
+    headlineEl.textContent='the crew.';
+  }else if(headlineEl){
+    headlineEl.textContent='meet who built it.';
+  }
 }
+
 function qrSlideAdvance(){
-  if(qrSlideshowState.slide<QR_SLIDES.length-1){
+  if(qrSlideshowState.slide<QR_HOMIES.length){
     qrSlideshowState.slide++;
     qrRenderSlideshow();
   }else{
@@ -3228,21 +3283,21 @@ function qrStepHandoff(){
     contribState.currentIdx=0;
     showContribIntro();
   },100);
-  return `<div class="qr-card"><div class="qr-loading"><div class="qr-loading-spinner"></div><div class="qr-loading-joke">loading your scenarios... 🎯</div></div></div>`;
+  return `<div class="qr-card"><div class="qr-loading"><div class="qr-loading-spinner"></div><div class="qr-loading-joke">setting it up...</div></div></div>`;
 }
 
-// ── Decline path: GIF + cheeky farewell ──
+// ── Decline path: minimal farewell ──
 function qrDecline(){
   const stage=document.getElementById('qr-stage');
   const old=stage.querySelector('.qr-card');
   if(old)old.classList.add('swap-out');
   setTimeout(()=>{
     stage.innerHTML=`<div class="qr-card" style="text-align:center">
-      <div class="qr-eyebrow" style="color:#e05580">ok... your loss</div>
-      <div class="qr-headline">cool, you didn't help train it 🤷‍♂️</div>
-      <div class="qr-gif-wrap"><div class="qr-bye-emoji">👋</div></div>
-      <div class="qr-sub">no hard feelings. if you change your mind, scan the code again and we'll be here.</div>
-      <button class="qr-secondary-btn" onclick="qrStep=0;renderQrStep()">wait, i'll do it →</button>
+      <div class="qr-eyebrow" style="color:rgba(255,255,255,0.4)">noted</div>
+      <div class="qr-headline">maybe next time.</div>
+      <div class="qr-gif-wrap"><div class="qr-bye-emoji" style="filter:grayscale(1) brightness(1.3)">👋</div></div>
+      <div class="qr-sub">scan again if you change your mind.</div>
+      <button class="qr-secondary-btn" onclick="qrStep=0;renderQrStep()">wait — i'll do it</button>
     </div>`;
   },260);
 }
@@ -3883,13 +3938,17 @@ function showContribSuccess(){
   const fab=document.getElementById('contrib-export-fab');if(fab)fab.style.display='none';
   // Suppress the auto-export-prompt too
   const prompt=document.getElementById('contrib-export-prompt');if(prompt)prompt.classList.remove('show');
+  // 🧹 Mark answers as sent so closing the panel doesn't trigger the "un-exported" warning.
+  // Keep a count for the success card, then empty the array.
+  contribState._sentCount=contribState.answers.length;
+  contribState.answers=[];
   stage.innerHTML=`
     <div class="contrib-card" style="text-align:center;padding:38px 24px">
       <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#4db37a,#3a9a64);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 0 50px rgba(77,179,122,0.5);animation:saveCirclePop .55s cubic-bezier(.34,1.56,.64,1)">
         <svg viewBox="0 0 24 24" style="width:46px;height:46px" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5L10 17.5L19 7.5"/></svg>
       </div>
       <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;color:var(--text)">sent to tris ✓</h2>
-      <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:6px">your ${contribState.answers.length} answers are in his hands now — thank you 💜</p>
+      <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:6px">your ${contribState._sentCount||0} answers are in his hands now — thank you 💜</p>
       <p style="font-size:12px;color:var(--text3);line-height:1.55;margin-bottom:22px">he'll bake the winners into the AI's training. you literally helped build it.</p>
       <button onclick="closeContribute()" style="width:100%;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">all done — close</button>
     </div>`;
