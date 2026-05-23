@@ -442,22 +442,22 @@ input[type="text"]::placeholder{color:var(--text3)}
 .auth-toggle button.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 
 /* ── CONTRIBUTOR OVERLAY ── */
-.contrib-overlay{position:fixed;inset:0;background:var(--bg);z-index:1500;display:none;flex-direction:column;align-items:center;padding:24px 18px;overflow-y:auto}
+.contrib-overlay{position:fixed;inset:0;background:var(--bg);z-index:1500;display:none;flex-direction:column;align-items:center;padding:calc(20px + env(safe-area-inset-top)) 18px calc(80px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
 .contrib-overlay.open{display:flex;animation:screenFadeIn .4s ease-out}
 .contrib-header{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .contrib-title{font-size:18px;font-weight:700;color:var(--text);font-family:'DM Sans',sans-serif}
 .contrib-progress{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
 .contrib-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 12px 50px rgba(0,0,0,0.4),0 0 60px rgba(155,110,224,0.12);animation:cardFloatIn .35s ease-out}
-.contrib-intro-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1600;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px)}
+.contrib-intro-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1600;display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));backdrop-filter:blur(10px)}
 .contrib-intro-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px 26px;max-width:420px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7)}
 .contrib-intro-box h2{font-size:18px;margin-bottom:12px;color:var(--text)}
 .contrib-intro-box p{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:14px}
 .contrib-intro-countdown{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.05em}
 .contrib-intro-close{margin-top:14px;padding:10px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'DM Sans',sans-serif;cursor:pointer;font-size:13px}
 .contrib-intro-close.ready{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.contrib-export-fab{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:999;padding:11px 20px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.contrib-export-fab{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1550;padding:11px 20px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
 .contrib-export-fab:hover{color:var(--text);border-color:var(--text2)}
-.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1700;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:18px 20px;box-shadow:0 12px 48px rgba(0,0,0,0.55),0 0 60px rgba(155,110,224,0.2);transition:transform .4s cubic-bezier(.22,1,.36,1)}
+.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1700;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:calc(14px + env(safe-area-inset-top)) 20px 18px;box-shadow:0 12px 48px rgba(0,0,0,0.55),0 0 60px rgba(155,110,224,0.2);transition:transform .4s cubic-bezier(.22,1,.36,1)}
 .contrib-export-prompt.show{transform:translate(-50%,0)}
 .contrib-export-prompt h3{font-size:14.5px;font-weight:700;margin-bottom:4px}
 .contrib-export-prompt p{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:12px}
@@ -474,6 +474,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 .fem-rating-btn{flex:1;min-width:32px;padding:9px 0;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .12s}
 .fem-rating-btn:hover{border-color:var(--text2);color:var(--text)}
 .fem-rating-btn.on{background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border-color:transparent;transform:scale(1.05)}
+.fem-wtf-btn{display:block;width:100%;margin-bottom:14px;padding:11px;background:rgba(224,85,85,0.08);border:1.5px solid var(--red);border-radius:10px;color:var(--red);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.01em}
+.fem-wtf-btn:hover{background:rgba(224,85,85,0.18);transform:scale(1.01);box-shadow:0 0 24px rgba(224,85,85,0.25)}
+.fem-wtf-btn:active{transform:scale(.98)}
 .gender-pick{display:flex;gap:10px;margin-top:14px}
 .gender-btn{flex:1;padding:18px;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
 .gender-btn:hover{border-color:var(--text2);color:var(--text)}
@@ -2986,23 +2989,194 @@ function showContribIntro(){
   },1000);
 }
 function closeContribIntro(){
+  // For female contributors, show a quick tip about the red WTF button before the first question
+  if(contribState.gender==='female'){
+    const titleEl=document.getElementById('contrib-intro-title');
+    const bodyEl=document.getElementById('contrib-intro-body');
+    const countEl=document.getElementById('contrib-intro-count');
+    const closeBtn=document.getElementById('contrib-intro-close');
+    titleEl.textContent='🚩 quick tip';
+    bodyEl.innerHTML='heads up — sometimes the AI generates a reply that <strong>completely misses the message</strong> (off-topic, makes no sense, doesn\'t fit at all).<br><br>when that happens, hit the big <strong style="color:var(--red)">🚩 wtf did the AI say?</strong> button — it instantly flags the reply and skips forward. saves you from typing a rant just to rate a 1.';
+    countEl.textContent='ready when you are';
+    closeBtn.textContent='got it, let\'s start';
+    closeBtn.disabled=false;closeBtn.classList.add('ready');
+    closeBtn.onclick=()=>{
+      document.getElementById('contrib-intro').style.display='none';
+      closeBtn.onclick=closeContribIntro; // restore for next time
+      renderContribQuestion();
+    };
+    return;
+  }
   document.getElementById('contrib-intro').style.display='none';
   renderContribQuestion();
 }
 
-// ── candidate-reply bank for female mode (rotated through baked goods + bads for honest spread) ──
+// ── candidate-reply bank for female mode ──────────────────────
+// Hand-curated on-topic AI replies, keyed by scenario message.
+// Each scenario gets 2-3 candidates spanning quality: a CLEAR WIN, a MID, and a CLEAR MISS.
+// This guarantees the reply she's rating actually addresses what was said.
+const SCENARIO_CANDIDATES={
+  // FLIRTY
+  "you're literally everywhere on my explore page 😭":[{t:"maybe that's a sign",q:'good'},{t:"the algorithm clearly knows what's good for you",q:'good'},{t:"yeah they notice me",q:'bad'}],
+  "okay you're actually funny I'll give you that":[{t:"about time you admitted it",q:'good'},{t:"don't get used to it",q:'mid'},{t:"thanks i try",q:'bad'}],
+  "why do you look so serious in all your pics":[{t:"that's my brand",q:'good'},{t:"smiling's overrated",q:'mid'},{t:"i'm just a serious guy",q:'bad'}],
+  "my friend thinks you're cute btw":[{t:"and what do you think",q:'good'},{t:"send her thanks",q:'bad'},{t:"tell your friend i appreciate it",q:'mid'}],
+  "stop making me laugh at work":[{t:"i'd say sorry but i'm not",q:'good'},{t:"that's a you problem",q:'mid'},{t:"my bad",q:'bad'}],
+  "okay I looked at your profile... you seem interesting":[{t:"what did you decide about me",q:'good'},{t:"only seem?",q:'mid'},{t:"thanks i think you do too",q:'bad'}],
+  "you give me a vibe I can't figure out yet":[{t:"keep guessing",q:'good'},{t:"that's the point",q:'mid'},{t:"i'm an open book actually",q:'bad'}],
+  "I was gonna wait for you to text but here we are":[{t:"glad you didn't",q:'good'},{t:"couldn't help yourself huh",q:'good'},{t:"hi",q:'bad'}],
+  "talking to you is actually too easy which is annoying":[{t:"it's annoying for me too",q:'good'},{t:"sorry not sorry",q:'mid'},{t:"yeah same",q:'bad'}],
+  "you're not like what I expected tbh":[{t:"what did you expect",q:'good'},{t:"i'll take that as a compliment",q:'mid'},{t:"different how",q:'good'}],
+  "wait you know [mutual] too? small world":[{t:"yeah we go way back, how do you know them",q:'good'},{t:"small indeed",q:'bad'},{t:"crazy small",q:'bad'}],
+  "okay that last post was actually a vibe":[{t:"appreciate it",q:'mid'},{t:"you finally noticed",q:'good'},{t:"thanks i tried",q:'bad'}],
+  "what made you actually text me":[{t:"the way you carry yourself in your stories",q:'good'},{t:"felt like a good idea",q:'mid'},{t:"just felt like it",q:'bad'}],
+  "your friends seem fun lol":[{t:"they are, you'd like them",q:'good'},{t:"come find out",q:'good'},{t:"yeah they're cool",q:'bad'}],
+  "okay I know it's been a minute but hi":[{t:"hi back",q:'mid'},{t:"the disappearer returns",q:'good'},{t:"hey stranger",q:'mid'}],
+  "I can literally see you're online btw":[{t:"and yet here you are watching",q:'good'},{t:"caught red handed",q:'mid'},{t:"my bad",q:'bad'}],
+  "btw you came up in conversation today":[{t:"good things i hope",q:'mid'},{t:"context required",q:'good'},{t:"oh yeah?",q:'bad'}],
+  "wow that was lowkey smooth I'll give it to you":[{t:"that wasn't even my best one",q:'good'},{t:"i'm just getting started",q:'good'},{t:"thanks",q:'bad'}],
+  "who's that in your story btw 👀":[{t:"my cousin lol relax",q:'good'},{t:"jealous already",q:'mid'},{t:"a friend",q:'bad'}],
+  "you're distracting me from actual work stop":[{t:"that's the goal",q:'good'},{t:"sorry not sorry",q:'mid'},{t:"i'll stop",q:'bad'}],
+  "omg the throwback photo of you is sending me":[{t:"that era was real",q:'mid'},{t:"glad it found you",q:'good'},{t:"lol thanks",q:'bad'}],
+  "why are you always the first one to view my story 👀":[{t:"someone's gotta keep watch",q:'good'},{t:"caught",q:'mid'},{t:"happens to be timing",q:'bad'}],
+  "are you ever going to say something nice to me":[{t:"you've been waiting?",q:'good'},{t:"your patience is admirable",q:'mid'},{t:"you're nice",q:'bad'}],
+  "so what made you swipe":[{t:"your captions are actually funny",q:'good'},{t:"good vibes",q:'bad'},{t:"liked your energy",q:'mid'}],
+  "so are you actually single or":[{t:"i am, you?",q:'good'},{t:"yes, currently",q:'mid'},{t:"that's a big question",q:'bad'}],
+  "texting me at 1am is suspicious behaviour":[{t:"you're up too so",q:'good'},{t:"couldn't sleep",q:'bad'},{t:"says the one who replied",q:'good'}],
+  "you're so easy to read btw":[{t:"prove it",q:'good'},{t:"tell me what i'm thinking then",q:'good'},{t:"if you say so",q:'bad'}],
+  "if i was there right now what would you do":[{t:"order food and put something on",q:'good'},{t:"a lot of things",q:'bad'},{t:"depends on your mood",q:'mid'}],
+  "that was your hand in the story right":[{t:"observant",q:'mid'},{t:"detective work",q:'good'},{t:"yes lol",q:'bad'}],
+  "you're actually so different from the guys I usually talk to":[{t:"what do you usually talk to",q:'good'},{t:"i'll take it",q:'mid'},{t:"thanks",q:'bad'}],
+  // FUNNY
+  "I just saw the most unhinged thing at the mall":[{t:"what happened i need details",q:'good'},{t:"explain everything right now",q:'good'},{t:"that's crazy",q:'bad'}],
+  "be honest, were you always this weird or is it just with me":[{t:"you bring it out",q:'good'},{t:"weird is my baseline",q:'mid'},{t:"no",q:'bad'}],
+  "I burned my food AGAIN send help":[{t:"order takeout and admit defeat",q:'good'},{t:"the kitchen is fighting back",q:'good'},{t:"that sucks",q:'bad'}],
+  "you're actually so random lol":[{t:"that's the brand",q:'good'},{t:"keeps it interesting",q:'mid'},{t:"thanks",q:'bad'}],
+  "I just fell in front of like 20 people I want to disappear":[{t:"did anyone clap",q:'good'},{t:"this is comedy gold",q:'good'},{t:"that's embarrassing",q:'bad'}],
+  "why does your taste in music make absolutely no sense":[{t:"because it's actually good",q:'good'},{t:"the lineup is curated",q:'mid'},{t:"sorry",q:'bad'}],
+  "this is literally the worst day of my entire life":[{t:"what happened, top three worst",q:'good'},{t:"explain in detail",q:'good'},{t:"that's rough",q:'bad'}],
+  "what was that story you just posted 😭":[{t:"a moment of poor judgment",q:'good'},{t:"history was made",q:'mid'},{t:"nothing important",q:'bad'}],
+  "what are you actually doing right now be honest":[{t:"sitting on the floor for no reason",q:'good'},{t:"texting you obviously",q:'mid'},{t:"nothing",q:'bad'}],
+  "this man just tried to sell me crystals at the train station":[{t:"did you buy any, i need to know",q:'good'},{t:"what crystals specifically",q:'good'},{t:"that's wild",q:'bad'}],
+  "I just put my phone in the fridge for some reason":[{t:"keeping it cool i respect it",q:'good'},{t:"the phone deserves a rest",q:'mid'},{t:"why",q:'bad'}],
+  "my group chat is genuinely unwell today":[{t:"who started it this time",q:'good'},{t:"i need screenshots immediately",q:'good'},{t:"that's crazy",q:'bad'}],
+  "I cannot do today I need a redo":[{t:"call in sick to life",q:'good'},{t:"day cancelled",q:'mid'},{t:"hang in there",q:'bad'}],
+  "no offense but your handwriting is criminal":[{t:"it has personality",q:'good'},{t:"it's a feature",q:'mid'},{t:"sorry",q:'bad'}],
+  "did you really just say 'on god' unironically":[{t:"on god i did",q:'good'},{t:"unironically yes",q:'mid'},{t:"my bad",q:'bad'}],
+  "I literally meant to say cinnamon NOT cannibal":[{t:"the slip is very telling",q:'good'},{t:"sure cinnamon",q:'good'},{t:"oh okay lol",q:'bad'}],
+  "I'm not even gonna ask what's happening in your story":[{t:"good, less i have to explain",q:'good'},{t:"smart move",q:'mid'},{t:"long story",q:'bad'}],
+  "the wind almost claimed my life today":[{t:"survival is impressive",q:'good'},{t:"narrowly escaped",q:'mid'},{t:"glad you're okay",q:'bad'}],
+  "if you don't laugh at this we have a problem":[{t:"we don't have a problem",q:'good'},{t:"sent me",q:'mid'},{t:"lmao",q:'bad'}],
+  "i just bought a 90 dollar candle and i have no regrets":[{t:"a 90 dollar candle better cure something",q:'good'},{t:"that's a personality purchase",q:'good'},{t:"good for you",q:'bad'}],
+  "i'm never drinking again i mean it this time":[{t:"how many times this year",q:'good'},{t:"sure you mean it",q:'mid'},{t:"good for you",q:'bad'}],
+  "i swear my cat is planning my downfall":[{t:"team cat",q:'good'},{t:"the cat is right",q:'good'},{t:"that sucks",q:'bad'}],
+  "my uber driver just asked me if i believed in time travel":[{t:"and what did you say",q:'good'},{t:"this is content",q:'mid'},{t:"that's weird",q:'bad'}],
+  "i didn't order this but i'm eating it anyway":[{t:"the only correct response",q:'good'},{t:"god mode",q:'mid'},{t:"lol",q:'bad'}],
+  "i still think about cringe things i did in 2018":[{t:"2018 me would lose to current me in a fight",q:'good'},{t:"the cringe never leaves",q:'mid'},{t:"same",q:'bad'}],
+  "my mom just typed an entire essay in the family chat":[{t:"send the essay i need to read it",q:'good'},{t:"i need the essay",q:'good'},{t:"that's so funny",q:'bad'}],
+  "so apparently i've been pronouncing croissant wrong for years":[{t:"please say it for me right now",q:'good'},{t:"how though",q:'mid'},{t:"lmao",q:'bad'}],
+  "a stranger just heard me singing in the supermarket":[{t:"what song, this matters",q:'good'},{t:"give the playlist",q:'good'},{t:"that's awkward",q:'bad'}],
+  // CHILL
+  "what you up to":[{t:"nothing much you",q:'good'},{t:"just got home, you?",q:'mid'},{t:"i haven't had much sleep",q:'bad'}],
+  "how was your day":[{t:"long but chill, yours?",q:'good'},{t:"productive enough",q:'mid'},{t:"good",q:'bad'}],
+  "you never text first 🙄":[{t:"i was about to",q:'mid'},{t:"i wait so you can miss me",q:'good'},{t:"sorry",q:'bad'}],
+  "been a while":[{t:"hi disappearing act",q:'good'},{t:"hey stranger",q:'mid'},{t:"yes",q:'bad'}],
+  "you're quiet today":[{t:"thinking mode",q:'mid'},{t:"trying to be mysterious",q:'good'},{t:"nothing wrong",q:'bad'}],
+  "I'm bored":[{t:"go cause a small problem",q:'good'},{t:"order food and watch something",q:'good'},{t:"sucks",q:'bad'}],
+  "randomly thought about you":[{t:"convenient because same",q:'good'},{t:"glad i'm rent-free",q:'mid'},{t:"aw thanks",q:'bad'}],
+  "we never do anything fun anymore":[{t:"saturday let's fix it",q:'good'},{t:"that's on us, name a day",q:'good'},{t:"true",q:'bad'}],
+  "morning":[{t:"morning",q:'mid'},{t:"hey you",q:'mid'},{t:"good morning",q:'bad'}],
+  "headed home now finally":[{t:"finally, long day?",q:'mid'},{t:"safe travels",q:'mid'},{t:"k",q:'bad'}],
+  "eating and texting you what do you want":[{t:"just to say hi",q:'mid'},{t:"to know what you're eating actually",q:'good'},{t:"nothing",q:'bad'}],
+  "today was so long but I'm home now":[{t:"rest mode activated",q:'good'},{t:"finally, what's the play",q:'mid'},{t:"hang in there",q:'bad'}],
+  "tell me something interesting I'm bored at this thing":[{t:"my fridge has been humming for 3 days straight",q:'good'},{t:"life is wild rn",q:'bad'},{t:"hmm idk",q:'bad'}],
+  "wait where are you in that story":[{t:"that little spot on king street",q:'good'},{t:"out and about",q:'mid'},{t:"don't worry about it",q:'bad'}],
+  "ok what'd you get up to today":[{t:"gym then chilled, you?",q:'good'},{t:"not much, errands",q:'mid'},{t:"i haven't had much sleep",q:'bad'}],
+  "can't sleep":[{t:"same boat",q:'mid'},{t:"come keep me company then",q:'good'},{t:"try counting sheep",q:'bad'}],
+  "i just had the best pasta of my life":[{t:"the bar is set high",q:'mid'},{t:"recipe or restaurant",q:'good'},{t:"nice",q:'bad'}],
+  "walking home rn":[{t:"safe trip",q:'mid'},{t:"text me when you're in",q:'good'},{t:"ok",q:'bad'}],
+  "just woke up from a 4 hour nap oops":[{t:"a 4 hour nap is a coma",q:'good'},{t:"that's not a nap that's a session",q:'good'},{t:"oh okay",q:'bad'}],
+  "first gym session in 3 weeks send help":[{t:"you got this, easy day",q:'good'},{t:"good luck",q:'mid'},{t:"why so long",q:'bad'}],
+  "on the bus rn going to my friends":[{t:"safe ride",q:'mid'},{t:"have fun",q:'mid'},{t:"k",q:'bad'}],
+  "this weekend was so chill i did literally nothing":[{t:"the best weekend",q:'good'},{t:"goals honestly",q:'mid'},{t:"that's boring",q:'bad'}],
+  // SAVAGE
+  "you think you're that guy huh":[{t:"i know i am",q:'good'},{t:"who said i wasn't",q:'mid'},{t:"not really",q:'bad'}],
+  "why do you do the same face in every pic":[{t:"it works",q:'good'},{t:"trademarked",q:'mid'},{t:"sorry",q:'bad'}],
+  "i think we have to break up over this playlist":[{t:"the playlist isn't going anywhere",q:'good'},{t:"defending it on principle",q:'mid'},{t:"fine i'll change it",q:'bad'}],
+  "oh you're alive, i was about to file a missing report":[{t:"the search party can stand down",q:'good'},{t:"alive and well",q:'mid'},{t:"sorry",q:'bad'}],
+  "admit you missed me":[{t:"never",q:'good'},{t:"absence noted, that's all",q:'good'},{t:"maybe a little",q:'bad'}],
+  "you're kinda full of yourself you know that":[{t:"someone has to be",q:'good'},{t:"with reason",q:'mid'},{t:"sorry",q:'bad'}],
+  // MYSTERIOUS
+  "so what's your deal exactly":[{t:"depends on what part you mean",q:'good'},{t:"a lot to unpack",q:'mid'},{t:"i'm normal",q:'bad'}],
+  "what's your honest read on me":[{t:"you act unbothered but you notice everything",q:'good'},{t:"too soon to say",q:'bad'},{t:"you're interesting",q:'bad'}],
+  "do you think people change":[{t:"only when they want to",q:'good'},{t:"the core stays",q:'mid'},{t:"yes",q:'bad'}],
+  "what's something you don't tell anyone":[{t:"a list",q:'good'},{t:"that's not how this works",q:'good'},{t:"nothing really",q:'bad'}],
+  "what actually matters to you":[{t:"people who get it",q:'good'},{t:"the small stuff",q:'mid'},{t:"family",q:'bad'}],
+  // BOLD
+  "so where is this actually going":[{t:"depends on you tbh",q:'good'},{t:"somewhere real if you're in",q:'good'},{t:"idk yet",q:'bad'}],
+  "are you talking to other girls right now":[{t:"no, just you",q:'good'},{t:"not the way you're thinking",q:'mid'},{t:"why",q:'bad'}],
+  "would you actually date me":[{t:"yes",q:'good'},{t:"already am, kinda",q:'good'},{t:"maybe",q:'bad'}],
+  "i feel like you don't really care":[{t:"what's making you feel that, talk to me",q:'good'},{t:"i do, tell me what's up",q:'good'},{t:"i do care",q:'bad'}],
+  "what would actually make you leave":[{t:"feeling like an option",q:'good'},{t:"dishonesty",q:'mid'},{t:"lots of things",q:'bad'}],
+  // WHOLESOME
+  "today was actually really nice and i thought of you":[{t:"that means a lot, what made it nice",q:'good'},{t:"you make my days better too",q:'mid'},{t:"thanks",q:'bad'}],
+  "i passed!!":[{t:"LET'S GO, knew you would",q:'good'},{t:"that's huge, proud of you",q:'good'},{t:"nice",q:'bad'}],
+  "thank you for actually checking in this week, it helped":[{t:"always, you don't have to thank me",q:'good'},{t:"any time",q:'mid'},{t:"of course",q:'bad'}],
+  "i got in btw":[{t:"absolute legend, we celebrating",q:'good'},{t:"i knew you would",q:'good'},{t:"congrats",q:'bad'}],
+  "i miss my mom today":[{t:"that's hard, want to talk about it",q:'good'},{t:"call her, she misses you too",q:'mid'},{t:"sucks",q:'bad'}],
+  // SPICY
+  "i need to see you soon":[{t:"name the day",q:'good'},{t:"saturday, my place",q:'good'},{t:"yeah for sure",q:'bad'}],
+  "i can't stop thinking about that night":[{t:"which part specifically",q:'good'},{t:"same, we should fix that",q:'good'},{t:"yeah it was fun",q:'bad'}],
+  "what would you actually do if i was there":[{t:"start with food, end somewhere else",q:'good'},{t:"depends what mood you're in",q:'mid'},{t:"lots of things",q:'bad'}],
+  "i thought about you in the shower":[{t:"that's where i live now apparently",q:'good'},{t:"is that an invite",q:'good'},{t:"oh yeah?",q:'bad'}],
+  "my place tonight if you're free":[{t:"on my way",q:'good'},{t:"what time",q:'mid'},{t:"maybe",q:'bad'}],
+  // PLANS
+  "we could just stay in and watch something":[{t:"down, i'll grab snacks",q:'good'},{t:"yes, you pick the show",q:'good'},{t:"sure",q:'bad'}],
+  "i want to do something but idk what":[{t:"food then a walk somewhere",q:'good'},{t:"let's drive nowhere",q:'mid'},{t:"sure",q:'bad'}],
+  "what are you tryna do tonight":[{t:"see you, that's the plan",q:'good'},{t:"food and something low key",q:'mid'},{t:"idk yet",q:'bad'}],
+  "i can't friday how about saturday":[{t:"saturday works, what time",q:'good'},{t:"locked",q:'mid'},{t:"ok",q:'bad'}],
+  "okay you're cooking for me when":[{t:"sunday, what do you like",q:'good'},{t:"name a night",q:'mid'},{t:"soon",q:'bad'}],
+  // DRY
+  "k":[{t:"wrd",q:'mid'},{t:"that's all i get",q:'good'},{t:"ok",q:'bad'}],
+  "sure":[{t:"convincing",q:'good'},{t:"alright then",q:'mid'},{t:"bet",q:'bad'}],
+  "that's wild":[{t:"i know right",q:'mid'},{t:"the wildest part is still coming",q:'good'},{t:"yeah",q:'bad'}],
+  "hey":[{t:"hey, missed me?",q:'good'},{t:"the resurfacing",q:'mid'},{t:"hi",q:'bad'}]
+};
+
+// Per-tone fallback candidates for scenarios not in the curated map — at least on-tone if not exactly on-message
+const TONE_FALLBACK={
+  flirty:[{t:"keep talking like that",q:'good'},{t:"noted with interest",q:'mid'},{t:"thanks i guess",q:'bad'}],
+  funny:[{t:"this is a developing situation",q:'good'},{t:"call me with updates",q:'mid'},{t:"that's wild",q:'bad'}],
+  chill:[{t:"all good here, you?",q:'good'},{t:"same energy",q:'mid'},{t:"okay",q:'bad'}],
+  savage:[{t:"that's a you problem",q:'good'},{t:"keep talking",q:'mid'},{t:"whatever",q:'bad'}],
+  mysterious:[{t:"depends on the day",q:'good'},{t:"that's not a small question",q:'mid'},{t:"idk",q:'bad'}],
+  bold:[{t:"yes, what's the next move",q:'good'},{t:"direct answer is yes",q:'mid'},{t:"maybe",q:'bad'}],
+  wholesome:[{t:"that means a lot",q:'good'},{t:"i'm here for it",q:'mid'},{t:"aw thanks",q:'bad'}],
+  spicy:[{t:"keep going, i'm listening",q:'good'},{t:"is that a dare",q:'mid'},{t:"oh yeah?",q:'bad'}],
+  plans:[{t:"down, when",q:'good'},{t:"i'm in, pick a day",q:'mid'},{t:"sure sometime",q:'bad'}],
+  dry:[{t:"bet",q:'mid'},{t:"that's all",q:'good'},{t:"k",q:'bad'}]
+};
+
 function pickCandidateReply(scenario){
-  // First try BAKED_GOODS / BAKED_REPORTS that match the message text (loose match)
-  const msgLow=(scenario.message||'').toLowerCase().slice(0,30);
-  const matchesGood=(BAKED_GOODS||[]).filter(g=>(g.message||'').toLowerCase().includes(msgLow.slice(0,15))||msgLow.includes((g.message||'').toLowerCase().slice(0,15)));
-  const matchesBad=(BAKED_REPORTS||[]).filter(g=>(g.message||'').toLowerCase().includes(msgLow.slice(0,15))||msgLow.includes((g.message||'').toLowerCase().slice(0,15)));
-  // Mix: ~60% good, 40% bad-ish so we get spread in ratings
-  const pool=Math.random()<0.6&&matchesGood.length?matchesGood:(matchesBad.length?matchesBad:matchesGood);
-  if(pool.length){const pick=pool[Math.floor(Math.random()*pool.length)];return{text:pick.reply,source:pool===matchesBad?'reported':'good'}}
-  // Fallback: pull a generic plausible reply from the SEED training data for that tone
-  const tonePool=(SEED_TRAINING||[]).concat(GROK_SEED||[],TRIS_SEED||[]).filter(e=>e.tone===scenario.tone);
-  if(tonePool.length){const pick=tonePool[Math.floor(Math.random()*tonePool.length)];return{text:pick.userReply||pick.reply,source:'seed'}}
-  return{text:'(no candidate reply available — skip this one)',source:'fallback'};
+  const msgKey=(scenario.message||'').trim();
+  // 1) exact hand-curated candidate for this message (BEST — guaranteed on-topic)
+  const curated=SCENARIO_CANDIDATES[msgKey];
+  if(curated&&curated.length){
+    const pick=curated[Math.floor(Math.random()*curated.length)];
+    return{text:pick.t,source:'curated_'+pick.q};
+  }
+  // 2) loose match against curated map (in case of small punctuation diffs)
+  const msgLow=msgKey.toLowerCase();
+  for(const k of Object.keys(SCENARIO_CANDIDATES)){
+    if(k.toLowerCase()===msgLow||k.toLowerCase().slice(0,20)===msgLow.slice(0,20)){
+      const pool=SCENARIO_CANDIDATES[k];const pick=pool[Math.floor(Math.random()*pool.length)];
+      return{text:pick.t,source:'curated_loose_'+pick.q};
+    }
+  }
+  // 3) on-tone fallback (less on-topic but at least matches the vibe)
+  const fb=TONE_FALLBACK[scenario.tone];
+  if(fb&&fb.length){const pick=fb[Math.floor(Math.random()*fb.length)];return{text:pick.t,source:'tone_'+pick.q};}
+  return{text:"(no candidate — feel free to skip)",source:'none'};
 }
 
 function renderContribQuestion(){
@@ -3037,6 +3211,7 @@ function renderContribQuestion(){
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:15px;color:var(--text);line-height:1.5;margin-bottom:12px">"${(s.message||'').replace(/</g,'&lt;')}"</div>
       <div class="fem-reply-label">🤖 the AI told him to reply with:</div>
       <div class="fem-reply-box">"${(cand.text||'').replace(/</g,'&lt;')}"</div>
+      <button onclick="flagWtfReply()" class="fem-wtf-btn" title="instantly flag this reply as nonsense / off-topic and skip to the next one">🚩 wtf did the AI say? — doesn't fit at all</button>
       <div class="fem-rating-wrap">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">rate it 1-10</div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:0">1 = would block him · 5 = mid · 10 = would def reply</div>
@@ -3057,6 +3232,28 @@ function renderContribQuestion(){
     <div class="contrib-card">${body}</div>`;
 }
 let _femRating=null;
+// 🚩 "WTF did the AI say" — instantly flag this candidate as nonsense/off-topic and skip.
+// Stored separately so we can spot which scenarios consistently get bad AI replies.
+function flagWtfReply(){
+  const scenarioIdx=contribState.queue[contribState.currentIdx];
+  const s=SCENARIO_BANK[scenarioIdx];
+  const cand=contribState._currentCandidate||{text:'',source:''};
+  contribState.answers.push({
+    type:'female_wtf_flag',
+    tone:s.tone,
+    context:s.context,
+    message:s.message,
+    flaggedReply:cand.text,
+    replySource:cand.source,
+    rating:1, // auto-rated as 1 for analysis
+    feedback:"WTF flag — reply doesn't fit the message at all",
+    trainer:contribState.name,
+    gender:'female',
+    ts:Date.now()
+  });
+  showToast('🚩 flagged — moving on');
+  advanceContribQuestion();
+}
 function setFemRating(n){
   _femRating=n;
   document.querySelectorAll('.fem-rating-btn').forEach(b=>b.classList.toggle('on',Number(b.dataset.r)===n));
@@ -3102,6 +3299,7 @@ function showExportPrompt(){
 function dismissExportPrompt(){
   document.getElementById('contrib-export-prompt').classList.remove('show');
 }
+const TRIS_EMAIL='tristan.sooklal@icloud.com';
 function exportContribAnswers(){
   if(!contribState.answers.length){showToast('no answers to export yet');return}
   const data={
@@ -3112,13 +3310,53 @@ function exportContribAnswers(){
     count:contribState.answers.length,
     answers:contribState.answers
   };
+  const filename=`rizz-contrib-${contribState.gender}-${(contribState.name||'anon').replace(/[^a-z0-9]/gi,'_')}-${new Date().toISOString().slice(0,10)}.json`;
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;
-  a.download=`rizz-contrib-${contribState.gender}-${(contribState.name||'anon').replace(/[^a-z0-9]/gi,'_')}-${new Date().toISOString().slice(0,10)}.json`;
+  a.download=filename;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  showToast('📤 exported '+contribState.answers.length+' answers — send the file to tris');
+  // After download, show a tutorial modal so they know HOW to send it back
+  showSendBackTutorial(filename);
+}
+
+function showSendBackTutorial(filename){
+  const subject=encodeURIComponent(`Don't Miss™ training — ${contribState.name||'contributor'} (${contribState.gender}) · ${contribState.answers.length} answers`);
+  const body=encodeURIComponent(`hey tris,\n\nattaching my training answers for Don't Miss™.\n\n— name: ${contribState.name||'anon'}\n— gender: ${contribState.gender}\n— answers: ${contribState.answers.length}\n— file: ${filename}\n\n⚠️ don't forget to ATTACH the file (your browser just saved it to your downloads folder).\n\n— ${contribState.name||'anon'}`);
+  const mailto=`mailto:${TRIS_EMAIL}?subject=${subject}&body=${body}`;
+  // Render the tutorial in a fresh modal
+  const overlay=document.getElementById('contrib-intro');
+  const titleEl=document.getElementById('contrib-intro-title');
+  const bodyEl=document.getElementById('contrib-intro-body');
+  const countEl=document.getElementById('contrib-intro-count');
+  const closeBtn=document.getElementById('contrib-intro-close');
+  titleEl.textContent='📬 how to send your file back';
+  bodyEl.innerHTML=`
+    <div style="text-align:left;font-size:13px;line-height:1.6">
+      <p style="color:var(--text);margin-bottom:8px"><strong>✅ your file just downloaded:</strong></p>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text2);margin-bottom:14px;word-break:break-all">${filename}</div>
+      <p style="color:var(--text);margin-bottom:6px"><strong>📤 send it to tris one of these ways:</strong></p>
+      <ol style="padding-left:20px;color:var(--text2);margin-bottom:14px">
+        <li style="margin-bottom:6px"><strong style="color:var(--text)">email</strong> — tap the button below, attach the file from your downloads</li>
+        <li style="margin-bottom:6px"><strong style="color:var(--text)">DM</strong> — whoever shared this link on their story (instagram/whatsapp) — drop the file in their DMs and they'll forward it</li>
+      </ol>
+      <a href="${mailto}" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-shadow:0 0 32px rgba(155,110,224,0.3);margin-bottom:8px">📧 email tris now</a>
+      <div style="text-align:center;font-size:11px;color:var(--text3);margin-bottom:4px">${TRIS_EMAIL}</div>
+      <button onclick="copyEmailAddress()" style="display:block;width:100%;padding:8px;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11.5px;cursor:pointer;text-decoration:underline">copy email address</button>
+    </div>`;
+  countEl.textContent='';
+  closeBtn.textContent='done';
+  closeBtn.disabled=false;closeBtn.classList.add('ready');
+  closeBtn.onclick=()=>{
+    overlay.style.display='none';
+    closeBtn.onclick=closeContribIntro; // restore default handler
+  };
+  overlay.style.display='flex';
+}
+function copyEmailAddress(){
+  try{navigator.clipboard.writeText(TRIS_EMAIL).then(()=>showToast('📋 email copied'));}
+  catch(e){showToast(TRIS_EMAIL);}
 }
 function renderContribDone(){
   const stage=document.getElementById('contrib-stage');
