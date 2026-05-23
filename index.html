@@ -549,6 +549,16 @@ input[type="text"]::placeholder{color:var(--text3)}
 .qr-loading-spinner{width:42px;height:42px;border:2.5px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.8);border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:18px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .qr-loading-joke{font-size:14px;color:rgba(255,255,255,0.7);text-align:center;line-height:1.5;font-style:italic;max-width:300px;opacity:0;animation:fadeIn .4s ease-out forwards}
+
+/* Teaser screen — three sequential pulsing dots + moody headline */
+.qr-teaser-pulse{display:flex;justify-content:center;gap:10px;margin:18px 0 30px}
+.qr-teaser-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 14px rgba(255,255,255,0.4);animation:teaserDot 1.4s ease-in-out infinite}
+.qr-teaser-dot:nth-child(2){animation-delay:.18s}
+.qr-teaser-dot:nth-child(3){animation-delay:.36s}
+@keyframes teaserDot{0%,100%{transform:scale(.6);opacity:.35}50%{transform:scale(1.25);opacity:1;box-shadow:0 0 22px rgba(255,255,255,0.65)}}
+.qr-teaser-headline{font-size:18px;font-weight:600;color:#fff;line-height:1.4;letter-spacing:-.01em;margin-bottom:12px;opacity:0;animation:teaserRise .55s cubic-bezier(.22,1,.36,1) .2s forwards;text-shadow:0 0 24px rgba(255,255,255,0.18)}
+.qr-teaser-sub{font-size:12.5px;color:rgba(255,255,255,0.45);font-style:italic;letter-spacing:.02em;opacity:0;animation:teaserRise .55s cubic-bezier(.22,1,.36,1) .55s forwards}
+@keyframes teaserRise{0%{opacity:0;transform:translateY(8px);filter:blur(2px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
 @keyframes fadeIn{to{opacity:1}}
 
 /* AI Homies — sequential reveal slideshow, monochrome */
@@ -3064,9 +3074,10 @@ function actuallyRenderStep(stage){
     2:qrStepGender,
     3:qrStepDmExperience,
     4:qrStepLoading,
-    5:qrStepSkillRating,
-    6:qrStepSlideshow,
-    7:qrStepHandoff
+    5:qrStepTeaser,
+    6:qrStepSkillRating,
+    7:qrStepSlideshow,
+    8:qrStepHandoff
   };
   const fn=steps[qrStep]||qrStepWelcome;
   stage.innerHTML=fn();
@@ -3075,18 +3086,26 @@ function actuallyRenderStep(stage){
     const inp=stage.querySelector('#qr-name-input');
     if(inp){inp.focus();inp.addEventListener('input',()=>{
       const btn=stage.querySelector('#qr-name-next');
-      const ok=inp.value.trim().length>=2;
+      const ok=inp.value.trim().length>=3;
       btn.disabled=!ok;
       btn.style.opacity=ok?'1':'.5';
       btn.style.cursor=ok?'pointer':'not-allowed';
+      // clear any inline error as soon as they keep typing
+      const errEl=document.getElementById('qr-name-err');
+      if(errEl&&errEl.textContent)errEl.textContent='';
+      inp.style.borderColor='';
     });
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=2){qrSubmitName();}});}
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=3){qrSubmitName();}});}
   }
   if(qrStep===4){
-    // loading screen — pick a joke, hold for 1.6s, then advance
+    // loading screen — pick a joke, hold for 1.6s, then advance into the teaser
     setTimeout(()=>{qrStep=5;renderQrStep();},1600);
   }
-  if(qrStep===6){
+  if(qrStep===5){
+    // teaser — hold for 3s to entice, then go to skill rating
+    setTimeout(()=>{qrStep=6;renderQrStep();},3000);
+  }
+  if(qrStep===7){
     // slideshow auto-advances dots; user taps "next" to progress slides
     qrSlideshowState={slide:0};
     qrRenderSlideshow();
@@ -3110,15 +3129,56 @@ function qrStepName(){
   return `<div class="qr-card">
     <div class="qr-eyebrow">01 / 05</div>
     <div class="qr-headline">what do we call you?</div>
-    <div class="qr-sub">name or @. anonymous is fine.</div>
-    <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or @handle" maxlength="40" autocomplete="off" />
+    <div class="qr-sub">first name or @handle — real one. tris needs to credit you in the contributors panel.</div>
+    <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or @zoey.k" maxlength="40" autocomplete="off" />
+    <div id="qr-name-err" style="font-size:11px;color:#e05555;margin:-10px 0 14px;min-height:14px;text-align:center"></div>
     <button class="qr-primary-btn" id="qr-name-next" onclick="qrSubmitName()" disabled style="opacity:.4;cursor:not-allowed">next →</button>
   </div>`;
 }
+
+// 🔒 Stricter name validator — blocks lazy placeholders so the contributors panel actually has real names.
+// Returns {ok:bool, msg:string}
+const NAME_BLOCKLIST=new Set([
+  'idk','idc','guess','none','no','nope','nah','n/a','na','nil','null','undefined',
+  'lol','lmao','lmfao','xd','haha','hehe',
+  'hi','hey','hello','sup','yo',
+  'yes','y','ok','okay','sure','maybe','meh','whatever',
+  'anonymous','anon','anonymos','anonimous','someone','person','user','test','testing','test123','example',
+  'me','myself','mybad','idklol','whoknows','who','dunno',
+  'x','xx','xxx','xxxx','aa','aaa','asdf','asd','qwerty','abc','abcd','123','1234','12345',
+  'dontknow','dontcare','yourmom','urmom','idgaf','fuckyou','fuckoff','suckmydick','deeznuts','bigchungus','johndoe','janedoe'
+]);
+function validateContribName(raw){
+  const v=(raw||'').trim();
+  if(v.length<3)return{ok:false,msg:'name needs to be 3+ characters'};
+  if(v.length>40)return{ok:false,msg:'too long — keep it under 40 chars'};
+  // strip @ + spaces + special chars for normalisation
+  const norm=v.toLowerCase().replace(/^@/,'').replace(/[\s._\-'`]+/g,'');
+  if(NAME_BLOCKLIST.has(norm))return{ok:false,msg:'need a real name or @ — not a placeholder'};
+  // block all-numbers
+  if(/^\d+$/.test(norm))return{ok:false,msg:'name can\'t be only numbers'};
+  // block single repeating character ("aaaa", "....", "xxxxx")
+  if(/^(.)\1+$/.test(norm))return{ok:false,msg:'that\'s not a name lol — try again'};
+  // require at least 2 distinct letters (catches "aaaab" etc)
+  const letters=norm.replace(/[^a-z]/g,'');
+  if(letters.length<2)return{ok:false,msg:'name needs at least 2 letters'};
+  const uniq=new Set(letters);
+  if(uniq.size<2)return{ok:false,msg:'that\'s not a name lol — try again'};
+  return{ok:true,name:v};
+}
+
 function qrSubmitName(){
-  const v=(document.getElementById('qr-name-input')?.value||'').trim();
-  if(v.length<2){return}
-  contribState.name=v;
+  const errEl=document.getElementById('qr-name-err');
+  const inp=document.getElementById('qr-name-input');
+  const v=(inp?.value||'').trim();
+  const res=validateContribName(v);
+  if(!res.ok){
+    if(errEl)errEl.textContent=res.msg;
+    if(inp){inp.style.borderColor='#e05555';inp.focus();setTimeout(()=>{inp.style.borderColor='';},2500);}
+    return;
+  }
+  if(errEl)errEl.textContent='';
+  contribState.name=res.name;
   qrAdvance();
 }
 
@@ -3169,7 +3229,29 @@ function qrStepLoading(){
   </div>`;
 }
 
-// ── STEP 5: Skill rating ──
+// ── STEP 5: Teaser ── (3-second pause to entice / set the tone)
+const QR_TEASER_HEADLINES=[
+  "are you sure you're ready to train something like this?",
+  "this isn't your average questionnaire.",
+  "you sure you can handle what comes next?",
+  "last chance to back out.",
+  "the questions don't pull punches.",
+  "this might change how you text forever."
+];
+function qrStepTeaser(){
+  const h=QR_TEASER_HEADLINES[Math.floor(Math.random()*QR_TEASER_HEADLINES.length)];
+  return `<div class="qr-card" style="text-align:center">
+    <div class="qr-teaser-pulse">
+      <div class="qr-teaser-dot"></div>
+      <div class="qr-teaser-dot"></div>
+      <div class="qr-teaser-dot"></div>
+    </div>
+    <div class="qr-teaser-headline">${h}</div>
+    <div class="qr-teaser-sub">no going back after this 👀</div>
+  </div>`;
+}
+
+// ── STEP 6: Skill rating ──
 function qrStepSkillRating(){
   const buttons=[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="qr-skill-btn" data-n="${n}" onclick="qrPickSkill(${n})">${n}</button>`).join('');
   return `<div class="qr-card">
@@ -3361,8 +3443,9 @@ function renderContribIntake(){
     <div class="contrib-card">
       <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">step 1 of 2</div>
       <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">what's your name?</h2>
-      <p style="font-size:13px;color:var(--text3);line-height:1.55;margin-bottom:16px">just so Tris knows who contributed. doesn't need to be your real name — first name or instagram handle works.</p>
-      <input type="text" id="contrib-name-input" placeholder="e.g. ismaaeel or your @" maxlength="40" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:18px" autocomplete="off" />
+      <p style="font-size:13px;color:var(--text3);line-height:1.55;margin-bottom:16px">first name or instagram @handle — real one. Tris needs it to credit you in the contributors panel.</p>
+      <input type="text" id="contrib-name-input" placeholder="e.g. ismaaeel or @ismaaeel" maxlength="40" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:6px" autocomplete="off" />
+      <div id="contrib-name-err" style="font-size:11px;color:#e05555;margin-bottom:12px;min-height:14px"></div>
       <div style="font-size:13px;color:var(--text2);font-weight:500;margin-bottom:4px">i identify as:</div>
       <div class="gender-pick">
         <button class="gender-btn" id="g-male" onclick="pickGender('male')">👨 male<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:4px">you'll WRITE replies</div></button>
@@ -3380,9 +3463,15 @@ function pickGender(g){
   updateStartBtn();
 }
 function updateStartBtn(){
-  const name=(document.getElementById('contrib-name-input')?.value||'').trim();
+  const inp=document.getElementById('contrib-name-input');
+  const name=(inp?.value||'').trim();
   contribState.name=name;
-  const ok=name.length>=2&&contribState.gender;
+  const errEl=document.getElementById('contrib-name-err');
+  // Clear inline error live as they type — only enforce on submit-click
+  if(errEl)errEl.textContent='';
+  if(inp)inp.style.borderColor='';
+  // Button enables when MINIMAL surface checks pass (3+ chars + gender). Real validation runs on click.
+  const ok=name.length>=3&&contribState.gender;
   const btn=document.getElementById('contrib-start-btn');
   if(!btn)return;
   btn.disabled=!ok;
@@ -3391,7 +3480,17 @@ function updateStartBtn(){
   if(ok){btn.style.background='linear-gradient(180deg,#f5f5f5,#d8d8d8)';btn.style.color='#0a0a0c';btn.style.borderColor='transparent';btn.style.boxShadow='0 8px 24px rgba(0,0,0,0.5),0 0 28px rgba(255,255,255,0.18)';}
 }
 function startContribSession(){
-  if(!contribState.name||!contribState.gender)return;
+  // Apply full validator before starting — blocks "idk" / "guess" / etc
+  const res=validateContribName(contribState.name);
+  if(!res.ok){
+    const errEl=document.getElementById('contrib-name-err');
+    const inp=document.getElementById('contrib-name-input');
+    if(errEl)errEl.textContent=res.msg;
+    if(inp){inp.style.borderColor='#e05555';inp.focus();}
+    return;
+  }
+  contribState.name=res.name;
+  if(!contribState.gender)return;
   // build a shuffled queue of scenario indexes
   contribState.queue=SCENARIO_BANK.map((_,i)=>i).sort(()=>Math.random()-0.5);
   contribState.currentIdx=0;
@@ -3408,7 +3507,7 @@ function showContribIntro(){
     bodyEl.innerHTML='you\'ll see a message a girl sent + the situation + the vibe she wants you to reply in.<br><br>type what <strong>you</strong> would actually send back. natural, lowercase, no pressure. skip any you can\'t answer.';
   }else{
     titleEl.textContent='📖 your job (1 min read)';
-    bodyEl.innerHTML='you\'ll see a message a girl sent + a reply the AI generated for the guy to send back.<br><br>rate the reply <strong>1-10</strong> on how good/sendable it is, and optionally explain why. your honest feedback trains the AI to write replies girls actually like.';
+    bodyEl.innerHTML='you\'ll see a message a girl sent + a reply the AI generated for the guy to send back.<br><br>rate the reply <strong>1-10</strong> on how good/sendable it is.<br><br>then — and this part is gold — drop <strong>what YOU would actually reply</strong> if a guy sent you that. your real-girl response trains the AI to write what actually lands.';
   }
   intro.style.display='flex';
   closeBtn.disabled=true;closeBtn.classList.remove('ready');closeBtn.textContent='got it ('+5+')';
@@ -3646,6 +3745,20 @@ function pickCandidateReply(scenario){
   return{text:"(no candidate — feel free to skip)",source:'none'};
 }
 
+// 🧠 Rotating playful flavor lines for the female feedback box — makes contributors feel like the experts being consulted
+const FEM_AI_HUMBLEBRAGS=[
+  "our AI is fresh to the dating game — it needs the cheat codes only you have 👀",
+  "the AI is the new kid texting like it's 2014. teach it the modern playbook.",
+  "our AI is reading textbooks. you're the field experience.",
+  "between us — the AI is bricking shots. show it what would've worked.",
+  "the AI thinks it's smooth. you've seen the real ones. set it straight.",
+  "our AI has confidence but zero swag. that's where you come in.",
+  "treat this like the AI is your little brother asking for advice — be real with it.",
+  "this is your chance to ghostwrite for the next generation of men 💀",
+  "the AI is studying. you're the professor. drop the lesson.",
+  "you've blocked guys for less than what this AI just typed. fix it for them."
+];
+
 function renderContribQuestion(){
   const stage=document.getElementById('contrib-stage');
   if(contribState.currentIdx>=contribState.queue.length){return renderContribDone();}
@@ -3684,8 +3797,13 @@ function renderContribQuestion(){
         <div style="font-size:11px;color:var(--text3);margin-bottom:0">1 = would block him · 5 = mid · 10 = would def reply</div>
         <div class="fem-rating-buttons">${ratings}</div>
       </div>
-      <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:4px">optional: why? what would you reply if a guy sent you this?</div>
-      <textarea id="contrib-fem-feedback" placeholder="optional — your honest take..." rows="2" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);outline:none;resize:vertical;margin-bottom:12px"></textarea>
+      <div style="background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 13px;margin-top:4px;margin-bottom:10px">
+        <div style="font-size:10.5px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">🎓 expert consultation</div>
+        <div style="font-size:11.5px;color:var(--text2);line-height:1.5;font-style:italic">${FEM_AI_HUMBLEBRAGS[Math.floor(Math.random()*FEM_AI_HUMBLEBRAGS.length)]}</div>
+      </div>
+      <div style="font-size:12.5px;color:var(--text);font-weight:600;margin-bottom:4px">what would YOU send back?</div>
+      <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px;line-height:1.45">optional but <strong style="color:var(--text2)">extremely valuable</strong> — your real-girl reply trains the AI on what actually lands. one sentence is enough.</div>
+      <textarea id="contrib-fem-feedback" placeholder="what you'd actually text back if a guy hit you with this..." rows="2" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);outline:none;resize:vertical;margin-bottom:12px"></textarea>
       <div style="display:flex;gap:8px">
         <button onclick="skipContribQuestion()" style="flex:none;padding:11px 18px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">skip →</button>
         <button id="contrib-fem-save" onclick="saveContribAnswerFemale()" disabled style="flex:1;padding:11px;background:var(--surface3);color:var(--text3);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:not-allowed">pick a rating to save</button>
