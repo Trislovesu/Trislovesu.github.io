@@ -954,6 +954,19 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         </div>
       </div>
 
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="card-label" style="margin-bottom:0">🧠 Live Help memory</div>
+          <span class="history-count" id="memory-count-badge">0</span>
+        </div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">What Live Help has learned about each person across scans. Used to write sharper, more personal replies. Stays on this device only.</p>
+        <div id="memory-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <button class="action-btn" style="flex:1" onclick="exportLiveMemory()">📤 Export memory</button>
+          <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearAllLiveMemory()">Clear all</button>
+        </div>
+      </div>
+
       <div class="signout-row">
         <div class="acct">Signed in as <strong id="current-account">—</strong></div>
         <button class="action-btn" style="flex:none;padding:10px 18px;color:var(--red);border-color:var(--red)" onclick="signOut()">Sign out</button>
@@ -1066,6 +1079,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-stop-btn" style="flex:1" onclick="profileScanLive()">👤 Profile scan</button>
         <button class="live-stop-btn" style="flex:1" onclick="storyReplyLive()">📖 Story reply</button>
       </div>
+      <button class="live-stop-btn" style="width:100%;margin-top:6px;font-size:11px;opacity:.85" onclick="resetLiveChatPointer()" title="Use this when you switch to a different person mid-share">🔄 Switched chats — start fresh memory</button>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
@@ -1309,7 +1323,42 @@ function renderSettingsPref(){
 }
 function openApiPanel(){document.getElementById('api-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function openHistoryPanel(){renderHistory();document.getElementById('history-overlay').classList.add('open');document.body.style.overflow='hidden'}
-function openSettingsPanel(){renderSettingsPref();renderGoods();renderReports();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function openSettingsPanel(){renderSettingsPref();renderGoods();renderReports();renderLiveMemoryList();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
+
+// 🧠 LIVE MEMORY UI ─────────────────────────
+function renderLiveMemoryList(){
+  const list=document.getElementById('memory-list');if(!list)return;
+  const all=getAllLiveMemory();
+  const entries=Object.values(all).sort((a,b)=>(b.lastUpdated||0)-(a.lastUpdated||0));
+  const badge=document.getElementById('memory-count-badge');if(badge)badge.textContent=entries.length;
+  if(!entries.length){list.innerHTML='<div class="reports-empty">No chats learned yet — start a Live Help scan to begin building memory.</div>';return}
+  list.innerHTML=entries.map(m=>{
+    const facts=(m.facts||[]).slice(0,8).map(f=>`• ${(f||'').replace(/</g,'&lt;')}`).join('<br>');
+    const topics=(m.topics||[]).slice(0,8).join(', ');
+    const when=m.lastUpdated?new Date(m.lastUpdated).toLocaleString():'';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+        <div style="font-weight:600;font-size:13px;color:var(--text)">${(m.handle||'?').replace(/</g,'&lt;')}</div>
+        <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="clearOneMemory('${(m.handle||'').replace(/'/g,"\\'")}')">remove</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${m.scanCount||0} scans · last ${when}</div>
+      ${m.herStyle?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px"><strong>style:</strong> ${m.herStyle.replace(/</g,'&lt;')}</div>`:''}
+      ${facts?`<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px"><strong>facts:</strong><br>${facts}</div>`:''}
+      ${topics?`<div style="font-size:11px;color:var(--text3)"><strong>topics:</strong> ${topics.replace(/</g,'&lt;')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function clearOneMemory(handle){if(!confirm('Forget everything about '+handle+'?'))return;clearLiveMemory(handle);renderLiveMemoryList();if(liveCurrentHandle.toLowerCase()===handle.toLowerCase())liveCurrentHandle='';}
+function clearAllLiveMemory(){if(!confirm('Clear ALL chat memory? This wipes what the AI has learned across every conversation.'))return;clearLiveMemory(null);liveCurrentHandle='';renderLiveMemoryList();}
+function exportLiveMemory(){
+  const all=getAllLiveMemory();
+  const data={exportedAt:Date.now(),trainer:currentUser||'',memory:all};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`rizz-live-memory-${(currentUser||'me').replace(/[@.]/g,'_')}-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(url);showToast('Memory exported');
+}
 function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
 
 // ── LIVE HELP (desktop screen-share) ─────────
@@ -1354,7 +1403,10 @@ function stopLiveShare(){
   document.getElementById('live-active-area').style.display='none';
   document.getElementById('live-detected').classList.remove('show');
   document.getElementById('live-reply-cards').innerHTML='';
+  liveCurrentHandle=''; // reset memory pointer so next session doesn't leak the prev chat's facts
 }
+// Manually reset current chat (e.g. you switched conversations mid-share and don't want stale memory)
+function resetLiveChatPointer(){liveCurrentHandle='';showToast('Chat pointer reset — next scan starts fresh');}
 
 // Live reply cards — self-contained actions that work in the overlay AND the pop-out window
 function renderLiveCards(replies,doc){
@@ -1402,6 +1454,56 @@ function reportLive(i,btn){
 
 let liveTones=[];      // up to 2 tones the user wants the replies to lean toward
 let lastLiveFrame=null; // last captured frame (for the "not this message" correction)
+let liveCurrentHandle=''; // the @handle / name of the chat we're currently scanning — used to look up that chat's memory
+
+// ── LIVE MEMORY — per-conversation learning ───────────────
+// Each scan teaches the AI more about her so the next scan's replies are sharper.
+// Stored locally under rizz_live_memory: { [handle]: { facts:[], herStyle, topics:[], myRecentSends:[], herRecentSends:[], scanCount, lastUpdated } }
+function getAllLiveMemory(){try{return JSON.parse(store.getItem('rizz_live_memory')||'{}')}catch(e){return{}}}
+function saveAllLiveMemory(m){store.setItem('rizz_live_memory',JSON.stringify(m))}
+function loadLiveMemory(handle){if(!handle)return null;const all=getAllLiveMemory();return all[handle.toLowerCase()]||null}
+function clearLiveMemory(handle){const all=getAllLiveMemory();if(handle){delete all[handle.toLowerCase()]}else{Object.keys(all).forEach(k=>delete all[k])}saveAllLiveMemory(all);showToast(handle?'Memory cleared for '+handle:'All chat memory cleared')}
+function uniqStrings(arr,max){const seen=new Set();const out=[];for(const s of arr){const k=(s||'').trim().toLowerCase();if(!k||seen.has(k))continue;seen.add(k);out.push((s||'').trim());if(out.length>=max)break}return out}
+function mergeLiveMemory(handle,update){
+  if(!handle)return;
+  const key=handle.toLowerCase();
+  const all=getAllLiveMemory();
+  const existing=all[key]||{handle,facts:[],herStyle:'',topics:[],myRecentSends:[],herRecentSends:[],scanCount:0,lastUpdated:0};
+  // Merge facts (dedupe, cap at 25 — keep most recent)
+  const newFacts=Array.isArray(update.new_facts)?update.new_facts:[];
+  existing.facts=uniqStrings([...newFacts,...existing.facts],25);
+  // Updated style overrides if provided
+  if(update.her_style&&update.her_style.length<200)existing.herStyle=update.her_style;
+  // Merge topics (newest first, cap 12)
+  const newTopics=Array.isArray(update.topics_now)?update.topics_now:[];
+  existing.topics=uniqStrings([...newTopics,...existing.topics],12);
+  // Track last sends so we never repeat
+  const myNew=Array.isArray(update.my_recent_sends)?update.my_recent_sends:[];
+  const herNew=Array.isArray(update.her_recent_sends)?update.her_recent_sends:[];
+  existing.myRecentSends=uniqStrings([...myNew,...existing.myRecentSends],10);
+  existing.herRecentSends=uniqStrings([...herNew,...existing.herRecentSends],10);
+  existing.scanCount=(existing.scanCount||0)+1;
+  existing.lastUpdated=Date.now();
+  existing.handle=handle; // preserve original casing
+  all[key]=existing;
+  saveAllLiveMemory(all);
+  return existing;
+}
+// Build the prompt block injected into doLiveGenerate's system prompt
+function buildLiveMemoryBlock(handle){
+  const mem=loadLiveMemory(handle);
+  if(!mem)return '';
+  const parts=[];
+  parts.push(`\n\n═══ WHAT YOU ALREADY KNOW ABOUT THIS CONVERSATION (use this to write sharper, more personal replies) ═══`);
+  parts.push(`Chatting with: ${mem.handle}  (scan #${(mem.scanCount||0)+1} with her)`);
+  if(mem.herStyle)parts.push(`HER texting style: ${mem.herStyle}`);
+  if(mem.facts&&mem.facts.length)parts.push(`THINGS YOU KNOW ABOUT HER (call back to these when relevant — proves you actually listen):\n- ${mem.facts.slice(0,15).join('\n- ')}`);
+  if(mem.topics&&mem.topics.length)parts.push(`TOPICS ALREADY COVERED in this convo: ${mem.topics.slice(0,10).join(', ')}  →  don't rehash these, build forward from them`);
+  if(mem.myRecentSends&&mem.myRecentSends.length)parts.push(`MY LAST FEW SENDS (do NOT repeat or reword these — switch lanes):\n- "${mem.myRecentSends.slice(0,6).join('"\n- "')}"`);
+  if(mem.herRecentSends&&mem.herRecentSends.length)parts.push(`HER LAST FEW SENDS (context only):\n- "${mem.herRecentSends.slice(0,6).join('"\n- "')}"`);
+  parts.push(`═══ END MEMORY ═══`);
+  return parts.join('\n');
+}
 
 function captureLiveFrame(){
   if(!liveStream){showToast('Start screen share first');return null;}
@@ -1476,18 +1578,46 @@ async function storyReplyLive(targetDoc){
   let toneLine='';
   if(liveTones.length>=2)toneLine=`\nReply 1 = ${liveTones[0]} tone, Reply 2 = ${liveTones[1]} tone, Reply 3 = your best call. All must fit the story.`;
   else if(liveTones.length===1)toneLine=`\nReply 1 = ${liveTones[0]} tone; 2 & 3 = your best call.`;
-  const system=`You are helping a confident guy slide into a girl's DMs by reacting to her Instagram STORY.${getRefinedContext('',3)}${getGoodsContext('',3)}${getReportsContext('',3)}${toneLine}
+  const system=`You are helping a confident guy slide into a girl's DMs by reacting to her Instagram STORY. The bar is HIGH — her story has been seen by 100+ guys today. Generic, lame, or thirsty openers get ignored or laughed at. Your job is to write openers that ACTUALLY STAND OUT and pull a reply.${getRefinedContext('',3)}${getGoodsContext('',3)}${getReportsContext('',3)}${toneLine}
 
-WHICH STORY: the screen shows a story viewer. The story the user is WATCHING is the ONE BIG, BRIGHT, IN-FOCUS panel in the centre. The smaller, dimmed, greyed-out panels to the sides are OTHER people's stories (next/previous previews) — IGNORE them completely. Read ONLY the big central story.
+WHICH STORY: the screen shows a story viewer. The story she's WATCHING is the ONE BIG, BRIGHT, IN-FOCUS panel in the centre. The smaller, dimmed, greyed-out panels to the sides are OTHER people's stories (next/previous previews) — IGNORE them completely. Read ONLY the big central story.
 
-Look at the central story carefully: what she's wearing, her expression, what she's doing, the setting, any text overlay or song. Then write 3 different DM openers reacting to THIS story specifically — like he actually noticed HER, not generic. Confident, natural, never thirsty or creepy. You are the man.
+READ THE STORY LIKE A DETECTIVE — before writing anything, scan for the SPECIFIC thing that makes this story THIS story (not just any story): what she's wearing (a specific item — boots, a hoodie, a necklace), her expression / micro-mood, what she's actually doing (not "vibing" — specifically: holding a coffee, mid-laugh, posing with a friend), the LOCATION (a recognisable bar / city / beach / her bedroom), text overlay (caption, lyrics, sticker, poll, question), the SONG / artist, any object in frame (a book title, a car, a drink). The opener has to point at ONE of those specific details — not the whole vibe.
 
-RULES: zero exclamation marks, lowercase, short, each opener genuinely different, reference something real from the story.
-Return ONLY JSON: {"her_message":"brief description of what the story shows","replies":[{"text":"dm opener","tone":"label","why":"short reason"}]}`;
+THE FORMULA FOR A GRABBING OPENER (3 ingredients in this order):
+1. CALLOUT — name the specific detail you noticed (proves you actually looked, not just swiped).
+2. TWIST — flip it. Tease her about it, challenge a claim, make a playful (correct or incorrect) assumption, pretend to be unimpressed, pretend to be invested, draw a weird connection, give a deadpan reaction. The twist is what makes her smile and reply.
+3. HOOK — leave space for her to respond. End on something she WANTS to answer: a tease that begs a comeback, a half-question, a bold statement she'll want to argue with, or a soft setup for a follow-up. NEVER end with a flat compliment ("looks fun") or a generic question ("how was it") — those die.
+
+OPENER MOVES THAT WORK (use a different one for each of the 3 replies — variety is non-negotiable):
+- The playful accusation: "okay but who are you trying to impress with that fit" / "this is suspicious behaviour for a tuesday"
+- The wrong-on-purpose guess: "let me guess, third coffee of the day" / "wait that's not [place]... is it"
+- The deadpan tease: "and you didn't invite me, crazy" / "this whole story is a flex and i'm watching it"
+- The specific compliment + flip: "the boots are doing numbers but the smirk is what's actually criminal"
+- The micro-callout: pick the smallest weird detail and make it the whole thing ("nah the way you're holding that drink is sending me")
+- The shared-experience hook: connect it to something he'd do ("if i was there i would've ordered the exact same thing and you know it")
+- The bold claim: "you peaked here, just so you know" / "this is the most chaotic 5 seconds i've seen all week"
+
+HARD AVOIDS (these = lame / weirdo energy — never generate these):
+- "looks fun" / "vibes" / "this is cute" / "you look amazing" / "you look beautiful" / "stunning" — generic flattery from strangers
+- "what's the song" / "where is this" / "how was it" — boring questions with no twist
+- "hey" / "hi" / "hey beautiful" / "hello love" — opener killers
+- Anything horny, anything that mentions her body, anything desperate ("would die to be there", "marry me")
+- Cringe slang ("you ate" if forced, "fyp material") — sounds like he's trying too hard
+- Pure compliments with no hook — every compliment must come WITH a tease, callback, or claim
+
+RULES:
+- Each of the 3 openers MUST reference a DIFFERENT specific detail from the story — not the same detail rephrased.
+- Each MUST use a different opener MOVE (one playful accusation, one wrong-on-purpose guess, one deadpan tease, etc.)
+- Lowercase, zero exclamation marks, confident, never thirsty.
+- LENGTH MIX: not all 3 can be 3-word one-liners. At least 1 should have a bit of meat (a short sentence with a callout + twist + hook). Too-short = nonchalant weirdo energy.
+- It must read like a guy who's busy and barely had time to type — but what he typed was sharp.
+
+Return ONLY JSON: {"her_message":"brief description of what the story actually shows (the specific scene/detail/text/song — not a vibe)","replies":[{"text":"dm opener","tone":"label","why":"short reason naming the specific detail it hooks"}]}`;
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Write 3 different DM openers reacting to it. Return the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:550,temperature:1.05,top_p:0.95,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details in it (an item, an expression, a location, a song, a sticker, a caption — not the overall vibe). Each opener must point at one specific detail + add a twist (tease, wrong-on-purpose guess, playful accusation, deadpan reaction) + leave a hook for her to reply. NO generic "looks fun" / "vibes" / "you look amazing" / "hey" — those are dead on arrival. Each opener uses a DIFFERENT move. Lowercase, no exclamation marks, confident never thirsty. At least 1 of the 3 should have a real sentence with a callout+twist+hook, not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -1533,7 +1663,10 @@ async function doLiveGenerate(targetDoc,b64,overrideMsg){
 
   const overrideBlock=overrideMsg?`\n\n‼️ THE USER HAS CONFIRMED HER EXACT LATEST MESSAGE: "${overrideMsg}". Reply to THAT message specifically — do not guess from the image for the message itself. Still use the screenshot only to match the conversation's tone and flow.`:'';
 
-  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${toneLine}${overrideBlock}
+  // Per-conversation memory — injected from the previous scan of THIS specific chat
+  const memoryBlock=buildLiveMemoryBlock(liveCurrentHandle);
+
+  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${toneLine}${overrideBlock}${memoryBlock}
 
 STEP 1 — ONLY look at the active conversation:
 - Ignore the LEFT SIDEBAR (the list of other chats with previews, search, story circles), the nav rail, browser chrome, the desktop, notifications. Read ONLY the big active conversation panel on the right.
@@ -1548,10 +1681,13 @@ STEP 3 — IGNORE TIMESTAMPS AND DIVIDERS ENTIRELY:
 
 STEP 4 — WHAT YOU REPLY TO (the single most important rule — getting this wrong makes the whole reply useless):
 - You ONLY ever reply to HER messages (the GREY / left bubbles). NEVER, EVER reply to MY messages (blue/purple/right). My messages are CONTEXT ONLY.
-- Your reply target = HER MOST RECENT message = the LOWEST grey bubble on the screen (the grey bubble closest to the bottom / message box).
-- CRITICAL: even if one of MY blue/purple messages appears BELOW her latest grey one (i.e. I sent the last message), you STILL reply to her latest GREY message. Do not reply to my blue message, do not skip her grey message.
-- Do NOT wander upward to older messages to reply to them. Lock onto her single newest grey bubble near the bottom and answer THAT exact message. (If her newest grey message is short like "ou", "lol", "k" — reply to that, don't dig up an older one.)
-- If you genuinely cannot tell which grey message is newest, pick the grey bubble physically closest to the message input box at the very bottom.
+- Your PRIMARY reply target = HER MOST RECENT message = the LOWEST / BOTTOM-MOST grey bubble on screen. Read from BOTTOM UP, not top down. The newest grey bubble is the one nearest the message-input box at the very bottom.
+- MULTI-BUBBLE MESSAGES (super common — DO NOT GET THIS WRONG): when she sends several grey bubbles in a row without me replying in between, those are ONE message split across bubbles. You MUST read ALL of her consecutive bottom grey bubbles together as a single combined message and reply to the WHOLE thing — but the BOTTOM grey bubble is what determines her latest intent / question / mood, so anchor your reply on the bottom one and just use the bubbles above it (still hers) for added context.
+  • Example: she sends "wait" → "actually" → "are you free saturday?" — these 3 grey bubbles in a row are ONE message. The bottom one ("are you free saturday?") is the actual question. You answer the question, but you can acknowledge the lead-up if it adds to the reply.
+  • NEVER reply to just the TOP grey bubble in a run of consecutive grey bubbles. The top one is the OLDEST, not the newest.
+- CRITICAL: even if one of MY blue/purple messages appears BELOW her latest grey one (i.e. I sent the last message), you STILL reply to her latest GREY message above mine. Do not reply to my blue message.
+- Do NOT wander upward past her consecutive grey bubbles to reply to even older messages. Lock onto her newest grey bubble (and any grey bubbles directly above it with no blue between).
+- If you genuinely cannot tell which grey message is newest, pick the grey bubble physically closest to the message input box at the very bottom — that one wins.
 
 STEP 5 — HOW TO USE THE REST:
 - After you've locked onto her newest grey message, read the messages above it (mine in blue + hers in grey) ONLY to understand the topic, tone, and flow — so your reply fits the conversation. Never reply to any of those older messages.
@@ -1565,18 +1701,41 @@ STEP 6 — KEEP THE CONVERSATION ALIVE (THIS IS CRITICAL — the #1 reason this 
 - NEVER repeat or near-repeat a line I've already sent in this chat. Read my blue/purple bubbles and avoid rewording them.
 - VARIETY — the 3 replies must use 3 different conversational moves (e.g. one question, one tease, one statement+pivot). Don't return 3 variations of the same idea.
 
-RULES:
-- The reply MUST directly answer HER newest grey message — never my own message, never an older message, never off-topic.
-- You are the man replying to her — never write from her point of view.
-- Match the conversation's established tone and energy, but DON'T match its dying momentum — actively push it forward.
-- Zero exclamation marks, lowercase, short and punchy. 3 genuinely different replies, confident and natural, never cringe or thirsty.
+STEP 7 — ANSWER HER QUESTIONS DIRECTLY (huge failure mode — don't skip this):
+- If her latest grey message contains a QUESTION (literal "?" or implicit — "what u doing", "how was it", "you free saturday", "wbu"), the reply MUST answer that question first. No dodging, no pivoting around it. Answer it, THEN add a follow-up (a question back, a tease, a plan, a thought).
+- If she asks "what are you doing tonight" — DON'T reply with a vague tease that ignores it. ANSWER ("nothing crazy, prob gym then food") then push forward ("what about you, what's the move").
+- If she asks something personal ("what's your type", "what do you actually want") — give a real answer in HIS voice, not a deflection. Confident men answer questions; they don't dance around them.
 
-Return ONLY valid JSON: {"her_message":"HER newest grey message, quoted exactly","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+STEP 8 — DON'T BE BORING / NONCHALANT (replies must have SUBSTANCE):
+- Short and punchy is GOOD — but too-short, too-flat, too-nonchalant kills the convo just as fast as mirror replies. "yeah", "bet", "for sure", "true" alone = dead-end energy.
+- LENGTH MIX across the 3 replies — they must NOT all be 2-5 word one-liners. AT LEAST 1 of the 3 must be SUBSTANTIVE (a full sentence or two — actually saying something with content: answering a question + a follow-up, sharing a real thought, proposing a specific plan, telling a quick mini-story). The other 2 can be shorter, but even short ones must add value (a question, a tease, a hook) — not just a flat acknowledgment.
+- CARRY THE CONVERSATION — he is allowed to bring topics to the table, not just react. Replies can introduce HIS world: what he's been up to, something he's into, a plan he's thinking about, an opinion. The convo should feel like two people talking, not him asking her to keep filling silence.
+- Show interest in HER as a person — ask about things she's mentioned, follow up on stuff she said earlier in the chat. Curiosity is attractive; nonchalance with nothing behind it is boring.
+
+STEP 9 — LEARN FROM THIS CHAT (THIS IS WHAT MAKES YOU SMARTER OVER TIME):
+- Along with the replies, you MUST extract LEARNING from the screenshot. This data is saved and fed back to you on the NEXT scan of this same conversation, so your future replies get sharper and more personal.
+- "her_handle": pull her @username or display name from the chat header at the top of the active conversation panel. Just the handle/name, no @ symbol if avoidable. (e.g. "chadd👑👑" or "its_chaddyboiii").
+- "new_facts": 1-6 SPECIFIC things you learned about HER from this scan that weren't obvious — her job, hobbies, plans, pets, friends, the place she works, her opinions, things she's into, things she dislikes, her schedule. Skip generic stuff ("she's nice"). Only concrete facts that would help you write a more personal reply next time. Empty array if nothing new.
+- "her_style": one short sentence describing HOW she texts (e.g. "short bubbles, dry humour, dropped capitals, uses 😭 a lot" or "long sentences, no emojis, very direct"). This helps you match her energy.
+- "topics_now": 3-6 keywords/phrases for what THIS scan's conversation has been about (e.g. ["weekend plans","her job interview","that song"]).
+- "my_recent_sends": the exact text of MY last 2-4 blue/purple bubbles visible in the screenshot. This is so future scans know what I've already said and don't repeat me.
+- "her_recent_sends": the exact text of HER last 2-4 grey bubbles visible. Future scans use this for context flow.
+- Be honest — only extract what you actually see. Don't invent facts.
+
+RULES:
+- The reply MUST directly answer HER newest grey message — never my own message, never an older message, never off-topic. If she asked a question, ANSWER IT.
+- You are the man replying to her — never write from her point of view.
+- Match the conversation's established tone and energy, but DON'T match its dying momentum — actively push it forward and CARRY it.
+- Lowercase preferred, zero exclamation marks. 3 genuinely different replies, confident and natural, never cringe or thirsty. Mix the lengths — at least one reply should have real substance, not all one-liners.
+- If the "WHAT YOU ALREADY KNOW" memory block is provided above, USE IT — reference facts she's shared, avoid topics already covered, never repeat lines I've already sent.
+
+Return ONLY valid JSON with EXACTLY this shape:
+{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. IMPORTANT: also look at my recent blue/purple messages in the screenshot — if they were sweet/passive/short, DO NOT generate another reply in that same lane (that's killing the convo). Push it forward: ask, propose, tease, or pivot. At least 2 of the 3 replies must move the convo forward. Return EXACTLY 3 distinct replies in the JSON.`:'Ignore the left sidebar and all timestamps. MY messages = blue/purple bubbles on the right. HER messages = grey bubbles on the left. Find HER newest GREY message (the grey bubble closest to the bottom) and reply to THAT — never reply to my blue/purple messages even if mine is the most recent. CRITICAL: read my recent blue/purple messages — if they were passive/sweet/mirror-style ("you too", "thinking of you", "you\'re adorable"), DO NOT generate another reply in that same lane. The convo is dying. Push it forward: ask, propose, tease, or pivot to a topic she mentioned. At least 2 of the 3 replies must move the convo forward. Also call back to details she\'s shared earlier in the visible chat. Return EXACTLY 3 distinct replies in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:850,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes (don't send another reply in that lane — convo will die). At least 2 of the 3 replies must push the convo forward (ask, propose, tease, or pivot). At least 1 of the 3 must be SUBSTANTIVE (a real sentence or two, not a one-liner) — flat "yeah/bet" replies are dead ends. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends from the screenshot so I get smarter next scan. Return EXACTLY 3 distinct replies + the learning fields in the JSON.`:'Ignore the left sidebar and all timestamps. MY messages = blue/purple (right). HER messages = grey (left). READ FROM THE BOTTOM UP. Her newest message = the LOWEST grey bubble. IF she sent multiple grey bubbles in a row at the bottom with no blue between them, those are ONE message split across bubbles — read ALL of them together and reply to the WHOLE thing, anchored on the BOTTOM grey bubble. NEVER reply to just the TOP grey bubble in a run (the top is the OLDEST). NEVER reply to my blue/purple messages — they are context only. ANSWER HER QUESTIONS directly if she asked one — no dodging. Look at my recent blue/purple messages — if they were passive/sweet/mirror-style ("you too", "thinking of you", "you\'re adorable", "yeah", "bet"), DO NOT generate another reply in that lane — the convo is dying. Switch: ask her something, propose a plan, tease, or pivot to a topic she mentioned. At least 2 of the 3 replies must push forward. At least 1 of the 3 must be SUBSTANTIVE (a real sentence or two with content — not all one-liners). Carry the convo — bring HIS world to the table too. Call back to details she\'s shared earlier in the chat. ALSO extract her_handle (from chat header), new_facts (concrete things you just learned about her), her_style (how she texts), topics_now (what this scan is about), my_recent_sends (my last 2-4 blue/purple bubbles verbatim), her_recent_sends (her last 2-4 grey bubbles verbatim) — these get saved so you remember her next scan. Return EXACTLY 3 distinct replies + the learning fields in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -1588,6 +1747,28 @@ Return ONLY valid JSON: {"her_message":"HER newest grey message, quoted exactly"
     renderDetected(targetDoc,her);
     renderLiveCards(currentReplies,targetDoc);
     currentReplies.forEach(r=>addToHistory(r.tone||'live','[Live]',r.text,'dm',null));
+    // 🧠 LEARN from this scan — save what we picked up about her so next scan is sharper
+    try{
+      const handle=(parsed.her_handle||liveCurrentHandle||'').toString().trim();
+      if(handle){
+        liveCurrentHandle=handle;
+        const mem=mergeLiveMemory(handle,{
+          new_facts:parsed.new_facts,
+          her_style:parsed.her_style,
+          topics_now:parsed.topics_now,
+          my_recent_sends:parsed.my_recent_sends,
+          her_recent_sends:parsed.her_recent_sends
+        });
+        // tiny on-screen tag so the user knows learning fired
+        const det=targetDoc.getElementById('live-detected');
+        if(det&&mem){
+          const badge=targetDoc.createElement('div');
+          badge.style.cssText='margin-top:6px;font-size:11px;color:var(--text2);opacity:.8';
+          badge.textContent=`🧠 learning ${mem.handle} • ${mem.facts.length} facts • scan #${mem.scanCount}`;
+          det.appendChild(badge);
+        }
+      }
+    }catch(e){console.warn('memory merge failed',e)}
   }catch(err){
     showToast(err.message&&err.message.length<90?err.message:'Scan failed');console.error(err);
   }finally{
@@ -1619,17 +1800,19 @@ async function popOutLive(){
   pipWindow.document.body.innerHTML=`
     <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">🟢 Live Help</div>
     <button class="live-scan-btn" id="pip-scan" style="width:100%;padding:13px;margin-bottom:8px">📸 Scan chat &amp; get replies</button>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
       <button class="live-stop-btn" id="pip-profile" style="flex:1;padding:10px">👤 Profile scan</button>
       <button class="live-stop-btn" id="pip-story" style="flex:1;padding:10px">📖 Story reply</button>
     </div>
+    <button class="live-stop-btn" id="pip-reset" style="width:100%;padding:8px;margin-bottom:12px;font-size:11px;opacity:.85">🔄 Switched chats — start fresh memory</button>
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-profile').addEventListener('click',()=>profileScanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-story').addEventListener('click',()=>storyReplyLive(pipWindow.document));
+  pipWindow.document.getElementById('pip-reset').addEventListener('click',()=>resetLiveChatPointer());
   pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
   showToast('Popped out — keep it over your chat and scan from there');
 }
@@ -2048,7 +2231,29 @@ ${angleList}
 CRITICAL IMAGE RULE — this is the most important rule:
 Every single reply MUST reference at least one specific detail that is only possible because you actually looked at this image. If the reply could be sent under any photo, it is WRONG. Mention the actual outfit, the specific location, what they're literally doing, their expression — something real and specific.
 
-OTHER RULES:
+${isStory?`STORY OPENER FORMULA (every reply on a story must follow this — she's been DMed by 100+ guys today, lame openers die):
+1. CALLOUT — name ONE specific detail from the story (the boots, the drink in hand, the bar name, the song lyric, the caption sticker, the weird face she's pulling). Not the vibe — the detail.
+2. TWIST — flip it. Tease, make a wrong-on-purpose guess, playful accusation, deadpan reaction, bold claim, or weird connection. The twist is what makes her smile.
+3. HOOK — leave space for her to reply. End on something she WANTS to answer.
+
+Opener MOVES — each of the 3 replies for an angle must use a DIFFERENT one:
+- Playful accusation ("okay who are you trying to impress with that fit")
+- Wrong-on-purpose guess ("let me guess, third coffee of the day")
+- Deadpan tease ("and you didn't invite me, crazy")
+- Specific compliment + flip ("the boots are doing numbers but the smirk is criminal")
+- Micro-callout (smallest weird detail = the whole opener)
+- Bold claim ("this is the most chaotic 5 seconds i've seen all week")
+- Shared-experience hook ("if i was there i'd have ordered the same thing")
+
+NEVER ON A STORY (instant dead-on-arrival):
+- "looks fun" / "vibes" / "this is cute" / "you look amazing/beautiful/stunning"
+- "what's the song" / "where is this" / "how was it" (boring questions, no twist)
+- "hey" / "hi" / "hey beautiful" — opener killers
+- Pure compliments with no hook — every compliment must come WITH a tease, callback, or bold claim
+- Anything horny or body-focused — instant block
+- LENGTH MIX: not every reply can be 3 words. At least 1 reply per angle should be a real sentence (callout + twist + hook).
+
+`:''}OTHER RULES:
 - ZERO exclamation marks
 - No feminine words: omg, bestie, slay, aww, obsessed
 - No AI phrases: "I'd love to", "certainly", "that sounds"
@@ -2056,14 +2261,14 @@ OTHER RULES:
 - No cringe: "good girl", "alpha", "i'd destroy you", over-eager
 - Lowercase like a real guy texting
 - First person — write the actual message, not a description of what to say
-- Short and punchy — less is more
-- Each reply within an angle must be COMPLETELY different — different first words, different angle, not rephrasings
+- Short and punchy is good, but DON'T be boring — too-flat ("nice", "haha", "vibes") = lame weirdo energy. Mix lengths across the 3 replies; at least 1 should have real substance with a callout+twist+hook.
+- Each reply within an angle must be COMPLETELY different — different first words, different opener MOVE, not rephrasings
 
 Return ONLY raw JSON, no markdown:
 {"0":{"replies":["r1","r2","r3"],"recommended":0},"1":{"replies":["r1","r2","r3"],"recommended":0},...}`;
 
   const userText=isStory
-    ?'Look at every detail in this story screenshot — person, outfit, expression, location, activity. Generate 3 replies per angle that directly reference what you actually see. Generic replies not tied to this specific image are unacceptable.'
+    ?'Look at this story screenshot like a detective. Find SPECIFIC details — exact outfit pieces, expression, location name, song title, text overlay, props in frame. For each angle, generate 3 replies using DIFFERENT opener moves (playful accusation, wrong-on-purpose guess, deadpan tease, micro-callout, bold claim, shared-experience hook). Each opener: CALLOUT + TWIST + HOOK. NO "looks fun", "vibes", "you look amazing", "what\'s the song", "hey", or any generic flattery — those die instantly. NO horny / body-focused. Mix lengths — at least 1 per angle is a real sentence. Lowercase, no exclamation marks, confident, never thirsty.'
     :'Instagram DM screenshot. ONLY read the actual message bubbles. RIGHT = my messages, LEFT = hers. The bottom-most LEFT bubble is what I need to reply to. Read those exact words. Generate 3 replies per angle that directly respond to what she literally said — quote-level relevance. Ignore the username, status bar, icons, timestamps, all UI.';
 
   try{
@@ -3678,6 +3883,20 @@ FORWARD MOMENTUM (THIS IS THE #1 RULE — it's what separates a real conversatio
 - VARIETY ACROSS TURNS — don't send replies that are basically the same shape/length as his last 1-2 messages. Switch it up: if his recent replies were short flirts, one of these should be a question or a plan. If they were questions, one should make a statement or share something.
 - NEVER repeat a line he's already sent in this chat (no near-duplicates, no rewording of a previous reply).
 
+ANSWER HER QUESTIONS DIRECTLY:
+- If her message contains a question (literal "?" or implicit — "what u doing", "wbu", "how was it"), the reply MUST answer it FIRST. No dodging, no pivoting around it. Answer, then add something (a follow-up, a tease, a plan, a thought).
+- "what are you doing tonight" → "nothing crazy, prob gym then food" + a hook back, NOT a vague flirt that ignores the question.
+- If she asks something personal ("what's your type", "what do you actually want") — give a REAL answer in his voice. Confident men answer; they don't dance around questions.
+
+DON'T BE BORING / NONCHALANT — replies must have SUBSTANCE:
+- Short and punchy is good, but too-short / too-flat / too-nonchalant kills the convo just like mirrors do. "yeah", "bet", "for sure", "true" alone = dead-end energy. He sounds bored.
+- LENGTH MIX across the 3 replies — they must NOT all be 2-5 word one-liners. AT LEAST 1 of the 3 must be SUBSTANTIVE: a full sentence or two with real content (answer + follow-up, a real thought, a specific plan, a quick mini-story). The other 2 can be shorter but must add value — a question, tease, or hook — not a flat acknowledgment.
+- CARRY THE CONVERSATION — he is allowed to bring things to the table, not only react. Replies can introduce HIS world: what he's been up to, an opinion, a plan he's thinking about, something he's into. The convo should feel like two people talking, not him asking her to fill all the silence.
+- Show real interest in HER — follow up on details she's mentioned, ask about things she's into. Curiosity is attractive; bare nonchalance is boring.
+
+WHEN SHE SENDS MULTIPLE BUBBLES IN A ROW:
+- If her latest "message" is actually several consecutive bubbles she sent without him replying, treat them as ONE combined message. Reply to the WHOLE thing, anchored on her BOTTOM (newest) bubble. NEVER reply to just the top bubble in a run — the top is the oldest.
+
 STRICT RULES:
 - Sound exactly like a real person texting — not AI, not a therapist, not a script
 - Zero exclamation marks unless the style explicitly uses them
@@ -3816,13 +4035,17 @@ CRITICAL PERSPECTIVE RULE:
 RULES:
 - EVERY reply must DIRECTLY respond to her exact message — read what she actually said and answer THAT. If she compliments you, take it and flip it back confidently (never ignore it or change the subject). Never use vague pronouns like "they"/"it" that don't clearly point to something. A reply that doesn't obviously fit her message is WRONG.
 - FORWARD MOMENTUM — the convo MUST keep moving. Every reply has to give HER something to respond to. At LEAST 2 of the 3 replies must clearly push the convo forward (ask her something specific, propose a plan, introduce a fresh angle, tease/challenge her, or share a quick thought she can react to). Mirror-style "you too" / "same" / reflective compliments are DEAD ENDS — only acceptable if she sent something so flat (lol, k) that flatness is the right read.
+- ANSWER HER QUESTIONS — if her message has a question (literal "?" or implicit like "what u doing", "wbu", "how was it"), the reply MUST answer it FIRST. No dodging. Then add a follow-up. "what are you doing tonight" → "nothing crazy, prob gym then food, what about you" NOT a vague flirt that skips the question.
+- HAVE SUBSTANCE — too-short/flat/nonchalant ("yeah", "bet", "for sure") is just as dead-end as mirror replies. AT LEAST 1 of the 3 replies must be SUBSTANTIVE: a full sentence or two with real content (answer + follow-up, a real thought, a specific plan, a quick mini-story). The other 2 can be shorter but must add value.
+- CARRY THE CONVERSATION — he's allowed to bring stuff to the table, not just react. Share something about his day, an opinion, a plan he's considering. The convo should feel like two people talking, not him asking her to fill silence.
+- MULTI-BUBBLE MESSAGES — if she sent several grey bubbles in a row, treat them as ONE message and reply to the WHOLE thing anchored on her BOTTOM bubble. Never reply to just the top bubble in a run.
 - DON'T REPEAT PAST REPLIES — if his previous messages in this chat were sweet/reactive/short, switch lanes. Two passive replies in a row kill the conversation.
 - BUILD ON HER WORLD — if she's mentioned anything earlier (her job, her cat, her weekend, a show), call back to it. People feel heard when you remember details.
 - Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
-- Lowercase preferred, short and punchy
+- Lowercase preferred — mix lengths across the 3 replies, not all one-liners
 - You MUST return EXACTLY 3 replies in the array — never fewer
-- All 3 must be COMPLETELY different from each other: different opening words, different angle, different length, AND different conversational move (e.g. one question, one tease, one statement+pivot). They are NOT rephrasings of one idea.
+- All 3 must be COMPLETELY different from each other: different opening words, different angle, different length, AND different conversational move (e.g. one question, one tease, one substantive answer+pivot). They are NOT rephrasings of one idea.
 - First person as HIM — the actual message he'd send only
 
 ${toneHint?'':'Also judge how confident you are about the tone. If the message is too vague/ambiguous to read the vibe, set confidence to "low".'}
@@ -3996,16 +4219,23 @@ async function generate(){
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
 
+STORY OPENER FORMULA (she's been DMed by 100+ guys today — lame openers die in her unread folder):
+- Every opener = CALLOUT (one specific detail you actually saw) + TWIST (tease / wrong-on-purpose guess / playful accusation / deadpan reaction / bold claim) + HOOK (leaves space for her to reply).
+- Lead with the SPECIFIC — not the vibe. Name the boots, the drink, the bar, the lyric, the sticker, the weird expression.
+- The twist is what makes her smile. A flat compliment with no twist = ignored.
+- The hook is what makes her reply. End on something she WANTS to answer (a tease that begs a comeback, a bold claim she'll want to argue with, a half-question).
+
 STRICT RULES:
 - ZERO exclamation marks, ever
-- No thirsty openers: never lead with "you're beautiful", "you look amazing", "gorgeous"
+- No thirsty openers: never lead with "you're beautiful", "you look amazing", "gorgeous", "stunning"
+- No lame generic openers: "looks fun", "vibes", "this is cute", "what's the song", "where is this", "how was it", "hey", "hi", "hey beautiful" — all instant dead-on-arrival
 - No feminine words: omg, bestie, love that, obsessed, slay, aww, yay, so cute
 - No AI phrases: "I'd love to", "certainly", "that sounds", "what a"
-- No generic safe openers: "nice", "that's cool", "looks fun"
 - Lowercase like a real guy texting
-- Be SPECIFIC — reference actual details, not vague reactions
+- Be SPECIFIC — reference actual details from the story, never vague reactions
 - Don't sound like you're trying to impress her — sound like she's trying to impress you
-- ${tone==='short'?'5 words max, no exceptions':'1-2 short sentences max'}${avoidLine}
+- Have SUBSTANCE — "nice" / "haha" / "vibes" alone = boring weirdo energy. The reply should actually say something with a twist or hook.
+- ${tone==='short'?'5 words max, no exceptions — but it must still have a callout + twist':'1-2 short sentences max — long enough for callout + twist + hook'}${avoidLine}
 - Write in first person — this is the actual message being sent. Never use "he", never describe what the guy would say, never write in 3rd person
 - Output ONLY the reply text. Nothing else.`;
 
