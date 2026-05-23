@@ -1,7 +1,7 @@
 {
-  "name": "Rizz App™",
-  "short_name": "Rizz App™",
-  "description": "AI-powered Instagram DM reply assistant",
+  "name": "Don't Miss™",
+  "short_name": "Don't Miss™",
+  "description": "Don't Miss™ — AI-powered Instagram DM reply assistant. Catch every shot.",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",

@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Rizz App™</title>
+<title>Don't Miss™</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f0f0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Rizz App™">
+<meta name="apple-mobile-web-app-title" content="Don't Miss™">
 <link rel="apple-touch-icon" href="icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -442,13 +442,13 @@ input[type="text"]::placeholder{color:var(--text3)}
 .auth-toggle button.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 
 /* ── CONTRIBUTOR OVERLAY ── */
-.contrib-overlay{position:fixed;inset:0;background:var(--bg);z-index:998;display:none;flex-direction:column;align-items:center;padding:24px 18px;overflow-y:auto}
+.contrib-overlay{position:fixed;inset:0;background:var(--bg);z-index:1500;display:none;flex-direction:column;align-items:center;padding:24px 18px;overflow-y:auto}
 .contrib-overlay.open{display:flex;animation:screenFadeIn .4s ease-out}
 .contrib-header{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .contrib-title{font-size:18px;font-weight:700;color:var(--text);font-family:'DM Sans',sans-serif}
 .contrib-progress{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
 .contrib-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 12px 50px rgba(0,0,0,0.4),0 0 60px rgba(155,110,224,0.12);animation:cardFloatIn .35s ease-out}
-.contrib-intro-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1001;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px)}
+.contrib-intro-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1600;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px)}
 .contrib-intro-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px 26px;max-width:420px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7)}
 .contrib-intro-box h2{font-size:18px;margin-bottom:12px;color:var(--text)}
 .contrib-intro-box p{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:14px}
@@ -457,7 +457,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .contrib-intro-close.ready{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .contrib-export-fab{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:999;padding:11px 20px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
 .contrib-export-fab:hover{color:var(--text);border-color:var(--text2)}
-.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1002;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:18px 20px;box-shadow:0 12px 48px rgba(0,0,0,0.55),0 0 60px rgba(155,110,224,0.2);transition:transform .4s cubic-bezier(.22,1,.36,1)}
+.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1700;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:18px 20px;box-shadow:0 12px 48px rgba(0,0,0,0.55),0 0 60px rgba(155,110,224,0.2);transition:transform .4s cubic-bezier(.22,1,.36,1)}
 .contrib-export-prompt.show{transform:translate(-50%,0)}
 .contrib-export-prompt h3{font-size:14.5px;font-weight:700;margin-bottom:4px}
 .contrib-export-prompt p{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:12px}
@@ -549,16 +549,16 @@ input[type="text"]::placeholder{color:var(--text3)}
 .panel-close:active{transform:scale(.95)}
 .panel-body{padding:0 22px 30px}
 
-/* ── STICKER NOTE (taped to top-left of the login card) ── */
+/* ── STICKER NOTE (taped to the upper-right of the title area, compact for mobile) ── */
 .login-card{position:relative}
-.sticker-note{position:absolute;top:-76px;left:-6px;width:150px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:12px 11px 13px;z-index:2;box-shadow:0 12px 32px rgba(0,0,0,0.55),0 0 44px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:top left;transform:rotate(-6deg);animation:stickerFloat 6s ease-in-out infinite}
+.sticker-note{position:absolute;top:84px;right:-12px;width:118px;background:linear-gradient(165deg,#2a2540,#1f1b30);border:1px solid rgba(160,130,255,0.3);border-radius:5px;padding:8px 9px 9px;z-index:2;box-shadow:0 10px 28px rgba(0,0,0,0.55),0 0 36px rgba(100,55,220,0.18),inset 0 1px 0 rgba(255,255,255,0.08);font-family:'DM Sans',sans-serif;transform-origin:top right;transform:rotate(5deg);animation:stickerFloat 6s ease-in-out infinite}
 /* tape strip across the top of the note */
-.sticker-note::after{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-3deg);width:44px;height:17px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 6px rgba(0,0,0,0.3)}
-.sticker-note h3{font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:5px}
-.sticker-note p{font-size:9.5px;line-height:1.45;color:var(--text2)}
-.sticker-note .crew{font-size:9px;color:rgba(160,130,255,0.85);margin-top:7px;font-weight:600}
-@keyframes stickerFloat{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(-6deg) translateY(-4px)}}
-@media (max-width:600px){.sticker-note{width:132px;left:-2px;top:-70px;padding:10px 9px 11px}.sticker-note p{font-size:9px}}
+.sticker-note::after{content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(-3deg);width:36px;height:13px;background:rgba(226,226,226,0.14);border:1px solid rgba(255,255,255,0.14);border-radius:2px;backdrop-filter:blur(2px);box-shadow:0 2px 5px rgba(0,0,0,0.3)}
+.sticker-note h3{font-size:9.5px;font-weight:700;color:var(--text);margin-bottom:3px;display:flex;align-items:center;gap:4px;line-height:1.1}
+.sticker-note p{font-size:8.5px;line-height:1.42;color:var(--text2);margin:0}
+.sticker-note .crew{font-size:8px;color:rgba(160,130,255,0.85);margin-top:5px;font-weight:600;line-height:1.3}
+@keyframes stickerFloat{0%,100%{transform:rotate(5deg) translateY(0)}50%{transform:rotate(5deg) translateY(-3px)}}
+@media (max-width:600px){.sticker-note{width:108px;right:-6px;top:76px;padding:7px 8px 8px}.sticker-note p{font-size:8px}.sticker-note h3{font-size:9px}}
 
 /* ── AUTH FORM ── */
 .auth-toggle{display:flex;gap:0;background:var(--surface2);border-radius:10px;padding:4px;border:1px solid var(--border);margin-bottom:22px}
@@ -673,13 +673,13 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <!-- STICKER NOTE stuck to the card's edge -->
     <div class="sticker-note">
       <h3>📌 To the crew</h3>
-      <p>Thank you for your efforts and contribution training the Rizzer — it genuinely made it better. Check back soon, more coming.</p>
+      <p>Thank you for your efforts and contribution training Don't Miss — it genuinely made it better. Check back soon, more coming.</p>
       <div class="crew">— Nikolai · Ismaaeel · Jayden</div>
     </div>
     <div class="logo-wrap">
       <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
     </div>
-    <h1>Rizz App™</h1>
+    <h1>Don't Miss™</h1>
     <p class="sub" id="auth-sub">Sign in to continue</p>
     <div class="auth-toggle">
       <button id="auth-tab-signin" class="active" onclick="setAuthMode('signin')">Sign In</button>
@@ -701,7 +701,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <div class="auth-error" id="auth-error"></div>
     <button class="auth-submit" id="auth-submit" onclick="submitAuth()">Sign In</button>
     <button class="contrib-cta" onclick="openContribute()">
-      💜 Help train the Rizzer — answer some questions
+      💜 Help train Don't Miss — answer some questions
       <span class="contrib-cta-sub">no account needed · takes 2 min · you can be male or female</span>
     </button>
   </div>
@@ -710,7 +710,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 <!-- 🎯 CONTRIBUTOR OVERLAY — minimal training UI for crew on Instagram -->
 <div class="contrib-overlay" id="contrib-overlay">
   <div class="contrib-header">
-    <div class="contrib-title">💜 Train the Rizzer</div>
+    <div class="contrib-title">💜 Train Don't Miss</div>
     <button onclick="closeContribute()" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:6px 12px;font-family:'DM Sans',sans-serif">✕ Close</button>
   </div>
   <div id="contrib-stage" style="width:100%;max-width:520px"></div>
@@ -771,7 +771,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
     </div>
     <div style="flex:1">
-      <h1>Rizz App™</h1>
+      <h1>Don't Miss™</h1>
       <p>AI-powered replies — your voice, your vibe</p>
     </div>
     <div class="header-actions">
@@ -780,7 +780,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       <button class="hdr-icon" onclick="openApiPanel()" title="API key & gallery" id="api-icon">🔑</button>
       <button class="hdr-icon" onclick="openHistoryPanel()" title="Reply history">🕑<span class="history-count" id="history-count" style="position:absolute;top:-6px;right:-6px;min-width:18px;font-size:10px;padding:0 4px">0</span></button>
       <button class="hdr-icon" onclick="openSettingsPanel()" title="Settings">⚙️</button>
-      <button class="hdr-icon" onclick="openTraining()" title="Train the Rizzer" id="train-icon-btn">🎯<span class="train-empty-badge" id="train-badge"></span></button>
+      <button class="hdr-icon" onclick="openTraining()" title="Train Don't Miss" id="train-icon-btn">🎯<span class="train-empty-badge" id="train-badge"></span></button>
     </div>
   </div>
 
@@ -1122,7 +1122,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 <div class="train-overlay" id="train-overlay">
   <div class="train-header">
     <div>
-      <div class="train-title">🎯 Train the Rizzer</div>
+      <div class="train-title">🎯 Train Don't Miss</div>
       <div style="font-size:12px;color:var(--text3);margin-top:2px">Reply naturally — the AI learns your exact style</div>
     </div>
     <button class="train-close" onclick="closeTraining()">Done</button>
@@ -1170,7 +1170,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       📵 Live Help needs a desktop browser (Chrome, Edge or Firefox). Screen sharing isn't supported on iPhone/iPad — use the 🔥 Quick Response screenshot flow on mobile instead.
     </div>
     <div id="live-start-area">
-      <p class="live-hint">Tap below, then pick the window with your chat (e.g. your browser tab with Instagram, or the Messages window). Rizz App reads what's on screen and fires back replies — no tab-switching.</p>
+      <p class="live-hint">Tap below, then pick the window with your chat (e.g. your browser tab with Instagram, or the Messages window). Don't Miss reads what's on screen and fires back replies — no tab-switching.</p>
       <button class="live-start-btn" onclick="startLiveShare()">▶ Start screen share</button>
     </div>
     <div id="live-active-area" style="display:none">
@@ -3589,7 +3589,7 @@ function resetScenarioPool(){
 function notifyTris(){
   const name=getTrainerCode()||'friend';
   const myCount=trainingData.filter(d=>(d.trainer||'anon')===getTrainerCode()).length;
-  const subject=`Rizz App™ — ${name} finished all training scenarios`;
+  const subject=`Don't Miss™ — ${name} finished all training scenarios`;
   const body=`Hey Tris,\n\n${name} here. I just finished all the training scenarios you have in the app — got through every one of them.\n\nMy total saved replies: ${myCount}\n\nWhen you get a chance, would be sick to have some fresh scenarios to keep training. I'm gonna export my training data now so you can import it.\n\n— ${name}`;
   const url=`mailto:tristan.sooklal@icloud.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   // Use anchor click — most reliable cross-platform way to trigger mailto
@@ -4453,18 +4453,26 @@ function getGoodsContext(userMsg,limit=4){
 
 // Friendly error message from an API response (esp. rate limits)
 // ── DAILY CALL LIMIT (protects the shared API key) ──
-const DAILY_CALL_LIMIT=60;  // generations per device per day
+const DAILY_CALL_LIMIT=60;       // generations per device per day for crew
+const OWNER_CALL_LIMIT=1000;     // 👑 unlimited-ish bucket for the dev/owner account
+function getCallLimit(){
+  // dev/owner account gets the bigger bucket — they're paying for the key
+  return (currentUser&&currentUser.toLowerCase()===DEV_EMAIL.toLowerCase())?OWNER_CALL_LIMIT:DAILY_CALL_LIMIT;
+}
 function checkCallLimit(){
   const today=new Date().toISOString().slice(0,10);
   let data;try{data=JSON.parse(store.getItem('rizz_calls')||'{}')}catch(e){data={}}
   if(data.day!==today)data={day:today,count:0};
-  if(data.count>=DAILY_CALL_LIMIT){
-    showToast(`🛑 Daily limit reached (${DAILY_CALL_LIMIT}/day). Resets at midnight.`);
+  const limit=getCallLimit();
+  if(data.count>=limit){
+    showToast(`🛑 Daily limit reached (${limit}/day). Resets at midnight.`);
     return false;
   }
   data.count++;store.setItem('rizz_calls',JSON.stringify(data));
   return true;
 }
+// quick reset — call from console with `resetCallLimit()` if you ever need to nuke today's counter
+function resetCallLimit(){store.removeItem('rizz_calls');showToast('🔄 Call counter reset for today');}
 
 async function apiErrorMessage(res){
   if(res.status===429){
@@ -5214,7 +5222,7 @@ async function uploadImageToGithub(b64,mimeType,label){
     const res=await fetch(`https://api.github.com/repos/${ghSettings.user}/${ghSettings.repo}/contents/uploads/${filename}`,{
       method:'PUT',
       headers:{'Authorization':`token ${ghSettings.token}`,'Content-Type':'application/json'},
-      body:JSON.stringify({message:`Upload ${label} image`,content:b64,committer:{name:'Rizz App',email:'rizz@app.com'}})
+      body:JSON.stringify({message:`Upload ${label} image`,content:b64,committer:{name:"Don't Miss",email:'dontmiss@app.com'}})
     });
     if(!res.ok)return null;
     const isRoot=ghSettings.repo===`${ghSettings.user}.github.io`;
