@@ -257,6 +257,17 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.good-rw.marked{color:var(--green);border-color:var(--green);background:var(--green-bg);pointer-events:none}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
+/* regen-vibe inline picker on Live cards */
+.regen-picker{display:none;flex-wrap:wrap;gap:5px;margin-top:8px;padding:8px;background:var(--surface2);border:1px dashed var(--border);border-radius:10px}
+.regen-picker.open{display:flex}
+.regen-chip{padding:5px 10px;border-radius:100px;border:1px solid var(--border);background:var(--surface);font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.regen-chip:hover{border-color:var(--text2);color:var(--text)}
+.rw-btn.regen-rw{color:var(--text3)}
+.rw-btn.regen-rw:hover{color:#9b6ee0;border-color:#9b6ee0;background:rgba(155,110,224,0.08)}
+/* feedback-copy iOS-style toggle */
+#feedback-copy-slider:before{content:"";position:absolute;height:22px;width:22px;left:2px;top:2px;background:var(--text2);border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+#feedback-copy-toggle:checked + #feedback-copy-slider{background:rgba(91,158,245,0.25);border-color:#5b9ef5}
+#feedback-copy-toggle:checked + #feedback-copy-slider:before{transform:translateX(20px);background:#5b9ef5}
 /* report modal */
 .report-modal{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(6px)}
 .report-modal.open{opacity:1;pointer-events:all}
@@ -928,6 +939,20 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="pref-btn" data-pref="random" onclick="setPref('random')"><span>🎲 Random<div class="pref-sub">surprise me each time</div></span><span class="arrow">✓</span></button>
         <button class="pref-btn" data-pref="none" onclick="setPref('none')"><span>🚫 None<div class="pref-sub">no forced tone</div></span><span class="arrow">✓</span></button>
       </div>
+
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
+          <div style="flex:1">
+            <div class="card-label" style="margin-bottom:4px">📋 Copy with feedback request</div>
+            <p style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:0">When ON, copying a reply also appends a short disclaimer so you can paste it in a group chat and friends know it's AI + asks them to rate it / suggest fixes. Turn off when you're done testing. <br><span id="feedback-copy-label" style="color:var(--text2);font-weight:500"></span></p>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0;margin-top:4px">
+            <input type="checkbox" id="feedback-copy-toggle" style="opacity:0;width:0;height:0" onchange="setFeedbackCopy(this.checked)">
+            <span style="position:absolute;cursor:pointer;inset:0;background:var(--surface3);border:1px solid var(--border);border-radius:28px;transition:.2s" id="feedback-copy-slider"></span>
+          </label>
+        </div>
+      </div>
+
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
           <div class="card-label" style="margin-bottom:0">⭐ Saved good replies</div>
@@ -1323,7 +1348,15 @@ function renderSettingsPref(){
 }
 function openApiPanel(){document.getElementById('api-overlay').classList.add('open');document.body.style.overflow='hidden'}
 function openHistoryPanel(){renderHistory();document.getElementById('history-overlay').classList.add('open');document.body.style.overflow='hidden'}
-function openSettingsPanel(){renderSettingsPref();renderGoods();renderReports();renderLiveMemoryList();document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden'}
+function openSettingsPanel(){
+  renderSettingsPref();renderGoods();renderReports();renderLiveMemoryList();
+  // sync the feedback-copy toggle to current state
+  const t=document.getElementById('feedback-copy-toggle');
+  if(t){t.checked=feedbackCopyEnabled();}
+  const lbl=document.getElementById('feedback-copy-label');
+  if(lbl)lbl.textContent=feedbackCopyEnabled()?'ON — clipboard includes a feedback ask':'OFF — clipboard gets just the reply';
+  document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden';
+}
 
 // 🧠 LIVE MEMORY UI ─────────────────────────
 function renderLiveMemoryList(){
@@ -1409,20 +1442,126 @@ function stopLiveShare(){
 function resetLiveChatPointer(){liveCurrentHandle='';showToast('Chat pointer reset — next scan starts fresh');}
 
 // Live reply cards — self-contained actions that work in the overlay AND the pop-out window
+const REGEN_VIBES=['spicier','flirtier','funnier','more chill','more confident','bolder','shorter','longer','more savage','wholesome'];
 function renderLiveCards(replies,doc){
   const cont=doc.getElementById('live-reply-cards');if(!cont)return;
+  const chips=REGEN_VIBES.map(v=>`<span class="regen-chip" data-vibe="${v}">${v}</span>`).join('');
   cont.innerHTML=replies.map((r,i)=>`
-    <div class="reply-card">
+    <div class="reply-card" id="live-card-${i}">
       <div class="reply-card-meta"><span class="reply-tone-tag">${r.tone||'reply'}</span><span class="reply-why">${(r.why||'').replace(/</g,'&lt;')}</span></div>
-      <div class="reply-text">${(r.text||'').replace(/</g,'&lt;')}</div>
+      <div class="reply-text" id="live-text-${i}">${(r.text||'').replace(/</g,'&lt;')}</div>
       <div class="rewrite-strip">
         <button class="rw-btn good-rw" onclick="markGoodLive(${i},this)">⭐ Good</button>
         <button class="rw-btn report-rw" onclick="reportLive(${i},this)">🚩 Report</button>
+        <button class="rw-btn regen-rw" onclick="toggleRegenPicker(${i},this)">🔄 Regen</button>
         <button class="rw-btn copy-rw" onclick="copyLiveReply(${i})">Copy ↗</button>
       </div>
+      <div class="regen-picker" id="live-regen-${i}">${chips}</div>
     </div>`).join('');
+  // wire chip clicks (delegated per card so it works in pip too)
+  replies.forEach((_,i)=>{
+    const picker=cont.querySelector('#live-regen-'+i);
+    if(!picker)return;
+    picker.querySelectorAll('.regen-chip').forEach(c=>{
+      c.addEventListener('click',()=>{regenSingleLive(i,c.dataset.vibe,doc);});
+    });
+  });
 }
-function copyLiveReply(i){const r=currentReplies[i];if(!r)return;robustCopy(r.text);}
+function toggleRegenPicker(i,btn){
+  const doc=(btn&&btn.ownerDocument)||document;
+  const picker=doc.getElementById('live-regen-'+i);
+  if(picker)picker.classList.toggle('open');
+}
+function copyLiveReply(i){const r=currentReplies[i];if(!r)return;robustCopy(wrapForCopy(r.text,currentRepliesContext));}
+
+// 🔄 REGENERATE A SINGLE LIVE REPLY with a chosen vibe (spicier, flirtier, etc.)
+async function regenSingleLive(i,vibe,doc){
+  doc=doc||document;
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(!checkCallLimit())return;
+  const existing=currentReplies[i];if(!existing)return;
+  const her=lastGenMessage&&lastGenMessage!=='[Live chat]'?lastGenMessage:'';
+  const picker=doc.getElementById('live-regen-'+i);if(picker)picker.classList.remove('open');
+  const textEl=doc.getElementById('live-text-'+i);
+  const card=doc.getElementById('live-card-'+i);
+  if(card)card.classList.add('rewriting');
+  if(textEl)textEl.textContent='✨ regenerating ('+vibe+')...';
+  // build avoid list from other current replies + user's recent sends from memory
+  const avoid=currentReplies.filter((_,j)=>j!==i).map(r=>r.text).filter(Boolean);
+  const mem=loadLiveMemory(liveCurrentHandle);
+  const myRecents=mem?.myRecentSends?.slice(0,6)||[];
+  const memBlock=mem?buildLiveMemoryBlock(liveCurrentHandle):'';
+  const sys=`You are rewriting ONE reply for a confident guy texting a girl on Instagram DM. You are HIM — never write from her point of view.${getGoodsContext(her,3)}${getReportsContext(her,3)}${memBlock}
+
+HER newest message (the one being replied to): "${her||'(use the screenshot to read it)'}"
+
+The user wants this reply to be MORE: ${vibe.toUpperCase()}.
+
+EXISTING REPLY (you are replacing this one — your new reply must be CLEARLY different): "${existing.text}"
+
+DO NOT REPEAT any of these (the other replies on screen + my recent sends in this chat):
+${[...avoid,...myRecents].filter(Boolean).map(t=>'- "'+t+'"').join('\n')||'(none)'}
+
+VIBE GUIDE:
+- spicier/flirtier = playful tension, light innuendo, never crude or thirsty
+- funnier = a real joke / unexpected punchline, not just "lol" energy
+- bolder/more confident = direct, decisive, makes a move (proposes plan, asks her out, makes a claim)
+- savage = sharp playful jab that flips on her, never mean
+- chill = laid-back energy, low-effort cool — but still has substance (not "yeah" alone)
+- shorter = max 6 words but must still have wit / a hook
+- longer = 1-2 full sentences with content
+- wholesome = warm + genuine, no cringe therapy-speak
+
+QUALITY RULES (same as always):
+- Lowercase, no exclamation marks
+- Directly answer her message; if she asked a question, ANSWER it before any pivot
+- NEVER use these phrasings: "you too", "same", "for sure" alone, "your go-to X", "you're really X or something", "looks fun", "vibes", "you're amazing", "you're literally the best", "i'd love to", "haha" alone, "lol" alone, "lmao" alone
+- Push the convo forward — give her something to respond to
+- Don't repeat or reword any of the existing replies or my recent sends listed above
+
+Return ONLY JSON: {"text":"the new reply","tone":"label","why":"short reason"}`;
+  try{
+    const useImg=!!lastLiveFrame;
+    const userContent=useImg
+      ?[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${lastLiveFrame}`}},{type:'text',text:`Rewrite reply #${i+1} to be ${vibe}. Her message: "${her}". Return ONE replacement reply as JSON.`}]
+      :`Rewrite the existing reply to be ${vibe}. Her message: "${her}". Return ONE replacement reply as JSON.`;
+    const body={model:useImg?'meta-llama/llama-4-scout-17b-16e-instruct':getTextModel(),max_tokens:250,temperature:1.05,top_p:0.95,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:sys},{role:'user',content:userContent}]};
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify(body)});
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim()||'';
+    let parsed=null;try{parsed=JSON.parse(raw);}catch(e){const m=raw.match(/\{[\s\S]*\}/);if(m){try{parsed=JSON.parse(m[0])}catch(e2){}}}
+    if(!parsed||!parsed.text)throw new Error('Could not regenerate');
+    currentReplies[i]={text:parsed.text.trim(),tone:parsed.tone||vibe,why:parsed.why||vibe};
+    renderLiveCards(currentReplies,doc);
+    addToHistory(parsed.tone||vibe,'[Live regen·'+vibe+']',parsed.text.trim(),'dm',null);
+  }catch(err){
+    if(textEl)textEl.textContent=existing.text;
+    if(card)card.classList.remove('rewriting');
+    showToast(err.message&&err.message.length<90?err.message:'Regen failed');
+    console.error(err);
+  }
+}
+// ── COPY-WITH-FEEDBACK ─────────────────────
+// When ON, the clipboard gets the reply + a short disclaimer asking friends to rate it.
+// Toggle from Settings → "Copy with feedback request".
+function feedbackCopyEnabled(){
+  const v=store.getItem('rizz_copy_feedback');
+  return v===null?true:v==='1'; // default ON
+}
+function setFeedbackCopy(on){
+  store.setItem('rizz_copy_feedback',on?'1':'0');
+  const lbl=document.getElementById('feedback-copy-label');
+  if(lbl)lbl.textContent=on?'ON — asking friends for feedback when you paste':'OFF — clipboard gets just the reply';
+  showToast(on?'Disclaimer ON — paste in your group chat for feedback':'Disclaimer OFF — clean copy mode');
+}
+// context labels what feature generated the reply — passed in per call site so testers know
+function wrapForCopy(text,context){
+  if(!feedbackCopyEnabled())return text;
+  const ctx=context||'Reply';
+  return `"${text}"\n\n— AI written response (${ctx} beta 2)\n— By Tris\n\nrate it 1-10? 🙏  optional: any feedback on what i should change`;
+}
+
 // Works in the main tab AND the pop-out window (clipboard API needs the focused doc)
 function robustCopy(text){
   const inPip=pipWindow&&!pipWindow.closed;
@@ -1434,10 +1573,10 @@ function robustCopy(text){
     doc.body.appendChild(ta);ta.focus();ta.select();
     const ok=doc.execCommand('copy');
     doc.body.removeChild(ta);
-    if(ok){showToast('Copied');return;}
+    if(ok){showToast(feedbackCopyEnabled()?'Copied + feedback ask':'Copied');return;}
   }catch(e){}
   // fallback to async clipboard if execCommand didn't work
-  try{(inPip?pipWindow.navigator:navigator).clipboard.writeText(text).then(()=>showToast('Copied')).catch(()=>showToast('Press Ctrl+C to copy'));}
+  try{(inPip?pipWindow.navigator:navigator).clipboard.writeText(text).then(()=>showToast(feedbackCopyEnabled()?'Copied + feedback ask':'Copied')).catch(()=>showToast('Press Ctrl+C to copy'));}
   catch(e){showToast('Couldn\'t copy automatically');}
 }
 function markGoodLive(i,btn){const r=currentReplies[i];if(!r)return;savedGoodReplies.push({message:lastGenMessage||'',reply:r.text,tone:r.tone||'',ts:Date.now()});saveGoods();renderGoods();if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}}
@@ -1578,52 +1717,94 @@ async function storyReplyLive(targetDoc){
   let toneLine='';
   if(liveTones.length>=2)toneLine=`\nReply 1 = ${liveTones[0]} tone, Reply 2 = ${liveTones[1]} tone, Reply 3 = your best call. All must fit the story.`;
   else if(liveTones.length===1)toneLine=`\nReply 1 = ${liveTones[0]} tone; 2 & 3 = your best call.`;
-  const system=`You are helping a confident guy slide into a girl's DMs by reacting to her Instagram STORY. The bar is HIGH — her story has been seen by 100+ guys today. Generic, lame, or thirsty openers get ignored or laughed at. Your job is to write openers that ACTUALLY STAND OUT and pull a reply.${getRefinedContext('',3)}${getGoodsContext('',3)}${getReportsContext('',3)}${toneLine}
+  const system=`You are writing Instagram DM openers for a confident guy reacting to a girl's STORY. Her story has been seen by 100+ guys today and 90% of them sent something forgettable. Your job is to write the message that actually makes her stop, smile, and reply.${getRefinedContext('',3)}${getGoodsContext('',3)}${getReportsContext('',3)}${toneLine}
 
 WHICH STORY: the screen shows a story viewer. The story she's WATCHING is the ONE BIG, BRIGHT, IN-FOCUS panel in the centre. The smaller, dimmed, greyed-out panels to the sides are OTHER people's stories (next/previous previews) — IGNORE them completely. Read ONLY the big central story.
 
-READ THE STORY LIKE A DETECTIVE — before writing anything, scan for the SPECIFIC thing that makes this story THIS story (not just any story): what she's wearing (a specific item — boots, a hoodie, a necklace), her expression / micro-mood, what she's actually doing (not "vibing" — specifically: holding a coffee, mid-laugh, posing with a friend), the LOCATION (a recognisable bar / city / beach / her bedroom), text overlay (caption, lyrics, sticker, poll, question), the SONG / artist, any object in frame (a book title, a car, a drink). The opener has to point at ONE of those specific details — not the whole vibe.
+READ THE STORY LIKE A DETECTIVE — find what makes THIS story THIS story (not "a story of a girl"). Look for:
+- A specific clothing item (the hoodie, the boots, the chain, the hat — not "her outfit")
+- Her EXPRESSION or micro-mood (smirking, mid-laugh, deadpan stare, looking off-camera)
+- What she's literally DOING (holding a drink, leaning on a wall, in a car, mirror selfie, with a friend)
+- The LOCATION (a bar, a beach, her bedroom, a city street, a gym)
+- Any text overlay, caption, sticker, poll, question, or song lyric
+- The SONG and ARTIST if visible
+- A random object in frame she didn't think you'd notice (a book on her bed, a drink, a license plate, a poster on the wall)
 
-THE FORMULA FOR A GRABBING OPENER (3 ingredients in this order):
-1. CALLOUT — name the specific detail you noticed (proves you actually looked, not just swiped).
-2. TWIST — flip it. Tease her about it, challenge a claim, make a playful (correct or incorrect) assumption, pretend to be unimpressed, pretend to be invested, draw a weird connection, give a deadpan reaction. The twist is what makes her smile and reply.
-3. HOOK — leave space for her to respond. End on something she WANTS to answer: a tease that begs a comeback, a half-question, a bold statement she'll want to argue with, or a soft setup for a follow-up. NEVER end with a flat compliment ("looks fun") or a generic question ("how was it") — those die.
+THINK BEFORE WRITING — for each opener, pick a SPECIFIC detail, then ask: "what's the most interesting/funny/sharp angle on this detail?" Don't just slap a tease onto a callout. The TEASE itself has to be witty. A bad twist on a good callout is still a bad opener.
 
-OPENER MOVES THAT WORK (use a different one for each of the 3 replies — variety is non-negotiable):
-- The playful accusation: "okay but who are you trying to impress with that fit" / "this is suspicious behaviour for a tuesday"
-- The wrong-on-purpose guess: "let me guess, third coffee of the day" / "wait that's not [place]... is it"
-- The deadpan tease: "and you didn't invite me, crazy" / "this whole story is a flex and i'm watching it"
-- The specific compliment + flip: "the boots are doing numbers but the smirk is what's actually criminal"
-- The micro-callout: pick the smallest weird detail and make it the whole thing ("nah the way you're holding that drink is sending me")
-- The shared-experience hook: connect it to something he'd do ("if i was there i would've ordered the exact same thing and you know it")
-- The bold claim: "you peaked here, just so you know" / "this is the most chaotic 5 seconds i've seen all week"
+QUALITY BAR — examples of LAME vs GOOD (study these — this is the difference between getting ignored and getting a reply):
 
-HARD AVOIDS (these = lame / weirdo energy — never generate these):
-- "looks fun" / "vibes" / "this is cute" / "you look amazing" / "you look beautiful" / "stunning" — generic flattery from strangers
-- "what's the song" / "where is this" / "how was it" — boring questions with no twist
-- "hey" / "hi" / "hey beautiful" / "hello love" — opener killers
-- Anything horny, anything that mentions her body, anything desperate ("would die to be there", "marry me")
-- Cringe slang ("you ate" if forced, "fyp material") — sounds like he's trying too hard
-- Pure compliments with no hook — every compliment must come WITH a tease, callback, or claim
+❌ LAME: "the top is doing some work"  → reads thirsty (commenting on how clothing looks on her body) + vague (what work?) + nothing to reply to
+✅ GOOD: "white top, nicki minaj song, golden hour — this is suspiciously curated for someone supposedly just chilling"
+   (callout = 3 specific details strung together, twist = playfully accusing her of curating, hook = invites her to defend or admit)
+
+❌ LAME: "you're really selling this song or something"  → grammatically awkward, no punchline, "or something" kills it
+✅ GOOD: "nicki and ariana on the speaker is a controversial pick i'm gonna need you to defend that"
+   (callout = the song, twist = mock-controversy / fake disagreement, hook = demands a defence)
+
+❌ LAME: "let me guess, your go to pose is touching your hair"  → "your go to pose" reads formulaic + slightly mocking-her-vanity in a flat way
+✅ GOOD: "the hand-on-the-face is your move and i'm onto you"
+   (callout = the specific pose, twist = "i'm onto you" sounds playful/observant, hook = teases her to respond)
+
+❌ LAME: "looks fun" / "vibes" / "you look amazing" / "stunning"  → instant unread
+✅ GOOD: "okay but who are you secretly recreating that pose from"  → wrong-on-purpose accusation, makes her laugh and explain
+
+❌ LAME: "what's the song"  → boring question, no effort
+✅ GOOD: "the nicki/ariana energy at [time of day] is a choice and i respect it"  → calls out the song WITH a take
+
+NO BODY/THIRST RULES — never make openers about how her body looks, how clothing fits her, or anything sexual:
+- ❌ "the top is doing work" / "that fit is hugging right" / "you're filling that out"
+- ✅ Comment on the STYLE choice ("white top with blue jeans is the most early-2010s tumblr revival energy") not the way it sits on her body
+- If you mention an outfit piece, the tease must be about the CHOICE / VIBE / WHAT IT SAYS — never about how she looks in it
+
+OPENER MOVES (each of the 3 replies MUST use a different one — variety is mandatory):
+1. Playful accusation — call out a "scheme" she's running ("who is this whole post for")
+2. Wrong-on-purpose guess — confidently guess something incorrect, she'll correct you ("let me guess, second espresso of the day")
+3. Deadpan tease — flat, dry, says-a-lot-with-little ("and you didn't invite me, crazy")
+4. Mock-controversy — pretend her choice (song/outfit/location) is divisive ("nicki/ariana is a controversial pick, defend yourself")
+5. Micro-callout — zoom in on the smallest weird detail in frame (a book, a sticker, a drink, a poster) and make IT the whole opener
+6. Bold-claim flip — make a confident sweeping statement she'll want to argue with ("you peaked in this 5-second clip")
+7. Shared-experience hook — connect it to something he'd do/say if he were there
+
+WRITING STYLE:
+- Lowercase, no exclamation marks, no emojis unless the story explicitly invites one (a 😭 or 👀 max)
+- Sound like a guy who's busy and texts fast but what he typed is SHARP — not robotic, not formulaic, not trying-too-hard
+- AVOID template-sounding phrasings: "your go-to X", "let me guess your favourite X is Y", "the [thing] is doing some [vague work]" — these read like an AI template
+- Specifics > vagueness. "the chain peeking out under the white top is doing the most" > "the outfit is fire"
+- Confidence > eagerness. He's not trying to win her over, he's noticing things out loud and she should be flattered he bothered
+
+LENGTH MIX:
+- At least 1 of the 3 openers should be a real sentence (10+ words) with a callout + sharp twist + hook
+- The shorter ones (2-7 words) must still LAND — a one-liner with no punchline is worse than a longer reply with substance
+
+HARD AVOIDS (instant rejection):
+- "looks fun", "vibes", "this is cute", "you look amazing/beautiful/stunning", "gorgeous"
+- "what's the song", "where is this", "how was it"
+- "hey", "hi", "hey beautiful", "hello love"
+- ANYTHING commenting on her body or how clothing fits her
+- "you ate", "fyp material", "main character energy" — overused gen-z cringe
+- Pure compliments with no twist or hook
+- Anything that sounds like an AI template ("your go-to X", "you're really X or something")
+- Anything passive that puts the work back on her ("send me the playlist")
 
 RULES:
-- Each of the 3 openers MUST reference a DIFFERENT specific detail from the story — not the same detail rephrased.
-- Each MUST use a different opener MOVE (one playful accusation, one wrong-on-purpose guess, one deadpan tease, etc.)
-- Lowercase, zero exclamation marks, confident, never thirsty.
-- LENGTH MIX: not all 3 can be 3-word one-liners. At least 1 should have a bit of meat (a short sentence with a callout + twist + hook). Too-short = nonchalant weirdo energy.
-- It must read like a guy who's busy and barely had time to type — but what he typed was sharp.
+- Each of the 3 openers MUST hook a DIFFERENT specific detail from the story
+- Each MUST use a different MOVE from the list above
+- The twist must actually be witty — not just a generic tease tacked onto a callout
+- Read each opener back to yourself: "would this make her smile and want to reply?" If no, rewrite it.
 
-Return ONLY JSON: {"her_message":"brief description of what the story actually shows (the specific scene/detail/text/song — not a vibe)","replies":[{"text":"dm opener","tone":"label","why":"short reason naming the specific detail it hooks"}]}`;
+Return ONLY JSON: {"her_message":"brief description of the specific scene (specific outfit + activity + location + song/text if any — not a vibe)","replies":[{"text":"dm opener","tone":"label","why":"short reason naming the specific detail it hooks AND why the twist lands"}]}`;
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:550,temperature:1.05,top_p:0.95,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details in it (an item, an expression, a location, a song, a sticker, a caption — not the overall vibe). Each opener must point at one specific detail + add a twist (tease, wrong-on-purpose guess, playful accusation, deadpan reaction) + leave a hook for her to reply. NO generic "looks fun" / "vibes" / "you look amazing" / "hey" — those are dead on arrival. Each opener uses a DIFFERENT move. Lowercase, no exclamation marks, confident never thirsty. At least 1 of the 3 should have a real sentence with a callout+twist+hook, not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.05,top_p:0.95,frequency_penalty:0.7,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details (item / pose / song / sticker / caption / object in frame — not "her vibe"). Each opener uses a DIFFERENT opener MOVE from the system prompt. The TWIST must actually be witty — don\'t just glue a generic tease onto a callout. Re-read each opener before returning: would she smile and want to reply? If no, rewrite. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "you look amazing/beautiful/stunning". BANNED topics: anything about how her body looks or how clothes FIT her — only her STYLE CHOICES (the colour pairing, the song pick, the location, the pose intent). No emojis unless the story explicitly invites one. Lowercase. At least 1 of the 3 must be 10+ words with real substance — not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const parsed=parseRepliesResponse(data.choices?.[0]?.message?.content?.trim()||'');
     if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the story — try again');
     currentReplies=dedupeReplies(parsed.replies);
+    currentRepliesContext='Story Reply';
     lastGenMessage='[Story] '+(parsed.her_message||'');
     const det=targetDoc.getElementById('live-detected');
     if(det){det.innerHTML=`📖 her story: <strong>"${(parsed.her_message||'').replace(/</g,'&lt;')}"</strong>`;det.classList.add('show');}
@@ -1668,8 +1849,18 @@ async function doLiveGenerate(targetDoc,b64,overrideMsg){
 
   const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${toneLine}${overrideBlock}${memoryBlock}
 
-STEP 1 — ONLY look at the active conversation:
-- Ignore the LEFT SIDEBAR (the list of other chats with previews, search, story circles), the nav rail, browser chrome, the desktop, notifications. Read ONLY the big active conversation panel on the right.
+STEP 1 — ONLY look at the active conversation panel (the RIGHT side of the screen):
+- IGNORE EVERYTHING on the LEFT SIDEBAR — that's MY chat list, MY username, MY notes, MY story circles, MY profile picture, search bar, navigation icons. The username at the top of the left sidebar (e.g. "trislovesu.7") is MINE — NEVER use that as her name.
+- IGNORE the very top of the page (browser tabs, address bar, "Sharing this tab" banners, desktop wallpaper, dock).
+- Read ONLY the big active conversation panel on the right — that's where SHE lives.
+
+HER NAME / HANDLE — where to find it (this is the SINGLE most common mistake — read carefully):
+- HER display name and @handle appear at the TOP of the active conversation panel (the right panel), in the CENTRE-TOP area, NOT the top-left.
+- It's the chunk that shows: her small avatar + her display name (often with emojis) + her @username underneath + status like "Active now" / "Active 2h ago". Right next to it on the right are call/video/info icons.
+- Example layout: "[avatar] chadd👑👑 / its_chaddyboiii / Active now      📞 📹 ⓘ"
+- That display name + handle = HER. Use that for her_handle.
+- THE USERNAME AT THE TOP OF THE LEFT SIDEBAR IS MINE — NEVER NEVER NEVER pull from there. If you only see ONE username and it's at the top-left of the screen with a verified tick and a dropdown arrow, that is the USER's own profile name — skip it, it's not her.
+- If you genuinely cannot see her name (e.g. cropped), set her_handle to "" (empty string). Do NOT guess and do NOT fall back to the sidebar name.
 
 STEP 2 — IDENTIFY WHO SENT EACH BUBBLE (use BOTH colour and position):
 - MY messages (the guy's) = bubbles on the RIGHT side AND coloured BLUE or PURPLE.
@@ -1680,14 +1871,41 @@ STEP 3 — IGNORE TIMESTAMPS AND DIVIDERS ENTIRELY:
 - "10:05 PM", "Tue 10:22 PM", "6:12 PM", "Seen", "Seen 8m ago", "Active now", "New messages" — these are TIME LABELS and STATUS, NOT messages. Never read them as content, never reply to them, never let them confuse the order. Just skip them.
 
 STEP 4 — WHAT YOU REPLY TO (the single most important rule — getting this wrong makes the whole reply useless):
-- You ONLY ever reply to HER messages (the GREY / left bubbles). NEVER, EVER reply to MY messages (blue/purple/right). My messages are CONTEXT ONLY.
-- Your PRIMARY reply target = HER MOST RECENT message = the LOWEST / BOTTOM-MOST grey bubble on screen. Read from BOTTOM UP, not top down. The newest grey bubble is the one nearest the message-input box at the very bottom.
-- MULTI-BUBBLE MESSAGES (super common — DO NOT GET THIS WRONG): when she sends several grey bubbles in a row without me replying in between, those are ONE message split across bubbles. You MUST read ALL of her consecutive bottom grey bubbles together as a single combined message and reply to the WHOLE thing — but the BOTTOM grey bubble is what determines her latest intent / question / mood, so anchor your reply on the bottom one and just use the bubbles above it (still hers) for added context.
-  • Example: she sends "wait" → "actually" → "are you free saturday?" — these 3 grey bubbles in a row are ONE message. The bottom one ("are you free saturday?") is the actual question. You answer the question, but you can acknowledge the lead-up if it adds to the reply.
-  • NEVER reply to just the TOP grey bubble in a run of consecutive grey bubbles. The top one is the OLDEST, not the newest.
-- CRITICAL: even if one of MY blue/purple messages appears BELOW her latest grey one (i.e. I sent the last message), you STILL reply to her latest GREY message above mine. Do not reply to my blue message.
-- Do NOT wander upward past her consecutive grey bubbles to reply to even older messages. Lock onto her newest grey bubble (and any grey bubbles directly above it with no blue between).
-- If you genuinely cannot tell which grey message is newest, pick the grey bubble physically closest to the message input box at the very bottom — that one wins.
+
+You ONLY ever reply to HER messages (GREY / left bubbles). MY messages (blue/purple/right) are CONTEXT ONLY — never your reply target, even if mine is the lowest bubble on screen.
+
+USE THIS EXACT STEP-BY-STEP ALGORITHM TO FIND HER NEWEST MESSAGE — do NOT skip or freelance:
+
+1. FIND THE MESSAGE INPUT BOX at the very bottom of the active conversation panel. It's a wide text field with placeholder text like "Message...", and usually a mic icon + image icon + sticker icon to the right of it. This is your ANCHOR.
+
+2. STARTING FROM THE INPUT BOX, SCAN UPWARDS one bubble at a time.
+
+3. The FIRST GREY BUBBLE you hit on the way up = HER NEWEST MESSAGE. This is your PRIMARY REPLY TARGET. (If you hit a blue/purple bubble first, KEEP GOING UP past it — blue/purple bubbles are mine and they're context only.)
+
+4. Now look directly ABOVE that grey bubble. If there are MORE grey bubbles stacked on top of it with NO blue/purple bubble between them, those grey bubbles are ALL part of the SAME message (she sent multiple bubbles in a row). Group them together and read them as ONE combined message.
+
+5. STOP scanning upward as soon as you hit a blue/purple bubble. Anything above that blue bubble is from a previous turn — DO NOT include it in her current message.
+
+6. The BOTTOM grey bubble in that group is the most recent piece of what she sent — anchor your reply on its content/question/mood. Use the grey bubbles above it (in the same group) for additional context.
+
+EXAMPLES:
+- Screen shows (top to bottom): grey "hi" → blue "hey" → grey "how was your day" → grey "mine was crazy" → grey "tell me everything" → [input box]
+  → SCAN UP from input box → first grey hit = "tell me everything" → above that, still grey (no blue between) = "mine was crazy" → still grey = "how was your day" → next up is BLUE "hey" → STOP. Her newest combined message = "how was your day / mine was crazy / tell me everything". Reply anchored on "tell me everything", but address all 3.
+
+- Screen shows: grey "you free saturday" → blue "yeah maybe why" → grey "okay nvm" → blue "wait what" → [input box]
+  → SCAN UP from input box → first hit is BLUE "wait what" (mine, skip going up) → next up = grey "okay nvm" → above that = blue "yeah maybe why" → STOP. Her newest = "okay nvm" (just that one bubble — there's blue above it). Reply to "okay nvm". Do NOT reply to my "wait what" even though mine is lower.
+
+- Screen shows: blue "hey what's up" → grey "not much you" → grey "actually nvm" → [input box]
+  → SCAN UP → first hit = grey "actually nvm" → above = grey "not much you" → above = blue "hey what's up" → STOP. Her combined = "not much you / actually nvm". Anchor on "actually nvm".
+
+ABSOLUTE FAILURE MODES — these are the mistakes that ruin every scan:
+❌ Picking the TOP grey bubble in a stack of greys (the top is the OLDEST — always anchor on the BOTTOM)
+❌ Replying to MY blue/purple bubble because it's the lowest message on screen
+❌ Wandering past a blue bubble to grab an even older grey message
+❌ Trying to reply to a message in the LEFT SIDEBAR (those are previews of other chats — not her)
+❌ Treating "New messages" / timestamps as actual messages
+
+If you genuinely cannot identify her newest grey bubble: pick the grey bubble physically CLOSEST to the message input box at the very bottom. That's the rule. No exceptions.
 
 STEP 5 — HOW TO USE THE REST:
 - After you've locked onto her newest grey message, read the messages above it (mine in blue + hers in grey) ONLY to understand the topic, tone, and flow — so your reply fits the conversation. Never reply to any of those older messages.
@@ -1714,7 +1932,7 @@ STEP 8 — DON'T BE BORING / NONCHALANT (replies must have SUBSTANCE):
 
 STEP 9 — LEARN FROM THIS CHAT (THIS IS WHAT MAKES YOU SMARTER OVER TIME):
 - Along with the replies, you MUST extract LEARNING from the screenshot. This data is saved and fed back to you on the NEXT scan of this same conversation, so your future replies get sharper and more personal.
-- "her_handle": pull her @username or display name from the chat header at the top of the active conversation panel. Just the handle/name, no @ symbol if avoidable. (e.g. "chadd👑👑" or "its_chaddyboiii").
+- "her_handle": pull HER display name or @username from the TOP-CENTRE of the ACTIVE CONVERSATION PANEL (the right panel) — it's the small avatar + name + status row at the top of where the messages are. NEVER pull from the LEFT SIDEBAR (that username is MINE — the user's own profile, NOT her). If the only username you can see is at the top-left of the page with a dropdown arrow, that's MINE — leave her_handle as "" instead of guessing. If you can see her name clearly in the active chat header, return it (e.g. "chadd👑👑" or "its_chaddyboiii"). If you only see ONE name and you're unsure whether it's hers, return "" — wrong guesses pollute the memory of every future scan.
 - "new_facts": 1-6 SPECIFIC things you learned about HER from this scan that weren't obvious — her job, hobbies, plans, pets, friends, the place she works, her opinions, things she's into, things she dislikes, her schedule. Skip generic stuff ("she's nice"). Only concrete facts that would help you write a more personal reply next time. Empty array if nothing new.
 - "her_style": one short sentence describing HOW she texts (e.g. "short bubbles, dry humour, dropped capitals, uses 😭 a lot" or "long sentences, no emojis, very direct"). This helps you match her energy.
 - "topics_now": 3-6 keywords/phrases for what THIS scan's conversation has been about (e.g. ["weekend plans","her job interview","that song"]).
@@ -1722,12 +1940,44 @@ STEP 9 — LEARN FROM THIS CHAT (THIS IS WHAT MAKES YOU SMARTER OVER TIME):
 - "her_recent_sends": the exact text of HER last 2-4 grey bubbles visible. Future scans use this for context flow.
 - Be honest — only extract what you actually see. Don't invent facts.
 
+QUALITY BAR — BAD vs GOOD (study these, this is the difference between a reply that lands and one that dies):
+
+❌ BAD: "you too" / "same" / "for sure" / "haha yeah" → flat, no value, hands work back to her
+✅ GOOD (she said "i miss you"): "you better, what are you doing about it tho"  (acknowledges + flips into a teasing demand)
+
+❌ BAD (she asked "what u doing tonight"): "nothing much, you?"  → boring, no carry
+✅ GOOD: "gym then probably food, was actually about to ask if you wanted in"  → answers + invites + low-key proposes
+
+❌ BAD: "you're literally the best" / "you're amazing" / "you're so cute" → empty compliment that puts the work back on her
+✅ GOOD: "okay that's the second time you've said that this week, what are you scheming"  → calls out a pattern playfully
+
+❌ BAD (she sent a meme/funny thing): "lmaoo", "this is sending me", "stop", "i can't"  → reaction with no follow-up
+✅ GOOD: "okay but this is genuinely you energy and i'm not unconvinced"  → reacts AND builds in a tease
+
+❌ BAD (she's venting): "that sucks", "aww no", "i'm sorry" → therapist mode / dead air
+✅ GOOD: "okay rant to me properly, what actually happened"  → opens space + sounds engaged, not performative
+
+❌ BAD: "wyd later", "you free tonight", "what's the move" out of nowhere  → too direct, no setup
+✅ GOOD: "if you say you're bored one more time i'm gonna have to do something about it"  → builds tension before any ask
+
+INSTANT-REJECT phrasings — NEVER generate any of these:
+- "you too" / "same" / "for sure" / "bet" / "true" (alone, as a full reply)
+- "you're amazing" / "you're literally the best" / "you're so cute" / "you're perfect" / "i adore you"
+- "haha", "lmao", "lol" as a FULL reply with nothing after
+- "i hear you" / "that makes sense" / "totally get it" — therapy-speak
+- "i'd love to" / "absolutely" / "of course" / "for sure thing" — AI-speak
+- "your go-to X" / "you're really X or something" — AI-template phrasings
+- "let me guess" used as the SAME crutch repeatedly — fine occasionally, not every scan
+- "wyd" / "wyd later" / "wbu" as a standalone reply — boring lazy texts
+- Anything in 3rd person about himself
+
 RULES:
-- The reply MUST directly answer HER newest grey message — never my own message, never an older message, never off-topic. If she asked a question, ANSWER IT.
+- The reply MUST directly answer HER newest grey message — never my own message, never an older message, never off-topic. If she asked a question, ANSWER IT before anything else.
 - You are the man replying to her — never write from her point of view.
 - Match the conversation's established tone and energy, but DON'T match its dying momentum — actively push it forward and CARRY it.
 - Lowercase preferred, zero exclamation marks. 3 genuinely different replies, confident and natural, never cringe or thirsty. Mix the lengths — at least one reply should have real substance, not all one-liners.
 - If the "WHAT YOU ALREADY KNOW" memory block is provided above, USE IT — reference facts she's shared, avoid topics already covered, never repeat lines I've already sent.
+- SELF-CHECK before returning: read each reply back as if you're HER receiving it. Would you smile and want to text back? If any reply is flat, empty, generic, or template-y — REWRITE IT before returning.
 
 Return ONLY valid JSON with EXACTLY this shape:
 {"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
@@ -1742,6 +1992,7 @@ Return ONLY valid JSON with EXACTLY this shape:
     const parsed=parseRepliesResponse(data.choices?.[0]?.message?.content?.trim()||'');
     if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the chat — scan again');
     currentReplies=dedupeReplies(parsed.replies);
+    currentRepliesContext='Live DM Assist';
     const her=overrideMsg||parsed.her_message||'';
     lastGenMessage=her||'[Live chat]';
     renderDetected(targetDoc,her);
@@ -1749,7 +2000,16 @@ Return ONLY valid JSON with EXACTLY this shape:
     currentReplies.forEach(r=>addToHistory(r.tone||'live','[Live]',r.text,'dm',null));
     // 🧠 LEARN from this scan — save what we picked up about her so next scan is sharper
     try{
-      const handle=(parsed.her_handle||liveCurrentHandle||'').toString().trim();
+      let handle=(parsed.her_handle||liveCurrentHandle||'').toString().trim();
+      // Guard: never save the user's own handle as "her". Strip out anything matching the signed-in email's local-part or known user-side names.
+      const myLocal=(currentUser||'').split('@')[0].toLowerCase().replace(/[._]/g,'');
+      const handleNorm=handle.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if(myLocal&&handleNorm&&(handleNorm.includes(myLocal)||myLocal.includes(handleNorm))){
+        console.warn('Live: ignoring handle that looks like the user, not her:',handle);
+        handle='';
+      }
+      // Also block common left-sidebar leaks
+      if(handle&&/^trislovesu/i.test(handle))handle='';
       if(handle){
         liveCurrentHandle=handle;
         const mem=mergeLiveMemory(handle,{
@@ -1808,7 +2068,7 @@ async function popOutLive(){
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-profile').addEventListener('click',()=>profileScanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-story').addEventListener('click',()=>storyReplyLive(pipWindow.document));
@@ -1955,6 +2215,7 @@ function updateCardVisibility(){
 let imgs={quick:{b64:null,type:null},dm:{b64:null,type:null},story:{b64:null,type:null}};
 let imgUrls={quick:null,dm:null,story:null};
 let currentReplies=[];
+let currentRepliesContext='Reply'; // labels which feature produced the latest replies — used by Copy-with-feedback
 function dzOver(e,id){e.preventDefault();document.getElementById('dz-'+id).classList.add('over')}
 function dzLeave(id){document.getElementById('dz-'+id).classList.remove('over')}
 function dzDrop(e,id){e.preventDefault();dzLeave(id);handleFile(e.dataTransfer.files[0],id)}
@@ -2231,27 +2492,44 @@ ${angleList}
 CRITICAL IMAGE RULE — this is the most important rule:
 Every single reply MUST reference at least one specific detail that is only possible because you actually looked at this image. If the reply could be sent under any photo, it is WRONG. Mention the actual outfit, the specific location, what they're literally doing, their expression — something real and specific.
 
-${isStory?`STORY OPENER FORMULA (every reply on a story must follow this — she's been DMed by 100+ guys today, lame openers die):
-1. CALLOUT — name ONE specific detail from the story (the boots, the drink in hand, the bar name, the song lyric, the caption sticker, the weird face she's pulling). Not the vibe — the detail.
-2. TWIST — flip it. Tease, make a wrong-on-purpose guess, playful accusation, deadpan reaction, bold claim, or weird connection. The twist is what makes her smile.
-3. HOOK — leave space for her to reply. End on something she WANTS to answer.
+${isStory?`STORY OPENER QUALITY BAR (she's been DMed by 100+ guys today — 90% sent something forgettable. Your replies need to land):
 
-Opener MOVES — each of the 3 replies for an angle must use a DIFFERENT one:
-- Playful accusation ("okay who are you trying to impress with that fit")
-- Wrong-on-purpose guess ("let me guess, third coffee of the day")
+EVERY OPENER = CALLOUT (a specific detail) + TWIST (actually witty, not a generic tease tacked on) + HOOK (gives her something to reply to)
+
+STUDY THESE BAD vs GOOD EXAMPLES:
+❌ "the top is doing some work" → reads thirsty (body comment) + vague
+✅ "white top + nicki/ariana + golden hour, this is suspiciously curated for someone supposedly chilling"
+
+❌ "you're really selling this song or something" → awkward, no punchline
+✅ "nicki and ariana on a tuesday morning is a controversial choice defend it"
+
+❌ "let me guess, your go-to pose is touching your hair" → "your go-to X" reads like an AI template
+✅ "the hand-on-the-face is your move and i'm onto you"
+
+OPENER MOVES — each reply must use a DIFFERENT one:
+- Playful accusation ("who is this whole post even for")
+- Wrong-on-purpose guess ("let me guess, second espresso")
 - Deadpan tease ("and you didn't invite me, crazy")
-- Specific compliment + flip ("the boots are doing numbers but the smirk is criminal")
-- Micro-callout (smallest weird detail = the whole opener)
-- Bold claim ("this is the most chaotic 5 seconds i've seen all week")
+- Mock-controversy ("[choice] is a controversial pick, defend it")
+- Micro-callout (zoom in on smallest weird detail — a book, a drink, a sticker)
+- Bold-claim flip ("you peaked in this 5-second clip")
 - Shared-experience hook ("if i was there i'd have ordered the same thing")
 
-NEVER ON A STORY (instant dead-on-arrival):
-- "looks fun" / "vibes" / "this is cute" / "you look amazing/beautiful/stunning"
-- "what's the song" / "where is this" / "how was it" (boring questions, no twist)
-- "hey" / "hi" / "hey beautiful" — opener killers
-- Pure compliments with no hook — every compliment must come WITH a tease, callback, or bold claim
-- Anything horny or body-focused — instant block
-- LENGTH MIX: not every reply can be 3 words. At least 1 reply per angle should be a real sentence (callout + twist + hook).
+NO BODY/THIRST RULE — never comment on how clothes fit her or how her body looks:
+- ❌ "the top is doing work" / "you're filling that out" / "that fit is hugging"
+- ✅ Comment on the CHOICE/VIBE/STYLE ("white top with blue jeans is peak early-2010s tumblr"), never how it looks ON her
+
+INSTANT-REJECT phrasings — never generate any of these:
+- "your go-to [X]" / "the [X] is doing some work" / "you're really [X] or something" / "selling this"
+- "looks fun" / "vibes" / "this is cute" / "you look amazing/beautiful/stunning/gorgeous"
+- "what's the song" / "where is this" / "how was it"
+- "hey" / "hi" / "hey beautiful" / "hello love"
+- "you ate" / "fyp material" / "main character energy" — overused gen-z
+- Any pure compliment with no twist or hook
+
+LENGTH MIX per angle: at least 1 reply must be 10+ words (real callout + sharp twist + hook). One-liners are fine ONLY if they actually land — a flat one-liner is worse than nothing.
+
+Before returning each opener, re-read it: "would she smile and want to reply?" If no, rewrite.
 
 `:''}OTHER RULES:
 - ZERO exclamation marks
@@ -3858,7 +4136,7 @@ async function generateDmReplies(){
   if(!isImage){
     cacheKey=getCacheKey(textMsg,rel,goal,rtype,len,style);
     const cached=readCache(cacheKey);
-    if(cached){currentReplies=cached;renderReplyCards(cached);showToast('⚡ Loaded from cache');return;}
+    if(cached){currentReplies=cached;currentRepliesContext='DM Reply';renderReplyCards(cached);showToast('⚡ Loaded from cache');return;}
   }
 
   if(!checkCallLimit())return;
@@ -3947,6 +4225,7 @@ Return ONLY valid JSON, no markdown:
     const parsed=parseRepliesResponse(rawTxt);
     if(!parsed||!parsed.replies||!parsed.replies.length)throw new Error('Could not read the reply — tap generate again');
     currentReplies=dedupeReplies(parsed.replies);
+    currentRepliesContext='Quick Response';
     lastGenMessage=isImage?'[DM screenshot]':textMsg;
     if(cacheKey)writeCache(cacheKey,currentReplies);
     renderReplyCards(currentReplies);
@@ -3993,7 +4272,7 @@ async function quickGenerate(forcedTone){
     qCacheKey=getCacheKey(textMsg,ctx,'',toneHint,'quick',tonePref);
     const cached=readCache(qCacheKey);
     if(cached&&cached.length){
-      currentReplies=cached;lastGenMessage=textMsg;
+      currentReplies=cached;currentRepliesContext='Quick Response';lastGenMessage=textMsg;
       renderReplyCards(currentReplies);
       showToast('⚡ From cache');
       return;
@@ -4080,6 +4359,7 @@ Return ONLY valid JSON, no markdown. The "replies" array MUST contain exactly 3 
     }
 
     currentReplies=dedupeReplies(parsed.replies);
+    currentRepliesContext='DM Reply';
     lastGenMessage=isImage?'[Quick screenshot]':textMsg;
     if(qCacheKey&&currentReplies.length)writeCache(qCacheKey,currentReplies);
     renderReplyCards(currentReplies);
@@ -4185,7 +4465,8 @@ function editReply(index,el){
 }
 function copyCardReply(index){
   const r=currentReplies[index];if(!r)return;
-  navigator.clipboard.writeText(r.text).then(()=>showToast('Copied'));
+  const payload=wrapForCopy(r.text,currentRepliesContext);
+  navigator.clipboard.writeText(payload).then(()=>showToast(feedbackCopyEnabled()?'Copied + feedback ask':'Copied'));
 }
 
 // ── GENERATE (image/story modes) ─────────────
@@ -4219,24 +4500,48 @@ async function generate(){
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
 
-STORY OPENER FORMULA (she's been DMed by 100+ guys today — lame openers die in her unread folder):
-- Every opener = CALLOUT (one specific detail you actually saw) + TWIST (tease / wrong-on-purpose guess / playful accusation / deadpan reaction / bold claim) + HOOK (leaves space for her to reply).
-- Lead with the SPECIFIC — not the vibe. Name the boots, the drink, the bar, the lyric, the sticker, the weird expression.
-- The twist is what makes her smile. A flat compliment with no twist = ignored.
-- The hook is what makes her reply. End on something she WANTS to answer (a tease that begs a comeback, a bold claim she'll want to argue with, a half-question).
+STORY OPENER QUALITY BAR (she's been DMed by 100+ guys today — your reply needs to actually land):
+
+EVERY OPENER = CALLOUT (a SPECIFIC detail) + TWIST (witty, not a generic tease tacked on) + HOOK (gives her a reason to reply)
+
+BAD vs GOOD EXAMPLES — study the difference:
+❌ "the top is doing some work" → thirsty body comment + vague
+✅ "white top + that song + golden hour, this is suspiciously curated for someone just chilling"
+
+❌ "you're really selling this song or something" → awkward, no punchline
+✅ "[song] on a tuesday morning is a controversial pick defend it"
+
+❌ "let me guess your go-to pose is touching your hair" → "your go-to X" reads AI-template
+✅ "the hand-on-the-face is your move and i'm onto you"
+
+NO BODY / NO THIRST — never comment on how clothes FIT her or how her body looks. Comment on the CHOICE / STYLE / VIBE only.
+
+INSTANT-REJECT phrasings — never use any:
+- "your go-to [X]", "the [X] is doing some work", "you're really [X] or something", "selling this"
+- "looks fun", "vibes", "this is cute", "you look amazing/beautiful/stunning/gorgeous"
+- "what's the song", "where is this", "how was it"
+- "hey", "hi", "hey beautiful", "hello love"
+- "you ate", "fyp material", "main character energy"
+
+OPENER MOVES (pick one that fits the story best — match the move to what you see):
+- Playful accusation ("who is this post even for")
+- Wrong-on-purpose guess ("let me guess, second espresso")
+- Deadpan tease ("and you didn't invite me, crazy")
+- Mock-controversy ("[choice] is controversial defend it")
+- Micro-callout (zoom in on the smallest weird detail)
+- Bold-claim flip ("you peaked in this clip")
 
 STRICT RULES:
 - ZERO exclamation marks, ever
-- No thirsty openers: never lead with "you're beautiful", "you look amazing", "gorgeous", "stunning"
-- No lame generic openers: "looks fun", "vibes", "this is cute", "what's the song", "where is this", "how was it", "hey", "hi", "hey beautiful" — all instant dead-on-arrival
-- No feminine words: omg, bestie, love that, obsessed, slay, aww, yay, so cute
+- No feminine words: omg, bestie, slay, aww, obsessed
 - No AI phrases: "I'd love to", "certainly", "that sounds", "what a"
 - Lowercase like a real guy texting
-- Be SPECIFIC — reference actual details from the story, never vague reactions
+- Be SPECIFIC — name the actual detail (the song, the pose, the location, the object), never the "vibe"
 - Don't sound like you're trying to impress her — sound like she's trying to impress you
-- Have SUBSTANCE — "nice" / "haha" / "vibes" alone = boring weirdo energy. The reply should actually say something with a twist or hook.
-- ${tone==='short'?'5 words max, no exceptions — but it must still have a callout + twist':'1-2 short sentences max — long enough for callout + twist + hook'}${avoidLine}
-- Write in first person — this is the actual message being sent. Never use "he", never describe what the guy would say, never write in 3rd person
+- Have SUBSTANCE — the reply must actually say something with a twist that lands
+- ${tone==='short'?'5 words max — but it MUST still have a callout + witty twist (no generic flatness)':'1-2 short sentences max — long enough for callout + sharp twist + hook'}${avoidLine}
+- Write in first person — the actual message being sent. Never 3rd person.
+- Before outputting: re-read your reply once. Would she smile and want to reply? If no, rewrite.
 - Output ONLY the reply text. Nothing else.`;
 
   try{
@@ -4289,7 +4594,9 @@ Write ONLY the DM reply text. Nothing else.`}];
 
 function copyResult(){
   if(!lastReply)return;
-  navigator.clipboard.writeText(lastReply).then(()=>{
+  // mode is 'story' for the story tab single-reply; default to 'Story Reply' if so
+  const ctx=(typeof mode!=='undefined'&&mode==='story')?'Story Reply':(currentRepliesContext||'Reply');
+  navigator.clipboard.writeText(wrapForCopy(lastReply,ctx)).then(()=>{
     const b=document.getElementById('copy-btn');
     b.textContent='✅ Copied!';b.classList.add('copied');
     setTimeout(()=>{b.textContent='📋 Copy Reply';b.classList.remove('copied')},2000);
@@ -4331,7 +4638,7 @@ function renderHistory(){
       </div>
     </div>`).join('');
 }
-function cpHist(i){navigator.clipboard.writeText(history[i].reply).then(()=>showToast('Copied!'))}
+function cpHist(i){const h=history[i];const ctx=(h&&h.mode==='story')?'Story Reply':(h&&h.mode==='dm')?'DM Reply':'Reply';navigator.clipboard.writeText(wrapForCopy(h.reply,ctx)).then(()=>showToast(feedbackCopyEnabled()?'Copied + feedback ask':'Copied!'))}
 
 // ── GITHUB IMAGE GALLERY ─────────────────────
 let ghSettings={user:'',repo:'',token:''};
