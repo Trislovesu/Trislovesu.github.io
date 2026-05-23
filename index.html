@@ -433,6 +433,52 @@ input[type="text"]::placeholder{color:var(--text3)}
 @keyframes overlaySlideUp{0%{opacity:0;transform:translateY(20px);filter:blur(8px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
 @keyframes cardFloatIn{0%{opacity:0;transform:translateY(20px) scale(.96);filter:blur(8px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 
+/* ── CONTRIBUTOR / "answer questions" attention-grabber ── */
+@keyframes contribPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(155,110,224,0.55),0 0 36px rgba(155,110,224,0.45)}50%{transform:scale(1.06);box-shadow:0 0 0 14px rgba(155,110,224,0),0 0 60px rgba(155,110,224,0.85)}}
+.contrib-cta{display:block;width:100%;margin-top:18px;padding:15px 18px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;letter-spacing:.02em;cursor:pointer;animation:contribPulse 2s ease-in-out infinite;position:relative;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,0.35)}
+.contrib-cta:hover{filter:brightness(1.1)}
+.contrib-cta-sub{font-size:11px;font-weight:500;opacity:.9;margin-top:3px;display:block}
+.signup-disabled-note{margin-top:8px;font-size:11px;color:var(--text3);text-align:center;font-style:italic;line-height:1.45}
+.auth-toggle button.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* ── CONTRIBUTOR OVERLAY ── */
+.contrib-overlay{position:fixed;inset:0;background:var(--bg);z-index:998;display:none;flex-direction:column;align-items:center;padding:24px 18px;overflow-y:auto}
+.contrib-overlay.open{display:flex;animation:screenFadeIn .4s ease-out}
+.contrib-header{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.contrib-title{font-size:18px;font-weight:700;color:var(--text);font-family:'DM Sans',sans-serif}
+.contrib-progress{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
+.contrib-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 12px 50px rgba(0,0,0,0.4),0 0 60px rgba(155,110,224,0.12);animation:cardFloatIn .35s ease-out}
+.contrib-intro-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1001;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px)}
+.contrib-intro-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px 26px;max-width:420px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.7)}
+.contrib-intro-box h2{font-size:18px;margin-bottom:12px;color:var(--text)}
+.contrib-intro-box p{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.contrib-intro-countdown{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.05em}
+.contrib-intro-close{margin-top:14px;padding:10px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'DM Sans',sans-serif;cursor:pointer;font-size:13px}
+.contrib-intro-close.ready{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.contrib-export-fab{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:999;padding:11px 20px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.contrib-export-fab:hover{color:var(--text);border-color:var(--text2)}
+.contrib-export-prompt{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:1002;width:92%;max-width:440px;background:var(--surface);border:1px solid var(--border2);border-radius:0 0 16px 16px;padding:18px 20px;box-shadow:0 12px 48px rgba(0,0,0,0.55),0 0 60px rgba(155,110,224,0.2);transition:transform .4s cubic-bezier(.22,1,.36,1)}
+.contrib-export-prompt.show{transform:translate(-50%,0)}
+.contrib-export-prompt h3{font-size:14.5px;font-weight:700;margin-bottom:4px}
+.contrib-export-prompt p{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:12px}
+.contrib-export-prompt .row{display:flex;gap:8px}
+.contrib-export-prompt button{flex:1;padding:10px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border)}
+.contrib-export-prompt .keep-btn{background:var(--surface2);color:var(--text2)}
+.contrib-export-prompt .export-btn{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+
+/* female rating UI */
+.fem-reply-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;font-style:italic}
+.fem-reply-label{font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:600}
+.fem-rating-wrap{margin-bottom:14px}
+.fem-rating-buttons{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.fem-rating-btn{flex:1;min-width:32px;padding:9px 0;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .12s}
+.fem-rating-btn:hover{border-color:var(--text2);color:var(--text)}
+.fem-rating-btn.on{background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border-color:transparent;transform:scale(1.05)}
+.gender-pick{display:flex;gap:10px;margin-top:14px}
+.gender-btn{flex:1;padding:18px;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.gender-btn:hover{border-color:var(--text2);color:var(--text)}
+.gender-btn.on{border-color:#9b6ee0;background:rgba(155,110,224,0.12);color:var(--text);box-shadow:0 0 24px rgba(155,110,224,0.25)}
+
 #login-screen{animation:screenFadeIn .55s cubic-bezier(.22,1,.36,1)}
 #login-screen.out{animation:screenFadeOut .42s cubic-bezier(.55,0,.7,.4) forwards}
 #user-select-screen{transition:opacity .35s,transform .35s}
@@ -637,8 +683,9 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <p class="sub" id="auth-sub">Sign in to continue</p>
     <div class="auth-toggle">
       <button id="auth-tab-signin" class="active" onclick="setAuthMode('signin')">Sign In</button>
-      <button id="auth-tab-create" onclick="setAuthMode('create')">Create Account</button>
+      <button id="auth-tab-create" class="disabled" title="Account creation temporarily unavailable">Create Account</button>
     </div>
+    <div class="signup-disabled-note">⚠️ Account creation is temporarily unavailable while we test. Existing users — sign in normally.</div>
     <div class="auth-field">
       <label>Email</label>
       <input type="email" id="auth-email" placeholder="you@email.com" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('auth-pin').focus()" />
@@ -653,6 +700,40 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     </div>
     <div class="auth-error" id="auth-error"></div>
     <button class="auth-submit" id="auth-submit" onclick="submitAuth()">Sign In</button>
+    <button class="contrib-cta" onclick="openContribute()">
+      💜 Help train the Rizzer — answer some questions
+      <span class="contrib-cta-sub">no account needed · takes 2 min · you can be male or female</span>
+    </button>
+  </div>
+</div>
+
+<!-- 🎯 CONTRIBUTOR OVERLAY — minimal training UI for crew on Instagram -->
+<div class="contrib-overlay" id="contrib-overlay">
+  <div class="contrib-header">
+    <div class="contrib-title">💜 Train the Rizzer</div>
+    <button onclick="closeContribute()" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:6px 12px;font-family:'DM Sans',sans-serif">✕ Close</button>
+  </div>
+  <div id="contrib-stage" style="width:100%;max-width:520px"></div>
+  <button class="contrib-export-fab" id="contrib-export-fab" onclick="exportContribAnswers()" style="display:none">📤 Export my answers (<span id="contrib-fab-count">0</span>)</button>
+</div>
+
+<!-- intro modal — auto-allow-close after 5s -->
+<div class="contrib-intro-overlay" id="contrib-intro" style="display:none">
+  <div class="contrib-intro-box">
+    <h2 id="contrib-intro-title">📖 How this works</h2>
+    <p id="contrib-intro-body"></p>
+    <div class="contrib-intro-countdown" id="contrib-intro-count">opens in 5...</div>
+    <button class="contrib-intro-close" id="contrib-intro-close" disabled onclick="closeContribIntro()">got it</button>
+  </div>
+</div>
+
+<!-- top-slide export prompt after N answers -->
+<div class="contrib-export-prompt" id="contrib-export-prompt">
+  <h3>📤 want to export your answers?</h3>
+  <p>your replies aren't saved permanently until you export — copy the file and send it back when you're done. you can keep going if you want.</p>
+  <div class="row">
+    <button class="keep-btn" onclick="dismissExportPrompt()">keep going</button>
+    <button class="export-btn" onclick="exportContribAnswers();dismissExportPrompt()">export now</button>
   </div>
 </div>
 
@@ -1188,6 +1269,7 @@ async function hashPin(email,pin){
 }
 
 function setAuthMode(m){
+  if(m==='create'){showToast('Account creation is temporarily unavailable');return;}
   authMode=m;
   document.getElementById('auth-tab-signin').classList.toggle('active',m==='signin');
   document.getElementById('auth-tab-create').classList.toggle('active',m==='create');
@@ -1598,7 +1680,22 @@ let liveCurrentHandle=''; // the @handle / name of the chat we're currently scan
 // ── LIVE MEMORY — per-conversation learning ───────────────
 // Each scan teaches the AI more about her so the next scan's replies are sharper.
 // Stored locally under rizz_live_memory: { [handle]: { facts:[], herStyle, topics:[], myRecentSends:[], herRecentSends:[], scanCount, lastUpdated } }
-function getAllLiveMemory(){try{return JSON.parse(store.getItem('rizz_live_memory')||'{}')}catch(e){return{}}}
+function getAllLiveMemory(){
+  let all={};try{all=JSON.parse(store.getItem('rizz_live_memory')||'{}')}catch(e){all={}}
+  // ── Auto-cleanup: strip out memory entries that look like the user themselves ──
+  // (Pre-fix scans saved 'trislovesu.7' as a chat partner. Block known self-handles + email-local-part.)
+  const myLocal=(currentUser||'').split('@')[0].toLowerCase().replace(/[._]/g,'');
+  const KNOWN_SELF=[/^trislovesu/i];
+  let dirty=false;
+  for(const key of Object.keys(all)){
+    const norm=key.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const isSelfByEmail=myLocal&&norm&&(norm.includes(myLocal)||myLocal.includes(norm));
+    const isSelfByKnown=KNOWN_SELF.some(rx=>rx.test(key));
+    if(isSelfByEmail||isSelfByKnown){delete all[key];dirty=true;}
+  }
+  if(dirty)try{store.setItem('rizz_live_memory',JSON.stringify(all))}catch(e){}
+  return all;
+}
 function saveAllLiveMemory(m){store.setItem('rizz_live_memory',JSON.stringify(m))}
 function loadLiveMemory(handle){if(!handle)return null;const all=getAllLiveMemory();return all[handle.toLowerCase()]||null}
 function clearLiveMemory(handle){const all=getAllLiveMemory();if(handle){delete all[handle.toLowerCase()]}else{Object.keys(all).forEach(k=>delete all[k])}saveAllLiveMemory(all);showToast(handle?'Memory cleared for '+handle:'All chat memory cleared')}
@@ -1671,14 +1768,57 @@ async function profileScanLive(targetDoc){
   if(!checkCallLimit())return;
   const btn=targetDoc.getElementById('pip-profile')||document.getElementById('live-profile-btn');
   if(btn){btn.disabled=true;btn.textContent='📡 Scanning profile...';}
-  const system=`You are evaluating an Instagram PROFILE screenshot for a confident guy deciding whether she's worth following / pursuing. Focus ONLY on: the profile picture, the bio text, the follower/following counts, and the post grid if any. IGNORE the left nav rail, the "suggested for you" row, search bars, and anything that isn't her profile.
-Judge like a guy with standards but be fair and honest. Consider: does she look attractive/interesting, is the bio a green or red flag, follower/following ratio, does the grid show a real life/personality or thirst-trap/empty.
+  const system=`You are a STRICT and HONEST profile evaluator for a confident guy with real standards deciding whether an Instagram account is worth a follow / DM. You are NOT a hype man and you are NOT polite — your job is to call it like it is. Most profiles online are mid; that's fine, say so.
+
+WHAT TO LOOK AT: the profile picture, display name, bio text (every word — bios reveal a LOT), follower/following counts and ratio, post count, and the post grid if visible.
+WHAT TO IGNORE: the left nav rail, search bar, "suggested for you", browser chrome, any other content not on her profile.
+
+STRICT 1–10 RUBRIC — use the FULL range. Stop defaulting to 5 or 6 — that's lazy. Pick the band that actually fits, then nudge ±1 based on details:
+
+1–2 = HARD SKIP. Red flags everywhere: private with zero posts and a generic name, bio shows OF/spam/sugar-baby red flags, follow ratio is wildly off (e.g. 30k following / 200 followers = bot or desperate), thirst trap with nothing else, fake/empty account, or just looks like a scam.
+3–4 = SKIP. Boring, low-effort, no personality visible. Empty bio, sparse grid, no actual life shown, generic selfies only, or vibe reads insecure / dry / nothing to talk about. Following >> followers heavily. Not necessarily "bad" — just nothing to grab.
+5 = MEH / NEUTRAL. Average profile. Some signal of a real person but nothing memorable. Use ONLY when you genuinely cannot push it higher or lower with evidence. Don't park here as a default.
+6 = SLIGHTLY ABOVE MID. A bit of personality, decent pic, bio has at least one interesting word, or grid hints at hobbies. Worth a follow if she's already shown interest, but he wouldn't chase.
+7 = SOLID. Attractive + real life visible (hobbies, friends, places, a personality coming through). Bio is on-brand. Follow + DM with a sharp opener — worth the effort.
+8 = STRONG. Clearly attractive AND interesting — has a real aesthetic, hobbies/skills you can hook on, balanced ratio, posts curated. DM with confidence; she has standards but rewards effort.
+9 = GREEN-LIGHT GREAT. Rare. Attractive, intentional, distinctive vibe — feels like someone with a real life and taste. Strong follow + DM, lead with something specific from her grid.
+10 = ELITE / PERFECT FIT. Reserve for genuinely standout — attractiveness + visible personality + aesthetic + something rare (skill, location, mindset, humour). If you're tempted to give a 10, ask yourself "is this top 1% of profiles I'd ever see?" If no → it's an 8 or 9.
+
+DEFAULT BIAS: when in doubt, go DOWN one point, not up. Inflating scores helps no one. Half the internet is a 4–6.
+
+FOLLOW/FOLLOWING RATIO SIGNALS:
+- Following >> Followers (e.g. 2000 following / 300 followers) = bot-energy / mass-follower / desperate → drop score 1–2 points
+- Followers >> Following (e.g. 10k followers / 400 following) = curated / has presence → small bump if other signals support it
+- Roughly equal with healthy numbers = normal person, judge on content
+
+BIO RED FLAGS (each one drops the score):
+- "DM for collab" with no real audience, "💕 brand reps", OF/Snapchat handles, "sugar daddy welcome", crypto/MLM, "live, laugh, love" energy with nothing else, just a zodiac sign, bible verse only, or empty
+- Bot-like emojis + nothing else, dead links, suspicious "model 🌹" with no actual work shown
+
+BIO GREEN FLAGS (each one raises it):
+- A specific city, a real interest (sport, art, language, job), a witty one-liner, links to a real project, university + major, a clearly authored line that sounds like her
+
+GRID SIGNALS:
+- Variety = real life (friends, places, hobbies, food) = better than all-selfies
+- All thirst traps with nothing else = score caps at ~5 regardless of attractiveness — boring to talk to
+- Empty / sparse / posts only from years ago = drop
+- Strong consistent aesthetic without being soulless = bump
+
+REASONS — must be SPECIFIC, not generic. "She looks pretty" is useless. "PFP shows her in a kitchen with art on the wall — has a vibe and a space" is useful. List 3–5 actual observations a friend would say out loud.
+
+MOVE — one sharp line on the play: "skip — empty bio + 200 posts of just selfies, nothing to hook into" or "follow + dm with a callout on the [specific detail] — she'll engage with someone who actually looked".
+
+VERDICT mapping:
+- score 1–4 → "skip"
+- score 5–6 → "maybe"
+- score 7–10 → "follow"
+
 Return ONLY raw JSON, no markdown:
-{"verdict":"follow|maybe|skip","score":<1-10>,"vibe":"one short honest read of her vibe","reasons":["specific reason from what you see","..."],"move":"one line — should he follow/dm and how to play it"}`;
+{"verdict":"follow|maybe|skip","score":<1-10 integer>,"vibe":"one short HONEST read — can be unflattering if true","reasons":["specific observation 1","specific observation 2","specific observation 3"],"move":"one sharp line on the play"}`;
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:450,temperature:0.7,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'This is an Instagram profile. Judge if she\'s follow-worthy based on her pic, bio, counts and posts. Ignore the nav and suggestions. Return the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.55,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Strict honest rating of this Instagram profile. USE THE FULL 1-10 RANGE — do not default to 5 or 6 (that\'s lazy). Pick the band from the rubric that ACTUALLY fits then nudge ±1 on details. Default-bias DOWN one point when uncertain. Most profiles are 4-6. Reserve 8+ for genuinely strong, 9-10 for rare. Give 3-5 specific observations (not generic flattery). Ignore the left nav and suggestions. Return the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -2751,6 +2891,247 @@ function clearIntelPanel(id){
   }
 }
 
+// ══════════════════════════════════════════════════
+// 💜 CONTRIBUTOR FLOW — minimal training UI for crew posted from Instagram
+// Two paths:
+//   Male path → see scenario (her message + context + tone) → write what HE'd send
+//   Female path → see scenario + a CANDIDATE AI reply → rate 1-10 + optional context
+// Both auto-prompt to export after 8 answers. Storage is local-only until export.
+// ══════════════════════════════════════════════════
+let contribState={
+  name:'',
+  gender:'',         // 'male' | 'female'
+  answers:[],        // {scenarioIdx, tone, context, message, reply OR rating, feedback, ts}
+  currentIdx:0,      // index into shuffled queue
+  queue:[],          // shuffled scenario indexes
+  promptShownAt:0    // last answer count we showed the export prompt at
+};
+const EXPORT_PROMPT_EVERY=8;
+
+function openContribute(){
+  // Show a sleek name + gender picker first
+  document.getElementById('contrib-overlay').classList.add('open');
+  renderContribIntake();
+}
+function closeContribute(){
+  if(contribState.answers.length>0&&!confirm('You have '+contribState.answers.length+' un-exported answers. Close anyway? They\'ll be lost.'))return;
+  document.getElementById('contrib-overlay').classList.remove('open');
+  contribState={name:'',gender:'',answers:[],currentIdx:0,queue:[],promptShownAt:0};
+  document.getElementById('contrib-export-fab').style.display='none';
+}
+function renderContribIntake(){
+  const stage=document.getElementById('contrib-stage');
+  stage.innerHTML=`
+    <div class="contrib-card">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">step 1 of 2</div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">what's your name?</h2>
+      <p style="font-size:13px;color:var(--text3);line-height:1.55;margin-bottom:16px">just so Tris knows who contributed. doesn't need to be your real name — first name or instagram handle works.</p>
+      <input type="text" id="contrib-name-input" placeholder="e.g. ismaaeel or your @" maxlength="40" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:18px" autocomplete="off" />
+      <div style="font-size:13px;color:var(--text2);font-weight:500;margin-bottom:4px">i identify as:</div>
+      <div class="gender-pick">
+        <button class="gender-btn" id="g-male" onclick="pickGender('male')">👨 male<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:4px">you'll WRITE replies</div></button>
+        <button class="gender-btn" id="g-female" onclick="pickGender('female')">👩 female<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:4px">you'll RATE AI replies</div></button>
+      </div>
+      <button id="contrib-start-btn" disabled style="width:100%;margin-top:18px;padding:14px;background:var(--surface3);color:var(--text3);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:not-allowed;transition:all .2s" onclick="startContribSession()">pick name + gender to start</button>
+    </div>`;
+  document.getElementById('contrib-name-input').focus();
+  document.getElementById('contrib-name-input').addEventListener('input',updateStartBtn);
+}
+function pickGender(g){
+  contribState.gender=g;
+  document.getElementById('g-male').classList.toggle('on',g==='male');
+  document.getElementById('g-female').classList.toggle('on',g==='female');
+  updateStartBtn();
+}
+function updateStartBtn(){
+  const name=(document.getElementById('contrib-name-input')?.value||'').trim();
+  contribState.name=name;
+  const ok=name.length>=2&&contribState.gender;
+  const btn=document.getElementById('contrib-start-btn');
+  if(!btn)return;
+  btn.disabled=!ok;
+  btn.style.cursor=ok?'pointer':'not-allowed';
+  btn.textContent=ok?(contribState.gender==='male'?"let's go — i'll write replies":"let's go — i'll rate AI replies"):'pick name + gender to start';
+  if(ok){btn.style.background='linear-gradient(135deg,#9b6ee0,#5b9ef5)';btn.style.color='#fff';btn.style.borderColor='transparent';btn.style.boxShadow='0 0 40px rgba(155,110,224,0.35)';}
+}
+function startContribSession(){
+  if(!contribState.name||!contribState.gender)return;
+  // build a shuffled queue of scenario indexes
+  contribState.queue=SCENARIO_BANK.map((_,i)=>i).sort(()=>Math.random()-0.5);
+  contribState.currentIdx=0;
+  showContribIntro();
+}
+function showContribIntro(){
+  const intro=document.getElementById('contrib-intro');
+  const closeBtn=document.getElementById('contrib-intro-close');
+  const countEl=document.getElementById('contrib-intro-count');
+  const titleEl=document.getElementById('contrib-intro-title');
+  const bodyEl=document.getElementById('contrib-intro-body');
+  if(contribState.gender==='male'){
+    titleEl.textContent='📖 your job (1 min read)';
+    bodyEl.innerHTML='you\'ll see a message a girl sent + the situation + the vibe she wants you to reply in.<br><br>type what <strong>you</strong> would actually send back. natural, lowercase, no pressure. skip any you can\'t answer.';
+  }else{
+    titleEl.textContent='📖 your job (1 min read)';
+    bodyEl.innerHTML='you\'ll see a message a girl sent + a reply the AI generated for the guy to send back.<br><br>rate the reply <strong>1-10</strong> on how good/sendable it is, and optionally explain why. your honest feedback trains the AI to write replies girls actually like.';
+  }
+  intro.style.display='flex';
+  closeBtn.disabled=true;closeBtn.classList.remove('ready');closeBtn.textContent='got it ('+5+')';
+  let n=5;
+  const tick=setInterval(()=>{
+    n--;
+    if(n<=0){
+      clearInterval(tick);countEl.textContent='ready when you are';
+      closeBtn.disabled=false;closeBtn.classList.add('ready');closeBtn.textContent='got it';
+    }else{countEl.textContent='unlocks in '+n+'...';closeBtn.textContent='got it ('+n+')';}
+  },1000);
+}
+function closeContribIntro(){
+  document.getElementById('contrib-intro').style.display='none';
+  renderContribQuestion();
+}
+
+// ── candidate-reply bank for female mode (rotated through baked goods + bads for honest spread) ──
+function pickCandidateReply(scenario){
+  // First try BAKED_GOODS / BAKED_REPORTS that match the message text (loose match)
+  const msgLow=(scenario.message||'').toLowerCase().slice(0,30);
+  const matchesGood=(BAKED_GOODS||[]).filter(g=>(g.message||'').toLowerCase().includes(msgLow.slice(0,15))||msgLow.includes((g.message||'').toLowerCase().slice(0,15)));
+  const matchesBad=(BAKED_REPORTS||[]).filter(g=>(g.message||'').toLowerCase().includes(msgLow.slice(0,15))||msgLow.includes((g.message||'').toLowerCase().slice(0,15)));
+  // Mix: ~60% good, 40% bad-ish so we get spread in ratings
+  const pool=Math.random()<0.6&&matchesGood.length?matchesGood:(matchesBad.length?matchesBad:matchesGood);
+  if(pool.length){const pick=pool[Math.floor(Math.random()*pool.length)];return{text:pick.reply,source:pool===matchesBad?'reported':'good'}}
+  // Fallback: pull a generic plausible reply from the SEED training data for that tone
+  const tonePool=(SEED_TRAINING||[]).concat(GROK_SEED||[],TRIS_SEED||[]).filter(e=>e.tone===scenario.tone);
+  if(tonePool.length){const pick=tonePool[Math.floor(Math.random()*tonePool.length)];return{text:pick.userReply||pick.reply,source:'seed'}}
+  return{text:'(no candidate reply available — skip this one)',source:'fallback'};
+}
+
+function renderContribQuestion(){
+  const stage=document.getElementById('contrib-stage');
+  if(contribState.currentIdx>=contribState.queue.length){return renderContribDone();}
+  const scenarioIdx=contribState.queue[contribState.currentIdx];
+  const s=SCENARIO_BANK[scenarioIdx];
+  const total=contribState.queue.length;
+  const stageNum=contribState.currentIdx+1;
+  const toneObj=TRAIN_TONES.find(t=>t.id===s.tone)||{label:s.tone,emoji:'💬',color:'#9b6ee0'};
+  // build the card body based on gender
+  let body='';
+  if(contribState.gender==='male'){
+    body=`
+      <div style="display:inline-block;padding:6px 14px;background:rgba(155,110,224,0.12);border:1px solid ${toneObj.color};border-radius:100px;font-size:11.5px;font-weight:700;color:${toneObj.color};letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">${toneObj.emoji} reply ${toneObj.label}</div>
+      <div style="font-size:13px;color:var(--text3);font-style:italic;margin-bottom:12px;line-height:1.55">${(s.context||'').replace(/</g,'&lt;')}</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:15px;color:var(--text);line-height:1.5;margin-bottom:12px">"${(s.message||'').replace(/</g,'&lt;')}"</div>
+      ${s.hint?`<div style="background:rgba(91,158,245,0.08);border:1px dashed rgba(91,158,245,0.3);border-radius:10px;padding:10px 13px;font-size:12px;color:var(--text2);margin-bottom:14px">💡 ${s.hint.replace(/</g,'&lt;')}</div>`:''}
+      <textarea id="contrib-reply-input" placeholder="type your reply..." rows="3" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:vertical;margin-bottom:12px" autocomplete="off"></textarea>
+      <div style="display:flex;gap:8px">
+        <button onclick="skipContribQuestion()" style="flex:none;padding:11px 18px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">skip →</button>
+        <button onclick="saveContribAnswerMale()" style="flex:1;padding:11px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">save ↵</button>
+      </div>`;
+  }else{
+    // female mode — show candidate AI reply + 1-10 rating + feedback
+    if(!contribState._currentCandidate)contribState._currentCandidate=pickCandidateReply(s);
+    const cand=contribState._currentCandidate;
+    const ratings=[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="fem-rating-btn" data-r="${n}" onclick="setFemRating(${n})">${n}</button>`).join('');
+    body=`
+      <div style="display:inline-block;padding:6px 14px;background:rgba(155,110,224,0.12);border:1px solid ${toneObj.color};border-radius:100px;font-size:11.5px;font-weight:700;color:${toneObj.color};letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">${toneObj.emoji} ${toneObj.label} situation</div>
+      <div style="font-size:13px;color:var(--text3);font-style:italic;margin-bottom:12px;line-height:1.55">she said this to him:</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:15px;color:var(--text);line-height:1.5;margin-bottom:12px">"${(s.message||'').replace(/</g,'&lt;')}"</div>
+      <div class="fem-reply-label">🤖 the AI told him to reply with:</div>
+      <div class="fem-reply-box">"${(cand.text||'').replace(/</g,'&lt;')}"</div>
+      <div class="fem-rating-wrap">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">rate it 1-10</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:0">1 = would block him · 5 = mid · 10 = would def reply</div>
+        <div class="fem-rating-buttons">${ratings}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:4px">optional: why? what would you reply if a guy sent you this?</div>
+      <textarea id="contrib-fem-feedback" placeholder="optional — your honest take..." rows="2" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);outline:none;resize:vertical;margin-bottom:12px"></textarea>
+      <div style="display:flex;gap:8px">
+        <button onclick="skipContribQuestion()" style="flex:none;padding:11px 18px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">skip →</button>
+        <button id="contrib-fem-save" onclick="saveContribAnswerFemale()" disabled style="flex:1;padding:11px;background:var(--surface3);color:var(--text3);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:not-allowed">pick a rating to save</button>
+      </div>`;
+  }
+  stage.innerHTML=`
+    <div class="contrib-header" style="max-width:none;margin-bottom:14px;padding:0">
+      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">scenario ${stageNum} of ${total}</div>
+      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">✓ ${contribState.answers.length} saved</div>
+    </div>
+    <div class="contrib-card">${body}</div>`;
+}
+let _femRating=null;
+function setFemRating(n){
+  _femRating=n;
+  document.querySelectorAll('.fem-rating-btn').forEach(b=>b.classList.toggle('on',Number(b.dataset.r)===n));
+  const btn=document.getElementById('contrib-fem-save');
+  if(btn){btn.disabled=false;btn.style.background='var(--accent)';btn.style.color='var(--accent-fg)';btn.style.cursor='pointer';btn.textContent='save rating ↵';}
+}
+function saveContribAnswerMale(){
+  const txt=(document.getElementById('contrib-reply-input')?.value||'').trim();
+  if(!txt){showToast('type a reply or skip');return}
+  const scenarioIdx=contribState.queue[contribState.currentIdx];
+  const s=SCENARIO_BANK[scenarioIdx];
+  contribState.answers.push({type:'male_reply',tone:s.tone,context:s.context,message:s.message,userReply:txt,trainer:contribState.name,gender:'male',ts:Date.now()});
+  advanceContribQuestion();
+}
+function saveContribAnswerFemale(){
+  if(_femRating===null){showToast('pick a rating');return}
+  const fb=(document.getElementById('contrib-fem-feedback')?.value||'').trim();
+  const scenarioIdx=contribState.queue[contribState.currentIdx];
+  const s=SCENARIO_BANK[scenarioIdx];
+  const cand=contribState._currentCandidate||{text:''};
+  contribState.answers.push({type:'female_rating',tone:s.tone,context:s.context,message:s.message,ratedReply:cand.text,replySource:cand.source,rating:_femRating,feedback:fb,trainer:contribState.name,gender:'female',ts:Date.now()});
+  advanceContribQuestion();
+}
+function skipContribQuestion(){
+  advanceContribQuestion();
+}
+function advanceContribQuestion(){
+  _femRating=null;
+  contribState._currentCandidate=null;
+  contribState.currentIdx++;
+  document.getElementById('contrib-export-fab').style.display='block';
+  document.getElementById('contrib-fab-count').textContent=contribState.answers.length;
+  // auto-prompt every N
+  if(contribState.answers.length>0&&contribState.answers.length%EXPORT_PROMPT_EVERY===0&&contribState.answers.length!==contribState.promptShownAt){
+    contribState.promptShownAt=contribState.answers.length;
+    showExportPrompt();
+  }
+  renderContribQuestion();
+}
+function showExportPrompt(){
+  document.getElementById('contrib-export-prompt').classList.add('show');
+}
+function dismissExportPrompt(){
+  document.getElementById('contrib-export-prompt').classList.remove('show');
+}
+function exportContribAnswers(){
+  if(!contribState.answers.length){showToast('no answers to export yet');return}
+  const data={
+    type:'rizz_contrib',
+    contributor:contribState.name,
+    gender:contribState.gender,
+    exportedAt:Date.now(),
+    count:contribState.answers.length,
+    answers:contribState.answers
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`rizz-contrib-${contribState.gender}-${(contribState.name||'anon').replace(/[^a-z0-9]/gi,'_')}-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast('📤 exported '+contribState.answers.length+' answers — send the file to tris');
+}
+function renderContribDone(){
+  const stage=document.getElementById('contrib-stage');
+  stage.innerHTML=`
+    <div class="contrib-card" style="text-align:center">
+      <div style="font-size:46px;margin-bottom:10px">🎉</div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">you finished every scenario</h2>
+      <p style="font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:16px">you answered <strong style="color:var(--text)">${contribState.answers.length}</strong> — absolute legend. export now and send the file to tris.</p>
+      <button onclick="exportContribAnswers()" style="width:100%;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer">📤 export my answers</button>
+      <button onclick="closeContribute()" style="width:100%;margin-top:10px;padding:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">all done — close</button>
+    </div>`;
+}
+
 // ── TRAINING SYSTEM ──────────────────────────
 const TRAIN_TONES=[
   {id:'flirty',    label:'Flirty',     emoji:'😏', color:'#e05580'},
@@ -2930,6 +3311,78 @@ const SCENARIO_BANK=[
   {tone:'dry',context:'She\'s asking a deadpan one-word follow-up',message:"and?",hint:'Deliver the punchline with confidence'},
   {tone:'dry',context:'She\'s giving the bare minimum acknowledgment',message:"yeah no I see it",hint:'Low-effort acknowledgment back — keep the rhythm'},
   {tone:'dry',context:'She\'s asking why to something with no enthusiasm',message:"why though",hint:'Answer briefly and confidently'},
+  // ── NEW v2 batch — added for the public crew training drive ──
+  // FLIRTY
+  {tone:'flirty',context:'She just saw an old photo of you and is commenting on it',message:"omg the throwback photo of you is sending me",hint:'Own the era — don\'t get embarrassed'},
+  {tone:'flirty',context:'She\'s teasing you about always reacting fast to her stories',message:"why are you always the first one to view my story 👀",hint:'Don\'t deny it — flip it on her'},
+  {tone:'flirty',context:'She\'s pretending to be hurt that you haven\'t complimented her',message:"are you ever going to say something nice to me",hint:'Make her wait, then drop one specific thing'},
+  {tone:'flirty',context:'She matched with you on a dating app and is being upfront',message:"so what made you swipe",hint:'Pick one specific thing about her, not generic'},
+  {tone:'flirty',context:'She\'s low-key asking if you\'re seeing anyone',message:"so are you actually single or",hint:'Honest + a small flip back at her'},
+  {tone:'flirty',context:'She\'s commenting on the late-night timing of your text',message:"texting me at 1am is suspicious behaviour",hint:'Lean into the suspicion playfully'},
+  {tone:'flirty',context:'She\'s flirting through claiming you\'re predictable',message:"you\'re so easy to read btw",hint:'Challenge it — make her prove it'},
+  {tone:'flirty',context:'She\'s testing if you can handle a forward statement',message:"if i was there right now what would you do",hint:'Confident specific answer — don\'t dodge'},
+  {tone:'flirty',context:'She\'s commenting on something she noticed in your story',message:"that was your hand in the story right",hint:'Be amused she noticed — don\'t over-explain'},
+  {tone:'flirty',context:'She\'s admitting she compared you to other guys',message:"you\'re actually so different from the guys I usually talk to",hint:'Curious follow-up — what does she usually talk to'},
+  // FUNNY
+  {tone:'funny',context:'She bought something dumb on impulse and is owning it',message:"i just bought a 90 dollar candle and i have no regrets",hint:'Roast the specific item, not her'},
+  {tone:'funny',context:'She did a bit too much at a club last night',message:"i\'m never drinking again i mean it this time",hint:'Call out the obvious lie — playfully'},
+  {tone:'funny',context:'She thinks her cat is plotting against her',message:"i swear my cat is planning my downfall",hint:'Take the cat\'s side with full commitment'},
+  {tone:'funny',context:'Her uber driver was the most chaotic person ever',message:"my uber driver just asked me if i believed in time travel",hint:'Demand more story — what did she say'},
+  {tone:'funny',context:'She got the wrong order at a restaurant and just accepted it',message:"i didn\'t order this but i\'m eating it anyway",hint:'Validate the chaos energy'},
+  {tone:'funny',context:'She\'s spiralling about a small mistake from years ago',message:"i still think about cringe things i did in 2018",hint:'Bond over a worse cringe of your own — keep it short'},
+  {tone:'funny',context:'Her family is being unhinged in the group chat',message:"my mom just typed an entire essay in the family chat",hint:'Ask for the essay — be too invested'},
+  {tone:'funny',context:'She just realised she\'s been using something wrong her whole life',message:"so apparently i\'ve been pronouncing croissant wrong for years",hint:'Roast playfully — make her say it again'},
+  {tone:'funny',context:'She got caught singing in public',message:"a stranger just heard me singing in the supermarket",hint:'Demand the song — make it dramatic'},
+  // CHILL
+  {tone:'chill',context:'Casual late-night check-in with no real agenda',message:"can\'t sleep",hint:'Match the low energy — keep it soft'},
+  {tone:'chill',context:'She\'s telling you what she ate without making it a big deal',message:"i just had the best pasta of my life",hint:'Casual one-line — don\'t demand the recipe'},
+  {tone:'chill',context:'She\'s walking home and texting',message:"walking home rn",hint:'Acknowledge it without making her stop walking'},
+  {tone:'chill',context:'She just woke up from a nap',message:"just woke up from a 4 hour nap oops",hint:'Tease the length without being a parent'},
+  {tone:'chill',context:'She\'s at the gym for the first time in weeks',message:"first gym session in 3 weeks send help",hint:'Encouraging but low-key — not a coach'},
+  {tone:'chill',context:'She\'s on her way somewhere and texting in transit',message:"on the bus rn going to my friends",hint:'Keep it light — don\'t hold her attention'},
+  {tone:'chill',context:'She had a quiet weekend and is texting you about it',message:"this weekend was so chill i did literally nothing",hint:'Validate the do-nothing energy'},
+  // SAVAGE
+  {tone:'savage',context:'She\'s testing you with a jab to see if you\'ll get defensive or roll with it',message:"you think you\'re that guy huh",hint:'Own it without overselling'},
+  {tone:'savage',context:'She\'s calling out a flaw she noticed in your photos',message:"why do you do the same face in every pic",hint:'Don\'t apologize — flip it'},
+  {tone:'savage',context:'She\'s mock-judging your music taste again',message:"i think we have to break up over this playlist",hint:'Pretend to take it seriously, defend the playlist'},
+  {tone:'savage',context:'She\'s pretending you\'ve let her down with a slow reply',message:"oh you\'re alive, i was about to file a missing report",hint:'Match the sass — don\'t apologize'},
+  {tone:'savage',context:'She\'s daring you to admit you were thinking of her',message:"admit you missed me",hint:'Hold the line — don\'t cave easily'},
+  {tone:'savage',context:'She\'s testing if you flinch at being called out',message:"you\'re kinda full of yourself you know that",hint:'Embrace it confidently — no flinching'},
+  // MYSTERIOUS
+  {tone:'mysterious',context:'She\'s trying to dig into your past without being obvious',message:"so what\'s your deal exactly",hint:'Give her one thread, hold the rest'},
+  {tone:'mysterious',context:'She wants to know what you actually think of her',message:"what\'s your honest read on me",hint:'Specific one observation, leave room for more'},
+  {tone:'mysterious',context:'Late-night philosophical question',message:"do you think people change",hint:'Real opinion, no fluff'},
+  {tone:'mysterious',context:'She\'s probing your inner life',message:"what\'s something you don\'t tell anyone",hint:'Tease something interesting without revealing it'},
+  {tone:'mysterious',context:'She wants to know what makes you tick',message:"what actually matters to you",hint:'One thing, said simply'},
+  // BOLD
+  {tone:'bold',context:'She\'s asking flat out what your intentions are',message:"so where is this actually going",hint:'Direct answer, no dancing'},
+  {tone:'bold',context:'She\'s pushing to know if you\'re seeing other people',message:"are you talking to other girls right now",hint:'Honest — don\'t be evasive'},
+  {tone:'bold',context:'She\'s asking if you\'d ever date her properly',message:"would you actually date me",hint:'Yes or no, then add one line'},
+  {tone:'bold',context:'She\'s questioning if you\'re even interested',message:"i feel like you don\'t really care",hint:'Address it directly — no defensiveness'},
+  {tone:'bold',context:'She wants to know your dealbreakers',message:"what would actually make you leave",hint:'Real answer, no bullet list'},
+  // WHOLESOME
+  {tone:'wholesome',context:'She had a good day and you\'re who she wanted to tell',message:"today was actually really nice and i thought of you",hint:'Genuine reaction — don\'t deflect it'},
+  {tone:'wholesome',context:'She passed an exam she was stressing about',message:"i passed!!",hint:'Real hype — be proud of her'},
+  {tone:'wholesome',context:'She\'s thanking you for being there during a tough week',message:"thank you for actually checking in this week, it helped",hint:'Receive it warmly — no deflection'},
+  {tone:'wholesome',context:'She got into the program she applied for',message:"i got in btw",hint:'Genuinely celebrate her win'},
+  {tone:'wholesome',context:'She\'s missing her family and being honest about it',message:"i miss my mom today",hint:'Sit with her — don\'t fix it'},
+  // SPICY
+  {tone:'spicy',context:'She\'s being forward about wanting to see you in person soon',message:"i need to see you soon",hint:'Match the directness — propose a real time'},
+  {tone:'spicy',context:'She\'s being explicit about thinking of you in a charged way',message:"i can\'t stop thinking about that night",hint:'Build the tension — don\'t cool it down'},
+  {tone:'spicy',context:'She\'s daring you to be honest about what you want',message:"what would you actually do if i was there",hint:'Bold confident specifics'},
+  {tone:'spicy',context:'She\'s teasing you about a charged moment',message:"i thought about you in the shower",hint:'Play the suspense — don\'t rush'},
+  {tone:'spicy',context:'She\'s pulling you in with a charged invitation',message:"my place tonight if you\'re free",hint:'Confident yes — no hedging'},
+  // MAKE PLANS
+  {tone:'plans',context:'She\'s suggesting a low-key stay-in date',message:"we could just stay in and watch something",hint:'Pick a movie + propose a time'},
+  {tone:'plans',context:'She wants to do something but is hoping you\'ll decide what',message:"i want to do something but idk what",hint:'Specific suggestion, not a list'},
+  {tone:'plans',context:'She\'s asking what you\'re tryna do tonight',message:"what are you tryna do tonight",hint:'A real plan — not "idk you"'},
+  {tone:'plans',context:'She can\'t do the day you suggested',message:"i can\'t friday how about saturday",hint:'Confirm + lock the time'},
+  {tone:'plans',context:'She wants you to cook for her at some point',message:"okay you\'re cooking for me when",hint:'Pick a day + the dish'},
+  // DRY
+  {tone:'dry',context:'She replied with the bare minimum to a long message',message:"k",hint:'Match the energy — one word'},
+  {tone:'dry',context:'She\'s being noncommittal on purpose',message:"sure",hint:'Don\'t chase — let it sit'},
+  {tone:'dry',context:'She\'s deadpan-reacting to your story',message:"that\'s wild",hint:'Drop the punchline — don\'t over-explain'},
+  {tone:'dry',context:'She left you on read for 2 days then came back with nothing',message:"hey",hint:'Acknowledge the gap subtly — no guilt-trip'}
 ];
 
 let trainingData=[];
@@ -3807,6 +4260,28 @@ const BAKED_REPORTS=[
   {message:"roses are red violets are fine, you'll be the 6 i'll be the 9",reply:"i'm not the type to be in relationships, but i'd make an exception for you",reason:"off-topic and overshares, ignores the playful poem"},
   {message:"roses are red violets are fine, you'll be the 6 i'll be the 9",reply:"which number am i supposed to call when the 9 is ringing",reason:"off-topic, tries too hard to be clever and flops"},
   {message:"u fine asf ma",reply:"maybe that's why they say you get what you pay for",reason:"off-topic, makes no sense as a reply to a compliment"},
+  // ── Added from 2026-05-23 export ──
+  {message:"Really!? What may i be doing in that beautiful mind of yours",reply:"probably thinking of you",reason:"REPEATS what I already said — kills the convo. When she echoes 'I'm on your mind', flip it forward (ask, propose, tease) instead of mirror-repeating."},
+  {message:"hey love",reply:"hey back",reason:"too generic — 'hey back' is a dead-end. Add a hook: a question, a tease, or a plan."},
+  {message:"hey love",reply:"whatcha up to",reason:"too lame for a 'hey love' opener — she opened warm, this is flat. Match her warmth + push forward."},
+  {message:"hey love",reply:"got a minute",reason:"sounds like a work message, not a flirty reply to 'hey love'. Wrong register."},
+  {message:"hey handsome",reply:"handsome is nice, but I like 'confident' better",reason:"too cocky / try-hard. Reads as overcompensating. Acknowledge + flip lightly, don't lecture her on adjectives."},
+  {message:"hey handsome",reply:"noted",reason:"too nonchalant — when she leads with a compliment, a one-word reply kills momentum. Add a tease or follow-up."},
+  {message:"hey handsome",reply:"who said it wasn't mutual",reason:"doesn't fit — she didn't claim it wasn't mutual. Generic flip that ignores her actual opener."},
+  {message:"Hey omg you're cute",reply:"im glad you noticed",reason:"reads try-hard / desperate. Confident men don't fish for confirmation of compliments — flip it back."},
+  {message:"Hey omg you're cute",reply:"you're looking for a pretty boy or what",reason:"wrong POV — sounds like she's the one being evaluated. Also too cringe and accusatory."},
+  {message:"Your back is insanely sexy omg",reply:"i've had my fair share of compliments but that's new",reason:"NOT confident enough. Reads as humblebrag. Either own it bluntly or flip the spotlight back on her."},
+  {message:"Your back is insanely sexy omg",reply:"don't think that gets worn out soon",reason:"robotic / AI-sounding phrasing. Nobody talks like this."},
+  {message:"I could show you what a real girl is",reply:"sounds like a challenge",reason:"cliché pickup-line response. Lazy."},
+  {message:"I could show you what a real girl is",reply:"i think you mean a girl who does what you want",reason:"wrong tone — turns playful claim into sarcastic argument."},
+  {message:"I could show you what a real girl is",reply:"so you think you're a girl now",reason:"off-topic / completely misses the playful claim she's making."},
+  {message:"I don't like football but if you want we can get messi",reply:"i already have one",reason:"off-topic, makes no sense — she's offering, this acts like Messi is a possession."},
+  {message:"I don't like football but if you want we can get messi",reply:"no need to bribe me to spend time with you",reason:"reads accusatory, kills her playful offer with a vibes-killer."},
+  {message:"I don't like football but if you want we can get messi",reply:"you're just saying that because you like him",reason:"off-topic projection — invents motives that aren't there."},
+  {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"make sure to swim with me",reason:"completely misses the innuendo punchline she set up. Match the energy or flip it, don't ignore it."},
+  {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"go ahead, i'm not that scary",reason:"corny + outdated, kills the joke instead of building on it."},
+  {message:"[Story video of a woman with brown off-shoulder top, song 'TEE BONE - Body Good', heart emojis]",reply:"tee bone's on the playlist now i'm judging",reason:"reads slightly feminizing / wrong POV — also too short, no real twist. Story replies need a sharper callout + twist."},
+  {message:"[Story]",reply:"you're lowkey lit rn or is that just the lighting",reason:"off-topic / doesn't fit a specific story. Generic 'lit' opener with no callout = dies."}
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -3911,6 +4386,28 @@ const BAKED_GOODS=[
   {message:"lovebomb me already so I can move on",reply:"glad you're impatient",tone:"teasing"},
   {message:"lovebomb me already so I can move on",reply:"you're pretty eager huh",tone:"teasing"},
   {message:"lovebomb me already so I can move on",reply:"you know i move on my terms",tone:"assertive"},
+  // ── Added from 2026-05-23 export ──
+  {message:"hey cutie",reply:"just you then",tone:"flirtatious"},
+  {message:"hey cutie",reply:"im glad we know each other's nicknames",tone:"nonchalant"},
+  {message:"hey cutie",reply:"who told you to call me that",tone:"teasing"},
+  {message:"HI love",reply:"how's your day going",tone:"casual"},
+  {message:"Hey omg you're cute",reply:"cute is nice, but charming is better",tone:"flirtatious"},
+  {message:"Your back is insanely sexy omg",reply:"glad you like it",tone:"nonchalant"},
+  {message:"I love beard",reply:"it's getting expensive to maintain",tone:"joking"},
+  {message:"I love beard",reply:"you got a type",tone:"teasing"},
+  {message:"I love beard",reply:"glad you like the beard",tone:"casual"},
+  {message:"I could show you what a real girl is",reply:"i'm right here, what do you want to do to me",tone:"flirty"},
+  {message:"Are you nine, because you're fine, lemme bull yuh",reply:"maybe that's why they say age is just a number",tone:"flirty"},
+  {message:"Roses are red violets are fine, you'll be the 6 i'll be the 9",reply:"sounds like a plan",tone:"flirty"},
+  {message:"U fine asf ma",reply:"better with you around",tone:"flirt"},
+  {message:"U fine asf ma",reply:"appreciated",tone:"polite"},
+  {message:"U can afford ur own kfc",reply:"lowkey though",tone:"playful"},
+  {message:"U can afford ur own kfc",reply:"guess i'll have to invest in a kfc atm",tone:"humorous"},
+  {message:"U can afford ur own kfc",reply:"you're right lol",tone:"lighthearted"},
+  // ⭐ Story-reply winners — these are the proven good format: specific callout + sharp twist
+  {message:"[Story: close-up selfie video with a song]",reply:"your hair looks like it's having a better day than me",tone:"flirty"},
+  {message:"[Story: two women in black dresses, light flare]",reply:"is that a reflex or are you always this photogenic",tone:"playful"},
+  {message:"[Story: outfit with a cross necklace]",reply:"the cross necklace is a bold choice with that top",tone:"flirty"}
 ];
 
 // Reference set — strong target responses for tricky message types that tend to flop
