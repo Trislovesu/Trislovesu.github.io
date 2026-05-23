@@ -482,18 +482,23 @@ input[type="text"]::placeholder{color:var(--text3)}
    Card turns green, ticks pops in, then fades to advance. Mobile-optimised: transform+opacity only. */
 .contrib-card.saved{
   border-color:var(--green)!important;
-  background:linear-gradient(165deg,rgba(77,179,122,0.18),rgba(77,179,122,0.05))!important;
-  box-shadow:0 0 0 1px rgba(77,179,122,0.4),0 12px 50px rgba(0,0,0,0.4),0 0 80px rgba(77,179,122,0.35)!important;
-  transition:border-color .25s ease,background .25s ease,box-shadow .35s ease;
+  background:linear-gradient(165deg,rgba(77,179,122,0.22),rgba(77,179,122,0.07))!important;
+  box-shadow:0 0 0 1.5px rgba(77,179,122,0.55),0 14px 60px rgba(0,0,0,0.4),0 0 100px rgba(77,179,122,0.55),inset 0 0 40px rgba(77,179,122,0.12)!important;
+  transition:border-color .3s cubic-bezier(.22,1,.36,1),background .3s ease,box-shadow .45s cubic-bezier(.22,1,.36,1);
+  animation:cardGreenPulse 1s ease-out;
 }
-.contrib-card.saved > *{transition:opacity .28s ease;opacity:.22}
+@keyframes cardGreenPulse{0%{box-shadow:0 0 0 1.5px rgba(77,179,122,0.55),0 14px 60px rgba(0,0,0,0.4),0 0 100px rgba(77,179,122,0.55),inset 0 0 40px rgba(77,179,122,0.12)}40%{box-shadow:0 0 0 3px rgba(77,179,122,0.8),0 14px 60px rgba(0,0,0,0.4),0 0 140px rgba(77,179,122,0.85),inset 0 0 60px rgba(77,179,122,0.22)}100%{box-shadow:0 0 0 1.5px rgba(77,179,122,0.55),0 14px 60px rgba(0,0,0,0.4),0 0 100px rgba(77,179,122,0.55),inset 0 0 40px rgba(77,179,122,0.12)}}
+.contrib-card.saved > *:not(.save-success-overlay){transition:opacity .28s ease,filter .28s ease;opacity:.16;filter:blur(1.5px)}
 .contrib-card.saved .save-success-overlay{opacity:1}
 .save-success-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .25s ease;will-change:transform,opacity;z-index:5}
-.save-success-circle{width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,#4db37a,#3a9a64);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(77,179,122,0.6),0 12px 40px rgba(77,179,122,0.45);animation:saveCirclePop .55s cubic-bezier(.34,1.56,.64,1) forwards,saveCircleHalo 1.1s ease-out .25s}
-.save-success-tick{width:38px;height:38px;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;fill:none;stroke-dasharray:48;stroke-dashoffset:48;animation:saveTickDraw .42s cubic-bezier(.65,0,.35,1) .2s forwards}
-.save-success-label{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--green);opacity:0;transform:translateY(8px);animation:saveLabelRise .35s ease-out .4s forwards;letter-spacing:.02em}
-@keyframes saveCirclePop{0%{transform:scale(.4) rotate(-12deg);opacity:0}60%{transform:scale(1.1) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
-@keyframes saveCircleHalo{0%{box-shadow:0 0 0 0 rgba(77,179,122,0.6),0 12px 40px rgba(77,179,122,0.45)}100%{box-shadow:0 0 0 28px rgba(77,179,122,0),0 12px 40px rgba(77,179,122,0.45)}}
+.contrib-card.saved .save-success-circle{animation:saveCirclePop .55s cubic-bezier(.34,1.56,.64,1),saveCircleHalo 1.2s ease-out .15s}
+.save-success-circle{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#52c283,#3a9a64);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(77,179,122,0.7),0 12px 40px rgba(77,179,122,0.55),inset 0 1px 0 rgba(255,255,255,0.2)}
+.save-success-tick{width:42px;height:42px;stroke:#fff;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;fill:none;stroke-dasharray:60;stroke-dashoffset:60;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.2))}
+.contrib-card.saved .save-success-tick{animation:saveTickDraw .42s cubic-bezier(.65,0,.35,1) .22s forwards}
+.save-success-label{font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:var(--green);opacity:0;transform:translateY(8px);letter-spacing:.04em;text-shadow:0 0 16px rgba(77,179,122,0.55)}
+.contrib-card.saved .save-success-label{animation:saveLabelRise .35s ease-out .42s forwards}
+@keyframes saveCirclePop{0%{transform:scale(.4) rotate(-12deg);opacity:0}60%{transform:scale(1.12) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes saveCircleHalo{0%{box-shadow:0 0 0 0 rgba(77,179,122,0.75),0 12px 40px rgba(77,179,122,0.55),inset 0 1px 0 rgba(255,255,255,0.2)}100%{box-shadow:0 0 0 32px rgba(77,179,122,0),0 12px 40px rgba(77,179,122,0.55),inset 0 1px 0 rgba(255,255,255,0.2)}}
 @keyframes saveTickDraw{to{stroke-dashoffset:0}}
 @keyframes saveLabelRise{to{opacity:1;transform:translateY(0)}}
 /* the parent card needs position:relative so the overlay covers it */
@@ -560,6 +565,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 /* 🕯️ MYSTERIOUS MARK — void circle with a ghostly serif monogram + breathing halo */
 .qr-homie-pfp.mystery{background:radial-gradient(circle at 50% 35%,#1c1c20 0%,#050507 100%);border-color:rgba(255,255,255,0.55);position:relative}
+.qr-homie-pfp.mystery.photo{background:#000}
+.qr-homie-pfp.mystery.photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;filter:contrast(1.05) brightness(.92) grayscale(.15)}
+.qr-homie-pfp.mystery.photo::after{display:none}
 .qr-homie-pfp.mystery::before{content:'';position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.18) 0%,transparent 60%);pointer-events:none;animation:mysteryBreath 3.6s ease-in-out infinite;mix-blend-mode:screen}
 .qr-homie-pfp.mystery::after{content:'';position:absolute;left:50%;top:0;width:1px;height:24%;background:linear-gradient(180deg,rgba(255,255,255,0.4),transparent);transform:translateX(-50%);pointer-events:none}
 .qr-homie.lead .qr-homie-pfp.mystery{box-shadow:0 8px 24px rgba(0,0,0,0.7),0 0 32px rgba(255,255,255,0.22),inset 0 0 12px rgba(0,0,0,0.5)}
@@ -804,7 +812,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <div class="auth-error" id="auth-error"></div>
     <button class="auth-submit" id="auth-submit" onclick="submitAuth()">Sign In</button>
     <button class="contrib-cta" onclick="openContribute()">
-      💜 Help train Don't Miss — answer some questions
+      👀 Help train Don't Miss — answer some questions
       <span class="contrib-cta-sub">no account needed · takes 2 min · you can be male or female</span>
     </button>
   </div>
@@ -3185,7 +3193,7 @@ function qrPickSkill(n){
 // Previously revealed homies stay on screen.
 let qrSlideshowState={slide:0};
 const QR_HOMIES=[
-  {monogram:'T',name:'Tris',role:'the architect',handle:'@trislovesu.7',lead:true,tagline:'the one behind it.'},
+  {pfpImg:'data:image/jpeg;base64,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',name:'Tris',role:'the architect',handle:'@trislovesu.7',lead:true,tagline:'the one behind it.'},
   {emoji:'🧠',name:'Claude',role:'the builder',handle:'anthropic',tagline:'wrote every line of this.'},
   {emoji:'💬',name:'ChatGPT',role:'the homie',handle:'openai',tagline:'the second opinion.'},
   {emoji:'⚡',name:'Grok',role:'the horny one',handle:'xai',tagline:"kept it from getting boring 😏"}
@@ -3214,9 +3222,11 @@ function qrRenderSlideshow(){
     const classes=['qr-homie','revealed'];
     if(h.lead)classes.push('lead');
     if(isFresh)classes.push('fresh');
-    const pfpInner=h.monogram
-      ?`<div class="qr-homie-pfp mystery"><span class="qr-mono">${h.monogram}</span></div>`
-      :`<div class="qr-homie-pfp">${h.emoji}</div>`;
+    const pfpInner=h.pfpImg
+      ?`<div class="qr-homie-pfp mystery photo"><img src="${h.pfpImg}" alt="${h.name}" /></div>`
+      :h.monogram
+        ?`<div class="qr-homie-pfp mystery"><span class="qr-mono">${h.monogram}</span></div>`
+        :`<div class="qr-homie-pfp">${h.emoji}</div>`;
     return `<div class="${classes.join(' ')}">
       <div class="qr-crown">👑</div>
       ${pfpInner}
@@ -3424,14 +3434,48 @@ function closeContribIntro(){
     closeBtn.textContent='got it, let\'s start';
     closeBtn.disabled=false;closeBtn.classList.add('ready');
     closeBtn.onclick=()=>{
-      document.getElementById('contrib-intro').style.display='none';
       closeBtn.onclick=closeContribIntro; // restore for next time
-      renderContribQuestion();
+      showUploadReminder(); // → chains into final reminder
     };
     return;
   }
-  document.getElementById('contrib-intro').style.display='none';
-  renderContribQuestion();
+  // Male path: skip the WTF tip, go straight to the upload reminder
+  showUploadReminder();
+}
+
+// 📤 Final pre-question popup: remind them to tap "send to tris" when done.
+// 2-second countdown before "got it" enables — gives them time to actually read it.
+function showUploadReminder(){
+  const overlay=document.getElementById('contrib-intro');
+  const titleEl=document.getElementById('contrib-intro-title');
+  const bodyEl=document.getElementById('contrib-intro-body');
+  const countEl=document.getElementById('contrib-intro-count');
+  const closeBtn=document.getElementById('contrib-intro-close');
+  titleEl.textContent='📤 one last thing';
+  bodyEl.innerHTML="when you're done answering, tap the big <strong>🚀 send to tris</strong> button.<br><br>nothing is saved until you do — so if you close the tab before sending, your answers are lost.<br><br>you can send what you have any time (a floating button stays at the bottom of the screen).";
+  closeBtn.disabled=true;closeBtn.classList.remove('ready');
+  let n=2;
+  countEl.textContent='unlocks in '+n+'...';
+  closeBtn.textContent='got it ('+n+')';
+  const tick=setInterval(()=>{
+    n--;
+    if(n<=0){
+      clearInterval(tick);
+      countEl.textContent="ready when you are";
+      closeBtn.disabled=false;closeBtn.classList.add('ready');
+      closeBtn.textContent="let's start →";
+    }else{
+      countEl.textContent='unlocks in '+n+'...';
+      closeBtn.textContent='got it ('+n+')';
+    }
+  },1000);
+  closeBtn.onclick=()=>{
+    clearInterval(tick);
+    overlay.style.display='none';
+    closeBtn.onclick=closeContribIntro; // restore default for any future intros
+    renderContribQuestion();
+  };
+  overlay.style.display='flex';
 }
 
 // ── candidate-reply bank for female mode ──────────────────────
@@ -3652,7 +3696,30 @@ function renderContribQuestion(){
       <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">scenario ${stageNum} of ${total}</div>
       <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">✓ ${contribState.answers.length} saved</div>
     </div>
-    <div class="contrib-card">${body}</div>`;
+    <div class="contrib-card">${body}
+      <div class="save-success-overlay" id="save-success-overlay">
+        <div class="save-success-circle">
+          <svg class="save-success-tick" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M10 25 L21 36 L39 14"/>
+          </svg>
+        </div>
+        <div class="save-success-label">saved ✓</div>
+      </div>
+    </div>`;
+}
+
+// 💚 Play the green-flash save-success animation, then call cb when done
+function flashSaveSuccess(cb){
+  const card=document.querySelector('.contrib-card');
+  if(!card){if(cb)cb();return;}
+  // re-trigger animations even if .saved was just removed
+  card.classList.remove('saved');
+  void card.offsetWidth; // force reflow
+  card.classList.add('saved');
+  // Total animation length: circle .55s + label .35s starting at .4s = ~.75s. Wait .85s before advancing.
+  setTimeout(()=>{
+    if(cb)cb();
+  },850);
 }
 let _femRating=null;
 // 🚩 "WTF did the AI say" — instantly flag this candidate as nonsense/off-topic and skip.
@@ -3674,8 +3741,7 @@ function flagWtfReply(){
     gender:'female',
     ts:Date.now()
   });
-  showToast('🚩 flagged — moving on');
-  advanceContribQuestion();
+  flashSaveSuccess(()=>advanceContribQuestion());
 }
 function setFemRating(n){
   _femRating=n;
@@ -3689,7 +3755,7 @@ function saveContribAnswerMale(){
   const scenarioIdx=contribState.queue[contribState.currentIdx];
   const s=SCENARIO_BANK[scenarioIdx];
   contribState.answers.push({type:'male_reply',tone:s.tone,context:s.context,message:s.message,userReply:txt,trainer:contribState.name,gender:'male',ts:Date.now()});
-  advanceContribQuestion();
+  flashSaveSuccess(()=>advanceContribQuestion());
 }
 function saveContribAnswerFemale(){
   if(_femRating===null){showToast('pick a rating');return}
@@ -3698,7 +3764,7 @@ function saveContribAnswerFemale(){
   const s=SCENARIO_BANK[scenarioIdx];
   const cand=contribState._currentCandidate||{text:''};
   contribState.answers.push({type:'female_rating',tone:s.tone,context:s.context,message:s.message,ratedReply:cand.text,replySource:cand.source,rating:_femRating,feedback:fb,trainer:contribState.name,gender:'female',ts:Date.now()});
-  advanceContribQuestion();
+  flashSaveSuccess(()=>advanceContribQuestion());
 }
 function skipContribQuestion(){
   advanceContribQuestion();
