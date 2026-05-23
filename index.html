@@ -1910,7 +1910,7 @@ OPENER MOVES (each of the 3 replies MUST use a different one — variety is mand
 7. Shared-experience hook — connect it to something he'd do/say if he were there
 
 WRITING STYLE:
-- Lowercase, no exclamation marks, no emojis unless the story explicitly invites one (a 😭 or 👀 max)
+- Lowercase, no exclamation marks. Emojis allowed BUT used sparingly to add flavour — MAX 1 per opener, and only when it actually punches the line up. NEVER more than 1. Favourites that land: 😭 👀 😏 💀 🤷‍♂️ 🫡 ☠️. Skip 😂 (overused), ❤️ (cringe), 🔥 (boring), 😍 (try-hard). At least 2 of the 3 openers should have NO emoji at all — silence + confidence > emoji crutch.
 - Sound like a guy who's busy and texts fast but what he typed is SHARP — not robotic, not formulaic, not trying-too-hard
 - AVOID template-sounding phrasings: "your go-to X", "let me guess your favourite X is Y", "the [thing] is doing some [vague work]" — these read like an AI template
 - Specifics > vagueness. "the chain peeking out under the white top is doing the most" > "the outfit is fire"
@@ -1940,7 +1940,7 @@ Return ONLY JSON: {"her_message":"brief description of the specific scene (speci
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.05,top_p:0.95,frequency_penalty:0.7,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details (item / pose / song / sticker / caption / object in frame — not "her vibe"). Each opener uses a DIFFERENT opener MOVE from the system prompt. The TWIST must actually be witty — don\'t just glue a generic tease onto a callout. Re-read each opener before returning: would she smile and want to reply? If no, rewrite. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "you look amazing/beautiful/stunning". BANNED topics: anything about how her body looks or how clothes FIT her — only her STYLE CHOICES (the colour pairing, the song pick, the location, the pose intent). No emojis unless the story explicitly invites one. Lowercase. At least 1 of the 3 must be 10+ words with real substance — not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.05,top_p:0.95,frequency_penalty:0.7,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details (item / pose / song / sticker / caption / object in frame — not "her vibe"). Each opener uses a DIFFERENT opener MOVE from the system prompt. The TWIST must actually be witty — don\'t just glue a generic tease onto a callout. Re-read each opener before returning: would she smile and want to reply? If no, rewrite. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "you look amazing/beautiful/stunning". BANNED topics: anything about how her body looks or how clothes FIT her — only her STYLE CHOICES (the colour pairing, the song pick, the location, the pose intent). Emojis allowed sparingly — MAX 1 per opener, and at least 2 of the 3 should have NO emoji. Use them to punch up a line, never as a substitute for wit. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Lowercase. At least 1 of the 3 must be 10+ words with real substance — not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -2119,6 +2119,7 @@ RULES:
 - You are the man replying to her — never write from her point of view.
 - Match the conversation's established tone and energy, but DON'T match its dying momentum — actively push it forward and CARRY it.
 - Lowercase preferred, zero exclamation marks. 3 genuinely different replies, confident and natural, never cringe or thirsty. Mix the lengths — at least one reply should have real substance, not all one-liners.
+- EMOJI USE: light flavour is fine, but MAX 1 emoji per reply, and AT LEAST 2 of the 3 replies should have NO emoji at all. Good emojis that land: 😭 👀 😏 💀 🤷‍♂️ 🫡 ☠️. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Never use an emoji to substitute for actual wit — it's a topper, not a crutch.
 - If the "WHAT YOU ALREADY KNOW" memory block is provided above, USE IT — reference facts she's shared, avoid topics already covered, never repeat lines I've already sent.
 - SELF-CHECK before returning: read each reply back as if you're HER receiving it. Would you smile and want to text back? If any reply is flat, empty, generic, or template-y — REWRITE IT before returning.
 
@@ -2676,6 +2677,7 @@ Before returning each opener, re-read it: "would she smile and want to reply?" I
 
 `:''}OTHER RULES:
 - ZERO exclamation marks
+- EMOJI USE: light flavour is good — MAX 1 emoji per reply, and at least 2 of the 3 should have NO emoji. Good ones: 😭 👀 😏 💀 🤷‍♂️ 🫡. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Emoji is a topper, never a crutch.
 - No feminine words: omg, bestie, slay, aww, obsessed
 - No AI phrases: "I'd love to", "certainly", "that sounds"
 - No generic openers: "nice", "that's cool", "looks fun", "love this"
@@ -2791,6 +2793,7 @@ GENERATION ROUND: ${round} — if this is round 2+, the replies MUST be complete
 
 RULES:
 - ZERO exclamation marks
+- EMOJI USE: light flavour ok — MAX 1 emoji per reply, at least 2 of the 3 should have NO emoji. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Topper not crutch.
 - No feminine words: omg, bestie, slay, aww, obsessed
 - No AI phrases: "I'd love to", "certainly", "that sounds"
 - No generic openers: "nice", "that's cool", "looks fun"
@@ -3017,10 +3020,10 @@ function closeContribIntro(){
 // This guarantees the reply she's rating actually addresses what was said.
 const SCENARIO_CANDIDATES={
   // FLIRTY
-  "you're literally everywhere on my explore page 😭":[{t:"maybe that's a sign",q:'good'},{t:"the algorithm clearly knows what's good for you",q:'good'},{t:"yeah they notice me",q:'bad'}],
-  "okay you're actually funny I'll give you that":[{t:"about time you admitted it",q:'good'},{t:"don't get used to it",q:'mid'},{t:"thanks i try",q:'bad'}],
+  "you're literally everywhere on my explore page 😭":[{t:"maybe that's a sign 👀",q:'good'},{t:"the algorithm clearly knows what's good for you",q:'good'},{t:"yeah they notice me",q:'bad'}],
+  "okay you're actually funny I'll give you that":[{t:"about time you admitted it",q:'good'},{t:"don't get used to it 🤷‍♂️",q:'mid'},{t:"thanks i try",q:'bad'}],
   "why do you look so serious in all your pics":[{t:"that's my brand",q:'good'},{t:"smiling's overrated",q:'mid'},{t:"i'm just a serious guy",q:'bad'}],
-  "my friend thinks you're cute btw":[{t:"and what do you think",q:'good'},{t:"send her thanks",q:'bad'},{t:"tell your friend i appreciate it",q:'mid'}],
+  "my friend thinks you're cute btw":[{t:"and what do you think 👀",q:'good'},{t:"send her thanks",q:'bad'},{t:"tell your friend i appreciate it",q:'mid'}],
   "stop making me laugh at work":[{t:"i'd say sorry but i'm not",q:'good'},{t:"that's a you problem",q:'mid'},{t:"my bad",q:'bad'}],
   "okay I looked at your profile... you seem interesting":[{t:"what did you decide about me",q:'good'},{t:"only seem?",q:'mid'},{t:"thanks i think you do too",q:'bad'}],
   "you give me a vibe I can't figure out yet":[{t:"keep guessing",q:'good'},{t:"that's the point",q:'mid'},{t:"i'm an open book actually",q:'bad'}],
@@ -3035,14 +3038,14 @@ const SCENARIO_CANDIDATES={
   "I can literally see you're online btw":[{t:"and yet here you are watching",q:'good'},{t:"caught red handed",q:'mid'},{t:"my bad",q:'bad'}],
   "btw you came up in conversation today":[{t:"good things i hope",q:'mid'},{t:"context required",q:'good'},{t:"oh yeah?",q:'bad'}],
   "wow that was lowkey smooth I'll give it to you":[{t:"that wasn't even my best one",q:'good'},{t:"i'm just getting started",q:'good'},{t:"thanks",q:'bad'}],
-  "who's that in your story btw 👀":[{t:"my cousin lol relax",q:'good'},{t:"jealous already",q:'mid'},{t:"a friend",q:'bad'}],
+  "who's that in your story btw 👀":[{t:"my cousin relax 😭",q:'good'},{t:"jealous already 👀",q:'mid'},{t:"a friend",q:'bad'}],
   "you're distracting me from actual work stop":[{t:"that's the goal",q:'good'},{t:"sorry not sorry",q:'mid'},{t:"i'll stop",q:'bad'}],
   "omg the throwback photo of you is sending me":[{t:"that era was real",q:'mid'},{t:"glad it found you",q:'good'},{t:"lol thanks",q:'bad'}],
   "why are you always the first one to view my story 👀":[{t:"someone's gotta keep watch",q:'good'},{t:"caught",q:'mid'},{t:"happens to be timing",q:'bad'}],
   "are you ever going to say something nice to me":[{t:"you've been waiting?",q:'good'},{t:"your patience is admirable",q:'mid'},{t:"you're nice",q:'bad'}],
   "so what made you swipe":[{t:"your captions are actually funny",q:'good'},{t:"good vibes",q:'bad'},{t:"liked your energy",q:'mid'}],
   "so are you actually single or":[{t:"i am, you?",q:'good'},{t:"yes, currently",q:'mid'},{t:"that's a big question",q:'bad'}],
-  "texting me at 1am is suspicious behaviour":[{t:"you're up too so",q:'good'},{t:"couldn't sleep",q:'bad'},{t:"says the one who replied",q:'good'}],
+  "texting me at 1am is suspicious behaviour":[{t:"you're up too so 🤷‍♂️",q:'good'},{t:"couldn't sleep",q:'bad'},{t:"says the one who replied",q:'good'}],
   "you're so easy to read btw":[{t:"prove it",q:'good'},{t:"tell me what i'm thinking then",q:'good'},{t:"if you say so",q:'bad'}],
   "if i was there right now what would you do":[{t:"order food and put something on",q:'good'},{t:"a lot of things",q:'bad'},{t:"depends on your mood",q:'mid'}],
   "that was your hand in the story right":[{t:"observant",q:'mid'},{t:"detective work",q:'good'},{t:"yes lol",q:'bad'}],
@@ -3050,17 +3053,17 @@ const SCENARIO_CANDIDATES={
   // FUNNY
   "I just saw the most unhinged thing at the mall":[{t:"what happened i need details",q:'good'},{t:"explain everything right now",q:'good'},{t:"that's crazy",q:'bad'}],
   "be honest, were you always this weird or is it just with me":[{t:"you bring it out",q:'good'},{t:"weird is my baseline",q:'mid'},{t:"no",q:'bad'}],
-  "I burned my food AGAIN send help":[{t:"order takeout and admit defeat",q:'good'},{t:"the kitchen is fighting back",q:'good'},{t:"that sucks",q:'bad'}],
+  "I burned my food AGAIN send help":[{t:"order takeout and admit defeat 😭",q:'good'},{t:"the kitchen is fighting back",q:'good'},{t:"that sucks",q:'bad'}],
   "you're actually so random lol":[{t:"that's the brand",q:'good'},{t:"keeps it interesting",q:'mid'},{t:"thanks",q:'bad'}],
-  "I just fell in front of like 20 people I want to disappear":[{t:"did anyone clap",q:'good'},{t:"this is comedy gold",q:'good'},{t:"that's embarrassing",q:'bad'}],
+  "I just fell in front of like 20 people I want to disappear":[{t:"did anyone clap 😭",q:'good'},{t:"this is comedy gold",q:'good'},{t:"that's embarrassing",q:'bad'}],
   "why does your taste in music make absolutely no sense":[{t:"because it's actually good",q:'good'},{t:"the lineup is curated",q:'mid'},{t:"sorry",q:'bad'}],
-  "this is literally the worst day of my entire life":[{t:"what happened, top three worst",q:'good'},{t:"explain in detail",q:'good'},{t:"that's rough",q:'bad'}],
-  "what was that story you just posted 😭":[{t:"a moment of poor judgment",q:'good'},{t:"history was made",q:'mid'},{t:"nothing important",q:'bad'}],
+  "this is literally the worst day of my entire life":[{t:"what happened, top three worst 😭",q:'good'},{t:"explain in detail",q:'good'},{t:"that's rough",q:'bad'}],
+  "what was that story you just posted 😭":[{t:"a moment of poor judgment honestly 😭",q:'good'},{t:"history was made",q:'mid'},{t:"nothing important",q:'bad'}],
   "what are you actually doing right now be honest":[{t:"sitting on the floor for no reason",q:'good'},{t:"texting you obviously",q:'mid'},{t:"nothing",q:'bad'}],
   "this man just tried to sell me crystals at the train station":[{t:"did you buy any, i need to know",q:'good'},{t:"what crystals specifically",q:'good'},{t:"that's wild",q:'bad'}],
   "I just put my phone in the fridge for some reason":[{t:"keeping it cool i respect it",q:'good'},{t:"the phone deserves a rest",q:'mid'},{t:"why",q:'bad'}],
-  "my group chat is genuinely unwell today":[{t:"who started it this time",q:'good'},{t:"i need screenshots immediately",q:'good'},{t:"that's crazy",q:'bad'}],
-  "I cannot do today I need a redo":[{t:"call in sick to life",q:'good'},{t:"day cancelled",q:'mid'},{t:"hang in there",q:'bad'}],
+  "my group chat is genuinely unwell today":[{t:"who started it this time 😭",q:'good'},{t:"i need screenshots immediately",q:'good'},{t:"that's crazy",q:'bad'}],
+  "I cannot do today I need a redo":[{t:"call in sick to life 😭",q:'good'},{t:"day cancelled",q:'mid'},{t:"hang in there",q:'bad'}],
   "no offense but your handwriting is criminal":[{t:"it has personality",q:'good'},{t:"it's a feature",q:'mid'},{t:"sorry",q:'bad'}],
   "did you really just say 'on god' unironically":[{t:"on god i did",q:'good'},{t:"unironically yes",q:'mid'},{t:"my bad",q:'bad'}],
   "I literally meant to say cinnamon NOT cannibal":[{t:"the slip is very telling",q:'good'},{t:"sure cinnamon",q:'good'},{t:"oh okay lol",q:'bad'}],
@@ -3069,7 +3072,7 @@ const SCENARIO_CANDIDATES={
   "if you don't laugh at this we have a problem":[{t:"we don't have a problem",q:'good'},{t:"sent me",q:'mid'},{t:"lmao",q:'bad'}],
   "i just bought a 90 dollar candle and i have no regrets":[{t:"a 90 dollar candle better cure something",q:'good'},{t:"that's a personality purchase",q:'good'},{t:"good for you",q:'bad'}],
   "i'm never drinking again i mean it this time":[{t:"how many times this year",q:'good'},{t:"sure you mean it",q:'mid'},{t:"good for you",q:'bad'}],
-  "i swear my cat is planning my downfall":[{t:"team cat",q:'good'},{t:"the cat is right",q:'good'},{t:"that sucks",q:'bad'}],
+  "i swear my cat is planning my downfall":[{t:"team cat 🤷‍♂️",q:'good'},{t:"the cat is right",q:'good'},{t:"that sucks",q:'bad'}],
   "my uber driver just asked me if i believed in time travel":[{t:"and what did you say",q:'good'},{t:"this is content",q:'mid'},{t:"that's weird",q:'bad'}],
   "i didn't order this but i'm eating it anyway":[{t:"the only correct response",q:'good'},{t:"god mode",q:'mid'},{t:"lol",q:'bad'}],
   "i still think about cringe things i did in 2018":[{t:"2018 me would lose to current me in a fight",q:'good'},{t:"the cringe never leaves",q:'mid'},{t:"same",q:'bad'}],
@@ -3079,10 +3082,10 @@ const SCENARIO_CANDIDATES={
   // CHILL
   "what you up to":[{t:"nothing much you",q:'good'},{t:"just got home, you?",q:'mid'},{t:"i haven't had much sleep",q:'bad'}],
   "how was your day":[{t:"long but chill, yours?",q:'good'},{t:"productive enough",q:'mid'},{t:"good",q:'bad'}],
-  "you never text first 🙄":[{t:"i was about to",q:'mid'},{t:"i wait so you can miss me",q:'good'},{t:"sorry",q:'bad'}],
+  "you never text first 🙄":[{t:"i was about to",q:'mid'},{t:"i wait so you can miss me 🤷‍♂️",q:'good'},{t:"sorry",q:'bad'}],
   "been a while":[{t:"hi disappearing act",q:'good'},{t:"hey stranger",q:'mid'},{t:"yes",q:'bad'}],
   "you're quiet today":[{t:"thinking mode",q:'mid'},{t:"trying to be mysterious",q:'good'},{t:"nothing wrong",q:'bad'}],
-  "I'm bored":[{t:"go cause a small problem",q:'good'},{t:"order food and watch something",q:'good'},{t:"sucks",q:'bad'}],
+  "I'm bored":[{t:"go cause a small problem 👀",q:'good'},{t:"order food and watch something",q:'good'},{t:"sucks",q:'bad'}],
   "randomly thought about you":[{t:"convenient because same",q:'good'},{t:"glad i'm rent-free",q:'mid'},{t:"aw thanks",q:'bad'}],
   "we never do anything fun anymore":[{t:"saturday let's fix it",q:'good'},{t:"that's on us, name a day",q:'good'},{t:"true",q:'bad'}],
   "morning":[{t:"morning",q:'mid'},{t:"hey you",q:'mid'},{t:"good morning",q:'bad'}],
@@ -3104,7 +3107,7 @@ const SCENARIO_CANDIDATES={
   "why do you do the same face in every pic":[{t:"it works",q:'good'},{t:"trademarked",q:'mid'},{t:"sorry",q:'bad'}],
   "i think we have to break up over this playlist":[{t:"the playlist isn't going anywhere",q:'good'},{t:"defending it on principle",q:'mid'},{t:"fine i'll change it",q:'bad'}],
   "oh you're alive, i was about to file a missing report":[{t:"the search party can stand down",q:'good'},{t:"alive and well",q:'mid'},{t:"sorry",q:'bad'}],
-  "admit you missed me":[{t:"never",q:'good'},{t:"absence noted, that's all",q:'good'},{t:"maybe a little",q:'bad'}],
+  "admit you missed me":[{t:"never 🤷‍♂️",q:'good'},{t:"absence noted, that's all",q:'good'},{t:"maybe a little",q:'bad'}],
   "you're kinda full of yourself you know that":[{t:"someone has to be",q:'good'},{t:"with reason",q:'mid'},{t:"sorry",q:'bad'}],
   // MYSTERIOUS
   "so what's your deal exactly":[{t:"depends on what part you mean",q:'good'},{t:"a lot to unpack",q:'mid'},{t:"i'm normal",q:'bad'}],
@@ -3128,7 +3131,7 @@ const SCENARIO_CANDIDATES={
   "i need to see you soon":[{t:"name the day",q:'good'},{t:"saturday, my place",q:'good'},{t:"yeah for sure",q:'bad'}],
   "i can't stop thinking about that night":[{t:"which part specifically",q:'good'},{t:"same, we should fix that",q:'good'},{t:"yeah it was fun",q:'bad'}],
   "what would you actually do if i was there":[{t:"start with food, end somewhere else",q:'good'},{t:"depends what mood you're in",q:'mid'},{t:"lots of things",q:'bad'}],
-  "i thought about you in the shower":[{t:"that's where i live now apparently",q:'good'},{t:"is that an invite",q:'good'},{t:"oh yeah?",q:'bad'}],
+  "i thought about you in the shower":[{t:"that's where i live now apparently 😏",q:'good'},{t:"is that an invite 👀",q:'good'},{t:"oh yeah?",q:'bad'}],
   "my place tonight if you're free":[{t:"on my way",q:'good'},{t:"what time",q:'mid'},{t:"maybe",q:'bad'}],
   // PLANS
   "we could just stay in and watch something":[{t:"down, i'll grab snacks",q:'good'},{t:"yes, you pick the show",q:'good'},{t:"sure",q:'bad'}],
@@ -3145,16 +3148,16 @@ const SCENARIO_CANDIDATES={
 
 // Per-tone fallback candidates for scenarios not in the curated map — at least on-tone if not exactly on-message
 const TONE_FALLBACK={
-  flirty:[{t:"keep talking like that",q:'good'},{t:"noted with interest",q:'mid'},{t:"thanks i guess",q:'bad'}],
-  funny:[{t:"this is a developing situation",q:'good'},{t:"call me with updates",q:'mid'},{t:"that's wild",q:'bad'}],
+  flirty:[{t:"keep talking like that 👀",q:'good'},{t:"noted with interest",q:'mid'},{t:"thanks i guess",q:'bad'}],
+  funny:[{t:"this is a developing situation 😭",q:'good'},{t:"call me with updates",q:'mid'},{t:"that's wild",q:'bad'}],
   chill:[{t:"all good here, you?",q:'good'},{t:"same energy",q:'mid'},{t:"okay",q:'bad'}],
-  savage:[{t:"that's a you problem",q:'good'},{t:"keep talking",q:'mid'},{t:"whatever",q:'bad'}],
+  savage:[{t:"that's a you problem 🤷‍♂️",q:'good'},{t:"keep talking",q:'mid'},{t:"whatever",q:'bad'}],
   mysterious:[{t:"depends on the day",q:'good'},{t:"that's not a small question",q:'mid'},{t:"idk",q:'bad'}],
   bold:[{t:"yes, what's the next move",q:'good'},{t:"direct answer is yes",q:'mid'},{t:"maybe",q:'bad'}],
   wholesome:[{t:"that means a lot",q:'good'},{t:"i'm here for it",q:'mid'},{t:"aw thanks",q:'bad'}],
-  spicy:[{t:"keep going, i'm listening",q:'good'},{t:"is that a dare",q:'mid'},{t:"oh yeah?",q:'bad'}],
+  spicy:[{t:"keep going, i'm listening 👀",q:'good'},{t:"is that a dare",q:'mid'},{t:"oh yeah?",q:'bad'}],
   plans:[{t:"down, when",q:'good'},{t:"i'm in, pick a day",q:'mid'},{t:"sure sometime",q:'bad'}],
-  dry:[{t:"bet",q:'mid'},{t:"that's all",q:'good'},{t:"k",q:'bad'}]
+  dry:[{t:"bet",q:'mid'},{t:"that's all 💀",q:'good'},{t:"k",q:'bad'}]
 };
 
 function pickCandidateReply(scenario){
@@ -3300,6 +3303,11 @@ function dismissExportPrompt(){
   document.getElementById('contrib-export-prompt').classList.remove('show');
 }
 const TRIS_EMAIL='tristan.sooklal@icloud.com';
+const TRIS_IG='trislovesu.7';
+// Keep the most recent export blob+file around so the "send via Instagram" button can re-share it
+let _lastExportFile=null;
+let _lastExportFilename='';
+
 function exportContribAnswers(){
   if(!contribState.answers.length){showToast('no answers to export yet');return}
   const data={
@@ -3311,14 +3319,49 @@ function exportContribAnswers(){
     answers:contribState.answers
   };
   const filename=`rizz-contrib-${contribState.gender}-${(contribState.name||'anon').replace(/[^a-z0-9]/gi,'_')}-${new Date().toISOString().slice(0,10)}.json`;
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  // Try to build a real File object (needed for the Web Share API on mobile)
+  let file=null;
+  try{file=new File([blob],filename,{type:'application/json'});}catch(e){/* old browsers */}
+  _lastExportFile=file;
+  _lastExportFilename=filename;
+  // Trigger download for desktop / fallback
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;
-  a.download=filename;
+  const a=document.createElement('a');a.href=url;a.download=filename;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   // After download, show a tutorial modal so they know HOW to send it back
   showSendBackTutorial(filename);
+}
+
+// 📲 Try to share the file directly to Instagram (or another app) via the OS share sheet.
+// On mobile: opens the share sheet with the file attached → user picks Instagram → picks Tris → done.
+// On desktop or unsupported browsers: falls back to opening Tris's IG DM and tells the user to drag the downloaded file in.
+async function shareToInstagram(){
+  const file=_lastExportFile;
+  const igDmUrl=`https://ig.me/m/${TRIS_IG}`; // deep-link straight to Tris's DM thread on Instagram
+  // Path 1 — modern mobile browsers: Web Share API with files
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({
+        files:[file],
+        title:"Don't Miss™ training",
+        text:`hey tris — my Don't Miss™ training answers (${contribState.answers.length} from ${contribState.name||'anon'}, ${contribState.gender}). pick Instagram → @${TRIS_IG} to send 📲`
+      });
+      showToast('📲 shared — pick Instagram → @'+TRIS_IG);
+      return;
+    }catch(err){
+      if(err&&err.name==='AbortError')return; // user cancelled
+      console.warn('share failed, falling back',err);
+    }
+  }
+  // Path 2 — no Web Share API or no file support: open Instagram DM and instruct manual attach
+  const ok=confirm("Your browser can't auto-attach the file to Instagram (this is an Instagram limit, not us).\n\nWhen you tap OK we'll open Tris's Instagram DM. From there:\n1. Tap the 📎 / + icon in the message bar\n2. Pick the file we just downloaded: "+_lastExportFilename+"\n3. Send.\n\nOpen Instagram DM now?");
+  if(!ok)return;
+  // ig.me deep-links to the app on mobile, falls back to web on desktop
+  window.open(igDmUrl,'_blank','noopener');
+  showToast('📲 opened DM with @'+TRIS_IG+' — attach the file from downloads');
 }
 
 function showSendBackTutorial(filename){
@@ -3331,19 +3374,20 @@ function showSendBackTutorial(filename){
   const bodyEl=document.getElementById('contrib-intro-body');
   const countEl=document.getElementById('contrib-intro-count');
   const closeBtn=document.getElementById('contrib-intro-close');
+  // Detect whether direct file-share to Instagram will actually work (mobile + Web Share API w/ files)
+  const canDirectShare=!!(_lastExportFile&&navigator.canShare&&navigator.canShare({files:[_lastExportFile]}));
   titleEl.textContent='📬 how to send your file back';
   bodyEl.innerHTML=`
     <div style="text-align:left;font-size:13px;line-height:1.6">
       <p style="color:var(--text);margin-bottom:8px"><strong>✅ your file just downloaded:</strong></p>
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text2);margin-bottom:14px;word-break:break-all">${filename}</div>
-      <p style="color:var(--text);margin-bottom:6px"><strong>📤 send it to tris one of these ways:</strong></p>
-      <ol style="padding-left:20px;color:var(--text2);margin-bottom:14px">
-        <li style="margin-bottom:6px"><strong style="color:var(--text)">email</strong> — tap the button below, attach the file from your downloads</li>
-        <li style="margin-bottom:6px"><strong style="color:var(--text)">DM</strong> — whoever shared this link on their story (instagram/whatsapp) — drop the file in their DMs and they'll forward it</li>
-      </ol>
-      <a href="${mailto}" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#9b6ee0,#5b9ef5);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;text-decoration:none;text-align:center;box-shadow:0 0 32px rgba(155,110,224,0.3);margin-bottom:8px">📧 email tris now</a>
-      <div style="text-align:center;font-size:11px;color:var(--text3);margin-bottom:4px">${TRIS_EMAIL}</div>
-      <button onclick="copyEmailAddress()" style="display:block;width:100%;padding:8px;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11.5px;cursor:pointer;text-decoration:underline">copy email address</button>
+      <p style="color:var(--text);margin-bottom:8px"><strong>📤 fastest way: send it on instagram</strong></p>
+      <button onclick="shareToInstagram()" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#f09433,#dc2743 25%,#cc2366 50%,#bc1888 75%,#8e2db5);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 0 32px rgba(220,39,67,0.32);margin-bottom:6px">📲 send via instagram DM <span style="font-weight:500;opacity:.92">→ @${TRIS_IG}</span></button>
+      <div style="font-size:10.5px;color:var(--text3);text-align:center;margin-bottom:14px;font-style:italic">${canDirectShare?'taps share sheet → pick Instagram → pick @'+TRIS_IG+' → file auto-attaches':'opens DM with tris → attach the file from downloads (instagram blocks auto-attach from web)'}</div>
+      <p style="color:var(--text);margin-bottom:6px"><strong>or email it:</strong></p>
+      <a href="${mailto}" style="display:block;width:100%;padding:11px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;text-decoration:none;text-align:center;margin-bottom:6px">📧 email tris (attach the file)</a>
+      <div style="text-align:center;font-size:10.5px;color:var(--text3);margin-bottom:4px">${TRIS_EMAIL}</div>
+      <button onclick="copyEmailAddress()" style="display:block;width:100%;padding:6px;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;text-decoration:underline">copy email</button>
     </div>`;
   countEl.textContent='';
   closeBtn.textContent='done';
@@ -4921,6 +4965,7 @@ WHEN SHE SENDS MULTIPLE BUBBLES IN A ROW:
 STRICT RULES:
 - Sound exactly like a real person texting — not AI, not a therapist, not a script
 - Zero exclamation marks unless the style explicitly uses them
+- EMOJI USE: light flavour is good — MAX 1 emoji per reply, at least 2 of the 3 must have NO emoji. Good ones: 😭 👀 😏 💀 🤷‍♂️ 🫡. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Emoji is a topper, never a crutch.
 - No cringe, no overexplaining, no therapy-speak ("I hear you", "that makes sense")
 - No AI phrases: "certainly", "of course", "great question", "I'd love to"
 - Lowercase preferred — matches how people actually text
@@ -5065,6 +5110,7 @@ RULES:
 - BUILD ON HER WORLD — if she's mentioned anything earlier (her job, her cat, her weekend, a show), call back to it. People feel heard when you remember details.
 - Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
+- EMOJI USE: light flavour is good — MAX 1 emoji per reply, at LEAST 2 of the 3 must have NO emoji. Good ones: 😭 👀 😏 💀 🤷‍♂️ 🫡. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Emoji is a topper, never a crutch — never substitute for wit.
 - Lowercase preferred — mix lengths across the 3 replies, not all one-liners
 - You MUST return EXACTLY 3 replies in the array — never fewer
 - All 3 must be COMPLETELY different from each other: different opening words, different angle, different length, AND different conversational move (e.g. one question, one tease, one substantive answer+pivot). They are NOT rephrasings of one idea.
@@ -5276,6 +5322,7 @@ OPENER MOVES (pick one that fits the story best — match the move to what you s
 
 STRICT RULES:
 - ZERO exclamation marks, ever
+- EMOJI USE: at most 1 emoji, only if it punches the line up. Don't force one in — most great openers have NONE. Good: 😭 👀 😏 💀. Avoid: 😂 ❤️ 🔥 😍 (overused).
 - No feminine words: omg, bestie, slay, aww, obsessed
 - No AI phrases: "I'd love to", "certainly", "that sounds", "what a"
 - Lowercase like a real guy texting
