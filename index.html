@@ -521,6 +521,12 @@ input[type="text"]::placeholder{color:var(--text3)}
 .qr-overlay::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,0.045),transparent 50%),radial-gradient(circle at 75% 80%,rgba(255,255,255,0.03),transparent 55%);animation:qrGlowPulse 9s ease-in-out infinite;pointer-events:none}
 @keyframes qrGlowPulse{0%,100%{opacity:.55}50%{opacity:1}}
 .qr-stage{width:100%;max-width:440px;position:relative;z-index:1}
+/* back button — top-left, only shown on backable steps */
+.qr-back-btn{position:fixed;top:calc(18px + env(safe-area-inset-top));left:18px;z-index:2050;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:8px 14px 8px 12px;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px);transition:all .18s cubic-bezier(.22,1,.36,1);display:none;align-items:center;gap:5px}
+.qr-back-btn.show{display:inline-flex;animation:qrBackIn .35s cubic-bezier(.22,1,.36,1)}
+.qr-back-btn:hover{color:#fff;border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);transform:translateX(-2px)}
+.qr-back-btn:active{transform:translateX(-3px) scale(.97)}
+@keyframes qrBackIn{0%{opacity:0;transform:translateX(-8px)}100%{opacity:1;transform:translateX(0)}}
 .qr-card{background:linear-gradient(170deg,rgba(28,28,32,0.92),rgba(14,14,18,0.96));border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:34px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 60px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.05);backdrop-filter:blur(14px);animation:qrCardIn .55s cubic-bezier(.22,1,.36,1)}
 @keyframes qrCardIn{0%{opacity:0;transform:translateY(20px) scale(.97);filter:blur(4px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 .qr-card.swap-out{animation:qrCardOut .26s cubic-bezier(.55,0,.7,.4) forwards}
@@ -712,6 +718,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 
 /* ── LIVE HELP ── */
 .hdr-icon.live-icon{border-color:rgba(77,179,122,0.4)}
+@keyframes adminBadgePulse{0%,100%{transform:scale(1);box-shadow:0 0 14px rgba(224,85,85,0.7)}50%{transform:scale(1.18);box-shadow:0 0 22px rgba(224,85,85,1)}}
+#admin-icon[data-show="1"]{display:inline-flex!important}
+#admin-badge[data-show="1"]{display:flex!important}
 .hdr-icon.live-icon:hover{border-color:var(--green);background:var(--green-bg)}
 .live-overlay{position:fixed;inset:0;z-index:960;background:var(--bg);display:none;flex-direction:column;overflow-y:auto}
 .live-overlay.open{display:flex}
@@ -840,6 +849,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 
 <!-- 📲 QR ONBOARDING OVERLAY — special landing for users who scan the QR code -->
 <div class="qr-overlay" id="qr-overlay">
+  <button class="qr-back-btn" id="qr-back-btn" onclick="qrBack()">← back</button>
   <div class="qr-stage" id="qr-stage"></div>
 </div>
 
@@ -917,6 +927,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       <button class="hdr-icon" onclick="openHistoryPanel()" title="Reply history">🕑<span class="history-count" id="history-count" style="position:absolute;top:-6px;right:-6px;min-width:18px;font-size:10px;padding:0 4px">0</span></button>
       <button class="hdr-icon" onclick="openSettingsPanel()" title="Settings">⚙️</button>
       <button class="hdr-icon" onclick="openTraining()" title="Train Don't Miss" id="train-icon-btn">🎯<span class="train-empty-badge" id="train-badge"></span></button>
+      <button class="hdr-icon" id="admin-icon" onclick="openAdminPanel()" title="Admin · live scans" style="display:none;border-color:rgba(255,205,70,0.45);background:linear-gradient(135deg,rgba(50,42,18,0.85),rgba(28,24,12,0.9));color:#ffcd46">👑<span id="admin-badge" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(224,85,85,0.7);animation:adminBadgePulse 1.6s ease-in-out infinite">!</span></button>
     </div>
   </div>
 
@@ -1122,6 +1133,27 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           </div>
           <div id="gh-status" style="font-size:12px;color:var(--text3)"></div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 👑 ADMIN PANEL — owner only, live QR scan feed -->
+<div class="panel-overlay" id="admin-overlay" onclick="if(event.target===this)closePanel('admin')">
+  <div class="panel-sheet">
+    <div class="panel-handle"></div>
+    <div class="panel-head"><h2>👑 Admin · Live Scans</h2><button class="panel-close" onclick="closePanel('admin')">Done</button></div>
+    <div class="panel-body">
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace" id="admin-stat-total">0</div><div style="font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">total scans</div></div>
+        <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace" id="admin-stat-24h">0</div><div style="font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">last 24h</div></div>
+        <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace" id="admin-stat-unseen">0</div><div style="font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em">new (!)</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.55">Live feed of QR scans. Each scan also posts to your Discord channel for push notifications.</p>
+      <div id="admin-scan-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:50vh;overflow-y:auto"></div>
+      <div style="display:flex;gap:8px">
+        <button class="action-btn" style="flex:1" onclick="adminMarkAllSeen()">Mark all seen</button>
+        <button class="action-btn" style="flex:none;padding:10px 16px" onclick="adminClearScanLog()">Clear log</button>
       </div>
     </div>
   </div>
@@ -1455,6 +1487,8 @@ async function submitAuth(){
 function startSession(email){
   currentUser=email;
   store.setItem('rizz_session',email);
+  // 👑 owner-only admin badge + periodic refresh
+  setTimeout(()=>{updateAdminBadge();if(isOwner()&&!window._adminPollTimer)window._adminPollTimer=setInterval(updateAdminBadge,30000);},250);
   const ls=document.getElementById('login-screen');
   ls.classList.add('out');
   const after=()=>{
@@ -1611,6 +1645,58 @@ function exportLiveMemory(){
   a.click();URL.revokeObjectURL(url);showToast('Memory exported');
 }
 function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
+
+// 👑 ADMIN PORTAL ─────────────────────────────
+// Shows only when the dev account is signed in. Tracks local scan log + Discord webhook fires.
+function isOwner(){return (currentUser||'').toLowerCase()===DEV_EMAIL.toLowerCase();}
+function getScanLog(){try{return JSON.parse(store.getItem('rizz_scan_log')||'[]')}catch(e){return[]}}
+function getLastSeenScans(){return Number(store.getItem('rizz_admin_last_seen')||0);}
+function setLastSeenScans(ts){store.setItem('rizz_admin_last_seen',String(ts));updateAdminBadge();}
+function updateAdminBadge(){
+  const icon=document.getElementById('admin-icon');
+  const badge=document.getElementById('admin-badge');
+  if(!icon||!badge)return;
+  if(!isOwner()){icon.style.display='none';return;}
+  icon.style.display='inline-flex';
+  const log=getScanLog();
+  const lastSeen=getLastSeenScans();
+  const unseen=log.filter(s=>s.ts>lastSeen).length;
+  badge.style.display=unseen>0?'flex':'none';
+  badge.textContent=unseen>9?'!':(unseen||'!');
+}
+function openAdminPanel(){
+  if(!isOwner()){showToast('owner only');return;}
+  renderAdminPanel();
+  document.getElementById('admin-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function renderAdminPanel(){
+  if(!isOwner()){closePanel('admin');return;} // belt + suspenders — render also gates
+  const log=getScanLog();
+  const lastSeen=getLastSeenScans();
+  const now=Date.now();
+  const last24=log.filter(s=>now-s.ts<24*60*60*1000).length;
+  const unseen=log.filter(s=>s.ts>lastSeen).length;
+  document.getElementById('admin-stat-total').textContent=log.length;
+  document.getElementById('admin-stat-24h').textContent=last24;
+  document.getElementById('admin-stat-unseen').textContent=unseen;
+  const list=document.getElementById('admin-scan-list');
+  if(!log.length){list.innerHTML='<div style="padding:24px 14px;text-align:center;color:var(--text3);font-size:13px">no scans yet — once someone scans the QR, they\'ll show up here live 📡</div>';return;}
+  list.innerHTML=log.slice(0,50).map(s=>{
+    const isNew=s.ts>lastSeen;
+    const when=new Date(s.ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid ${isNew?'rgba(224,85,85,0.4)':'var(--border)'};border-radius:10px">
+      <span style="font-size:14px">${isNew?'🔴':'📡'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--text);font-weight:600;line-height:1.3">${(s.location||'unknown').replace(/</g,'&lt;')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace">${when}</div>
+      </div>
+      ${isNew?'<span style="font-size:9px;font-weight:800;color:var(--red);letter-spacing:.08em;text-transform:uppercase">new</span>':''}
+    </div>`;
+  }).join('');
+}
+function adminMarkAllSeen(){setLastSeenScans(Date.now());renderAdminPanel();showToast('all marked seen');}
+function adminClearScanLog(){if(!confirm('clear the local scan log? discord channel keeps the history.'))return;store.removeItem('rizz_scan_log');setLastSeenScans(0);renderAdminPanel();updateAdminBadge();showToast('scan log cleared');}
 
 // ── LIVE HELP (desktop screen-share) ─────────
 let liveStream=null;
@@ -3055,6 +3141,8 @@ function isQrEntry(){
 
 function maybeOpenQrOnboarding(){
   if(!isQrEntry())return false;
+  // 📡 Fire scan tracker — runs once per tab session, posts to Discord + logs locally
+  fireScanWebhook();
   // Hide the login screen so it doesn't flash
   const login=document.getElementById('login-screen');
   if(login){login.style.display='none';}
@@ -3065,15 +3153,31 @@ function maybeOpenQrOnboarding(){
   return true;
 }
 
+// 🔙 Per-step back map — skips auto-advancing intermediates (loading + teaser) when going backwards
+// so the user doesn't have to sit through them again
+const QR_BACK_MAP={1:0,2:1,3:2,4:3,7:4,8:7,9:8};
+function qrBack(){
+  if(qrStep in QR_BACK_MAP){
+    qrStep=QR_BACK_MAP[qrStep];
+    renderQrStep();
+  }
+}
+function updateQrBackVisibility(){
+  const btn=document.getElementById('qr-back-btn');
+  if(!btn)return;
+  btn.classList.toggle('show',qrStep in QR_BACK_MAP);
+}
+
 function renderQrStep(){
   const stage=document.getElementById('qr-stage');
   // micro fade between steps using swap-out helper
   const old=stage.querySelector('.qr-card');
   if(old){
     old.classList.add('swap-out');
-    setTimeout(()=>actuallyRenderStep(stage),260);
+    setTimeout(()=>{actuallyRenderStep(stage);updateQrBackVisibility();},260);
   }else{
     actuallyRenderStep(stage);
+    updateQrBackVisibility();
   }
 }
 
@@ -3096,23 +3200,62 @@ function actuallyRenderStep(stage){
   // post-render wiring per step
   if(qrStep===1){
     const inp=stage.querySelector('#qr-name-input');
-    if(inp){inp.focus();inp.addEventListener('input',()=>{
-      const btn=stage.querySelector('#qr-name-next');
-      const ok=inp.value.trim().length>=3;
-      btn.disabled=!ok;
-      btn.style.opacity=ok?'1':'.5';
-      btn.style.cursor=ok?'pointer':'not-allowed';
-      // clear any inline error as soon as they keep typing
-      const errEl=document.getElementById('qr-name-err');
-      if(errEl&&errEl.textContent)errEl.textContent='';
-      inp.style.borderColor='';
-    });
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=3){qrSubmitName();}});}
+    if(inp){
+      // 🔙 Restore previously typed name if returning via Back
+      if(contribState.name)inp.value=contribState.name;
+      inp.focus();
+      const syncBtn=()=>{
+        const btn=stage.querySelector('#qr-name-next');
+        const ok=inp.value.trim().length>=3;
+        btn.disabled=!ok;
+        btn.style.opacity=ok?'1':'.5';
+        btn.style.cursor=ok?'pointer':'not-allowed';
+      };
+      syncBtn();
+      inp.addEventListener('input',()=>{
+        syncBtn();
+        const errEl=document.getElementById('qr-name-err');
+        if(errEl&&errEl.textContent)errEl.textContent='';
+        inp.style.borderColor='';
+      });
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=3){qrSubmitName();}});
+    }
+  }
+  if(qrStep===2){
+    // 🔙 Restore gender pick if returning
+    if(contribState.gender){
+      document.querySelectorAll('.qr-pick-btn').forEach(b=>b.classList.toggle('on',b.textContent.toLowerCase().startsWith(contribState.gender==='male'?'👨':'👩')));
+    }
   }
   if(qrStep===3){
-    // email step — focus the input
     const einp=document.getElementById('qr-email-input');
-    if(einp){einp.focus();einp.addEventListener('input',()=>{const errEl=document.getElementById('qr-email-err');if(errEl&&errEl.textContent)errEl.textContent='';einp.style.borderColor='';});einp.addEventListener('keydown',e=>{if(e.key==='Enter')qrSubmitEmail();});}
+    if(einp){
+      if(contribState.email)einp.value=contribState.email; // 🔙 restore typed email
+      einp.focus();
+      einp.addEventListener('input',()=>{const errEl=document.getElementById('qr-email-err');if(errEl&&errEl.textContent)errEl.textContent='';einp.style.borderColor='';});
+      einp.addEventListener('keydown',e=>{if(e.key==='Enter')qrSubmitEmail();});
+    }
+  }
+  if(qrStep===4){
+    // 🔙 Restore DM-exp pick if returning
+    if(contribState.dmExperience!==null&&contribState.dmExperience!==undefined){
+      const want=contribState.dmExperience?'yeah':'never';
+      document.querySelectorAll('.qr-pick-btn').forEach(b=>b.classList.toggle('on',b.textContent.toLowerCase().startsWith(want)));
+    }
+  }
+  if(qrStep===7){
+    // 🔙 Restore skill rating if returning
+    if(contribState.skillRating){
+      document.querySelectorAll('.qr-skill-btn').forEach(b=>b.classList.toggle('on',Number(b.dataset.n)===contribState.skillRating));
+      const btn=document.getElementById('qr-skill-next');
+      if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
+    }
+  }
+  if(qrStep===8){
+    // 🔙 Restore texting style pick if returning
+    if(contribState.textingStyle){
+      document.querySelectorAll('.qr-style-btn').forEach(b=>b.classList.toggle('on',b.dataset.id===contribState.textingStyle));
+    }
   }
   if(qrStep===5){
     // loading screen — pick a joke, hold for 1.6s, then advance into the teaser
@@ -3478,6 +3621,8 @@ function qrSlideAdvance(){
 
 // ── STEP 7: Handoff to existing contributor question flow ──
 function qrStepHandoff(){
+  // 💾 Save profile so next visit skips the intake
+  saveContribProfile();
   // Close QR overlay, open contributor overlay with state pre-populated.
   // Build the shuffled question queue and skip the name/gender intake screen.
   setTimeout(()=>{
@@ -3533,9 +3678,68 @@ let contribState={
 };
 const EXPORT_PROMPT_EVERY=8;
 
+// 💾 Persist contributor profile so returning contributors don't re-enter name/gender/email every session
+function saveContribProfile(){
+  if(!contribState.name||!contribState.gender)return;
+  try{
+    const profile={
+      name:contribState.name,
+      gender:contribState.gender,
+      entrySource:contribState.entrySource||'direct',
+      skillRating:contribState.skillRating,
+      dmExperience:contribState.dmExperience,
+      textingStyle:contribState.textingStyle,
+      email:contribState.email,
+      lastUsed:Date.now()
+    };
+    store.setItem('rizz_contrib_profile',JSON.stringify(profile));
+  }catch(e){console.warn('profile save failed',e)}
+}
+function loadContribProfile(){
+  try{const raw=store.getItem('rizz_contrib_profile');return raw?JSON.parse(raw):null;}catch(e){return null}
+}
+function clearContribProfile(){store.removeItem('rizz_contrib_profile');}
+
 function openContribute(){
-  // Show a sleek name + gender picker first
   document.getElementById('contrib-overlay').classList.add('open');
+  // 🪄 Returning contributor? Skip the intake — restore their profile and dive into the questions
+  const profile=loadContribProfile();
+  if(profile&&profile.name&&profile.gender){
+    Object.assign(contribState,profile,{answers:[],currentIdx:0,queue:[],promptShownAt:0});
+    renderContribWelcomeBack(profile);
+    return;
+  }
+  renderContribIntake();
+}
+
+// "welcome back" screen — one tap to continue, or restart from scratch
+function renderContribWelcomeBack(profile){
+  const stage=document.getElementById('contrib-stage');
+  const styleEmoji={deadpan:'💀',playful:'😏',chaotic:'🌀',longform:'📝'}[profile.textingStyle]||'';
+  const subBits=[];
+  if(profile.skillRating)subBits.push(`self-rated ${profile.skillRating}/10`);
+  if(profile.textingStyle)subBits.push(`${styleEmoji} ${profile.textingStyle}`);
+  if(profile.email)subBits.push(`📧 on the list`);
+  stage.innerHTML=`
+    <div class="contrib-card" style="text-align:center;padding:36px 26px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;font-weight:700">returning trainer</div>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:6px">welcome back, ${(profile.name||'').replace(/</g,'&lt;')} 👀</h2>
+      <p style="font-size:12.5px;color:var(--text3);line-height:1.55;margin-bottom:22px">${subBits.length?subBits.join(' · '):'we remember you.'}</p>
+      <button onclick="continueAsReturning()" style="width:100%;padding:14px;background:linear-gradient(180deg,#f5f5f5,#d8d8d8);color:#0a0a0c;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.5),0 0 28px rgba(255,255,255,0.18)">continue as ${(profile.name||'').replace(/</g,'&lt;')} →</button>
+      <button onclick="restartContribProfile()" style="width:100%;margin-top:10px;padding:11px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer">not you? start fresh →</button>
+    </div>`;
+}
+function continueAsReturning(){
+  // Build the shuffled queue and go straight to the upload reminder + first question (skips intake + intro popups)
+  contribState.queue=SCENARIO_BANK.map((_,i)=>i).sort(()=>Math.random()-0.5);
+  contribState.currentIdx=0;
+  // Show only the upload reminder popup — they already know how it works
+  showUploadReminder();
+}
+function restartContribProfile(){
+  if(!confirm('clear your saved profile and start fresh? this wipes your name, gender, email + the rest from this device.'))return;
+  clearContribProfile();
+  contribState={name:'',gender:'',entrySource:contribState.entrySource||'',skillRating:null,dmExperience:null,textingStyle:null,email:null,answers:[],currentIdx:0,queue:[],promptShownAt:0};
   renderContribIntake();
 }
 function closeContribute(){
@@ -3607,6 +3811,8 @@ function startContribSession(){
   }
   contribState.name=res.name;
   if(!contribState.gender)return;
+  // 💾 Save profile so next visit skips the intake
+  saveContribProfile();
   // build a shuffled queue of scenario indexes
   contribState.queue=SCENARIO_BANK.map((_,i)=>i).sort(()=>Math.random()-0.5);
   contribState.currentIdx=0;
@@ -4031,6 +4237,37 @@ const TRIS_WHATSAPP='18683512442'; // wa.me format — country code + number, no
 // Contributor taps "send to tris" → JSON file is POSTed straight to your Discord channel as an attachment. Zero friction.
 // IMPORTANT: this URL is public (visible in JS). If abused, delete the webhook and create a new one — takes 5 sec.
 const DISCORD_WEBHOOK_URL='https://discord.com/api/webhooks/1507674467172876338/veQ7ku90F_aEX_xOWBTvbqougcjU7MTJR31NgtR9ESwgV4FRCRPwJdkXc8DuaO_bkCh7';
+// 📡 Scan tracker — dedicated webhook (separate channel from submissions)
+const DISCORD_SCAN_WEBHOOK_URL='https://discord.com/api/webhooks/1507845840981594143/yJT7Nf7_PVtDtla78NIycIqfih5_ACcPk0PsqCd5xZiGpmBs_ohYSCRqi8tzt4alO1Uv';
+
+// Tracks per-tab scan count so refreshes don't spam Discord (only fires once per tab session)
+async function fireScanWebhook(){
+  if(!DISCORD_SCAN_WEBHOOK_URL)return;
+  // Dedupe: don't fire twice in the same browser tab session
+  try{if(sessionStorage.getItem('rizz_scan_fired'))return;sessionStorage.setItem('rizz_scan_fired','1');}catch(e){}
+  // Best-effort location lookup (free service, no key)
+  let loc='unknown location';
+  try{
+    const r=await fetch('https://ipapi.co/json/',{cache:'no-store'});
+    if(r.ok){const j=await r.json();
+      const parts=[j.city,j.region,j.country_name].filter(Boolean);
+      if(parts.length)loc=parts.join(', ');
+    }
+  }catch(e){}
+  // Local time string in user's locale
+  const now=new Date();
+  const time=now.toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit',hour12:true});
+  const content=`📡 **scan!** · 📍 ${loc} · 🕐 ${time}`;
+  try{
+    await fetch(DISCORD_SCAN_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content})});
+    // also push to local scan log so the in-app admin portal can show recent ones
+    try{
+      const log=JSON.parse(store.getItem('rizz_scan_log')||'[]');
+      log.unshift({ts:Date.now(),location:loc});
+      store.setItem('rizz_scan_log',JSON.stringify(log.slice(0,200)));
+    }catch(e){}
+  }catch(e){console.warn('scan webhook failed',e)}
+}
 
 async function autoSendToDiscord(){
   if(!DISCORD_WEBHOOK_URL||DISCORD_WEBHOOK_URL==='REPLACE_ME_WITH_YOUR_WEBHOOK_URL'){
@@ -4248,6 +4485,8 @@ function showContribSuccess(){
   // Keep a count for the success card, then empty the array.
   contribState._sentCount=contribState.answers.length;
   contribState.answers=[];
+  // 💾 Re-save profile with refreshed lastUsed timestamp
+  saveContribProfile();
   stage.innerHTML=`
     <div class="contrib-card" style="text-align:center;padding:38px 24px">
       <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#4db37a,#3a9a64);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 0 50px rgba(77,179,122,0.5);animation:saveCirclePop .55s cubic-bezier(.34,1.56,.64,1)">
