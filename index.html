@@ -545,6 +545,16 @@ input[type="text"]::placeholder{color:var(--text3)}
 .qr-skill-btn:hover{color:#fff;border-color:rgba(255,255,255,0.25)}
 .qr-skill-btn.on{background:#fff;color:#0a0a0c;border-color:#fff;transform:scale(1.1);box-shadow:0 0 18px rgba(255,255,255,0.3)}
 .qr-skill-anchor{font-size:11px;color:rgba(255,255,255,0.35);text-align:center;font-style:italic;margin-bottom:18px}
+
+/* Texting-style grid — 2x2 identity-claim cards */
+.qr-style-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.qr-style-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px;background:rgba(255,255,255,0.02);border:1.5px solid rgba(255,255,255,0.08);border-radius:14px;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .22s cubic-bezier(.22,1,.36,1);text-align:center;min-height:104px}
+.qr-style-btn:hover{border-color:rgba(255,255,255,0.25);color:#fff;background:rgba(255,255,255,0.05);transform:translateY(-2px)}
+.qr-style-btn.on{border-color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.09);color:#fff;box-shadow:0 0 28px rgba(255,255,255,0.15),inset 0 0 14px rgba(255,255,255,0.04);transform:scale(1.03)}
+.qr-style-emoji{display:block;font-size:26px;margin-bottom:6px;filter:grayscale(.25)}
+.qr-style-btn.on .qr-style-emoji{filter:grayscale(0)}
+.qr-style-label{display:block;font-size:13px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:3px}
+.qr-style-sub{display:block;font-size:10.5px;font-weight:400;color:rgba(255,255,255,0.45);line-height:1.3;font-style:italic}
 .qr-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 10px;min-height:200px}
 .qr-loading-spinner{width:42px;height:42px;border:2.5px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.8);border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:18px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -3072,12 +3082,14 @@ function actuallyRenderStep(stage){
     0:qrStepWelcome,
     1:qrStepName,
     2:qrStepGender,
-    3:qrStepDmExperience,
-    4:qrStepLoading,
-    5:qrStepTeaser,
-    6:qrStepSkillRating,
-    7:qrStepSlideshow,
-    8:qrStepHandoff
+    3:qrStepEmail,
+    4:qrStepDmExperience,
+    5:qrStepLoading,
+    6:qrStepTeaser,
+    7:qrStepSkillRating,
+    8:qrStepTextingStyle,
+    9:qrStepSlideshow,
+    10:qrStepHandoff
   };
   const fn=steps[qrStep]||qrStepWelcome;
   stage.innerHTML=fn();
@@ -3097,15 +3109,20 @@ function actuallyRenderStep(stage){
     });
     inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=3){qrSubmitName();}});}
   }
-  if(qrStep===4){
-    // loading screen — pick a joke, hold for 1.6s, then advance into the teaser
-    setTimeout(()=>{qrStep=5;renderQrStep();},1600);
+  if(qrStep===3){
+    // email step — focus the input
+    const einp=document.getElementById('qr-email-input');
+    if(einp){einp.focus();einp.addEventListener('input',()=>{const errEl=document.getElementById('qr-email-err');if(errEl&&errEl.textContent)errEl.textContent='';einp.style.borderColor='';});einp.addEventListener('keydown',e=>{if(e.key==='Enter')qrSubmitEmail();});}
   }
   if(qrStep===5){
-    // teaser — hold for 3s to entice, then go to skill rating
-    setTimeout(()=>{qrStep=6;renderQrStep();},3000);
+    // loading screen — pick a joke, hold for 1.6s, then advance into the teaser
+    setTimeout(()=>{qrStep=6;renderQrStep();},1600);
   }
-  if(qrStep===7){
+  if(qrStep===6){
+    // teaser — hold for 3s to entice, then go to skill rating
+    setTimeout(()=>{qrStep=7;renderQrStep();},3000);
+  }
+  if(qrStep===9){
     // slideshow auto-advances dots; user taps "next" to progress slides
     qrSlideshowState={slide:0};
     qrRenderSlideshow();
@@ -3127,7 +3144,7 @@ function qrStepWelcome(){
 // ── STEP 1: Name ──
 function qrStepName(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">01 / 05</div>
+    <div class="qr-eyebrow">01 / 07</div>
     <div class="qr-headline">what do we call you?</div>
     <div class="qr-sub">first name or @handle — real one. tris needs to credit you in the contributors panel.</div>
     <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or @zoey.k" maxlength="40" autocomplete="off" />
@@ -3139,31 +3156,70 @@ function qrStepName(){
 // 🔒 Stricter name validator — blocks lazy placeholders so the contributors panel actually has real names.
 // Returns {ok:bool, msg:string}
 const NAME_BLOCKLIST=new Set([
-  'idk','idc','guess','none','no','nope','nah','n/a','na','nil','null','undefined',
-  'lol','lmao','lmfao','xd','haha','hehe',
-  'hi','hey','hello','sup','yo',
-  'yes','y','ok','okay','sure','maybe','meh','whatever',
-  'anonymous','anon','anonymos','anonimous','someone','person','user','test','testing','test123','example',
-  'me','myself','mybad','idklol','whoknows','who','dunno',
-  'x','xx','xxx','xxxx','aa','aaa','asdf','asd','qwerty','abc','abcd','123','1234','12345',
-  'dontknow','dontcare','yourmom','urmom','idgaf','fuckyou','fuckoff','suckmydick','deeznuts','bigchungus','johndoe','janedoe'
+  // placeholders / dismissals
+  'idk','idc','idgaf','idke','dunno','dontknow','dontcare','whoknows','who','guess','none','nope','nah','meh','whatever','maybe',
+  'no','nil','null','undefined','na','n/a','nope','idek',
+  // laughs / reactions
+  'lol','lmao','lmfao','rofl','xd','haha','hehe','hahaha','hee','hah','ahaha','heh','jaja','kek',
+  // greetings used as names
+  'hi','hey','hello','sup','yo','wassup','hii','heyy','hihi','heya','hola','helloo',
+  // affirmations used as names
+  'yes','yeah','yep','y','ok','okay','okayy','sure','aight','bet','word',
+  // anonymous / placeholder identities
+  'anonymous','anon','anonymos','anonimous','annon','someone','person','people','user','test','testing','test123','testtest','example','sample','default',
+  'me','myself','mybad','mood','vibe','random','fake','fakename','nothing','blank','empty','noname',
+  // single chars / patterns / keyboard mashes
+  'x','xx','xxx','xxxx','aa','aaa','aaaa','bb','cc','dd','asdf','asd','qwerty','qwer','wasd','zxc','zxcv','abc','abcd','abcde','123','1234','12345','69','420',
+  // common offensive / joke names
+  'yourmom','urmom','suckmydick','deeznuts','bigchungus','johndoe','janedoe','fuckyou','fuckoff','bitch','dick','penis','vagina','tits','boobs','ass','balls','cock','poop','butt','fart','sus','amongus','ligma','sugma','sugondese',
+  // common one-word lazy answers
+  'bro','bruh','dude','bae','man','girl','boy','kid','guy','girlie','queen','king','homie','squad','crew',
+  // english words that aren't names
+  'what','why','how','when','where','stuff','thing','life','love','god','jesus','allah','satan','devil','blah','blahblah','meh','huh','duh','hmm','mhm','yup','nvm','tbh','fr','ong','idfk',
+  'cool','nice','good','bad','great','dope','sick','wild','crazy','funny','smart','dumb','real','fake'
 ]);
 function validateContribName(raw){
   const v=(raw||'').trim();
   if(v.length<3)return{ok:false,msg:'name needs to be 3+ characters'};
   if(v.length>40)return{ok:false,msg:'too long — keep it under 40 chars'};
-  // strip @ + spaces + special chars for normalisation
-  const norm=v.toLowerCase().replace(/^@/,'').replace(/[\s._\-'`]+/g,'');
-  if(NAME_BLOCKLIST.has(norm))return{ok:false,msg:'need a real name or @ — not a placeholder'};
+  // strip @ + spaces + special chars (incl. apostrophes/dots/dashes/backticks/quotes/exclaims/qmarks) for normalisation
+  let norm=v.toLowerCase().replace(/^@/,'').replace(/[\s._\-'`"!?,;:()/\\]+/g,'');
+  // 🆕 collapse any 3+ consecutive same character down to 1 — catches "lmaooo", "noooo", "yoooo", "heyyyy", "aaaaa"
+  norm=norm.replace(/(.)\1{2,}/g,'$1');
+  // 🆕 try collapsing repeated 2/3/4-letter cycles AND near-cycles (cycle with 1-2 extra chars)
+  let altNorm=norm;
+  const cycle2=norm.match(/^(..)\1+\1?.?$/);if(cycle2)altNorm=cycle2[1];   // lololol → lo, hahaha → ha
+  const cycle3=norm.match(/^(...)\1+\1?.?$/);if(cycle3)altNorm=cycle3[1];   // tomtom → tom
+  const cycle4=norm.match(/^(....)\1+$/);if(cycle4)altNorm=cycle4[1];       // blahblah → blah, byebyebye → bye
+  if(NAME_BLOCKLIST.has(norm)||NAME_BLOCKLIST.has(altNorm))return{ok:false,msg:'need a real name or @ — not a placeholder'};
+  // 🆕 too few unique characters for the length = clearly mashing the same keys
+  if(norm.length>=5&&new Set(norm).size<3)return{ok:false,msg:'that\'s not a name lol — try again'};
+  // 🆕 reject perfect short-substring cycles ≥ 6 chars ("tomtom", "byebye", "byebyebye") — these read as joke names
+  if(norm.length>=6){
+    for(let k=2;k<=3;k++){
+      const head=norm.slice(0,k);
+      if(norm.length%k===0&&head.repeat(norm.length/k)===norm)return{ok:false,msg:'that\'s a repeated word — try a real name'};
+    }
+  }
   // block all-numbers
   if(/^\d+$/.test(norm))return{ok:false,msg:'name can\'t be only numbers'};
-  // block single repeating character ("aaaa", "....", "xxxxx")
+  // block single repeating character ("aaaa", "....", "xxxxx") — after collapse this catches more
   if(/^(.)\1+$/.test(norm))return{ok:false,msg:'that\'s not a name lol — try again'};
   // require at least 2 distinct letters (catches "aaaab" etc)
   const letters=norm.replace(/[^a-z]/g,'');
   if(letters.length<2)return{ok:false,msg:'name needs at least 2 letters'};
   const uniq=new Set(letters);
   if(uniq.size<2)return{ok:false,msg:'that\'s not a name lol — try again'};
+  // 🆕 catch keyboard-mash: 3+ adjacent QWERTY keys in a row
+  const KEYBOARD_ROWS=['qwertyuiop','asdfghjkl','zxcvbnm','1234567890'];
+  for(const row of KEYBOARD_ROWS){
+    if(norm.length>=4){
+      for(let i=0;i<row.length-3;i++){
+        const seg=row.slice(i,i+4);
+        if(norm.includes(seg))return{ok:false,msg:'that\'s a keyboard mash — try a real name'};
+      }
+    }
+  }
   return{ok:true,name:v};
 }
 
@@ -3185,7 +3241,7 @@ function qrSubmitName(){
 // ── STEP 2: Gender ──
 function qrStepGender(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">02 / 05</div>
+    <div class="qr-eyebrow">02 / 07</div>
     <div class="qr-headline">you're a...</div>
     <div class="qr-sub">picks your path.</div>
     <div class="qr-pick">
@@ -3200,10 +3256,44 @@ function qrPickGender(g){
   setTimeout(qrAdvance,250);
 }
 
-// ── STEP 3: DM experience ──
+// ── STEP 3: Email (optional, for updates) ──
+function qrStepEmail(){
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">03 / 07</div>
+    <div class="qr-headline">stay in the loop</div>
+    <div class="qr-sub">drop your email so tris can ping you when the AI's good enough to actually use — and when v2 drops.</div>
+    <input type="email" class="qr-input" id="qr-email-input" placeholder="you@email.com  ·  optional" maxlength="120" autocomplete="email" autocapitalize="off" spellcheck="false" inputmode="email" />
+    <div id="qr-email-err" style="font-size:11px;color:#e05555;margin:-10px 0 14px;min-height:14px;text-align:center"></div>
+    <button class="qr-primary-btn" onclick="qrSubmitEmail()">i'm in →</button>
+    <button class="qr-secondary-btn" onclick="qrSkipEmail()" style="margin-top:8px">skip — i'll find out the hard way</button>
+  </div>`;
+}
+function qrSubmitEmail(){
+  const inp=document.getElementById('qr-email-input');
+  const errEl=document.getElementById('qr-email-err');
+  const v=(inp?.value||'').trim();
+  // Empty = treat as skip (graceful)
+  if(!v){qrSkipEmail();return;}
+  // Reuse the existing strict validator (RFC-ish + disposable-domain blocklist)
+  const res=validEmail(v);
+  if(!res.ok){
+    if(errEl)errEl.textContent=res.msg.toLowerCase();
+    if(inp){inp.style.borderColor='#e05555';inp.focus();setTimeout(()=>{inp.style.borderColor='';},2500);}
+    return;
+  }
+  contribState.email=res.email;
+  if(errEl)errEl.textContent='';
+  qrAdvance();
+}
+function qrSkipEmail(){
+  contribState.email=null;
+  qrAdvance();
+}
+
+// ── STEP 4: DM experience ──
 function qrStepDmExperience(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">03 / 05</div>
+    <div class="qr-eyebrow">04 / 07</div>
     <div class="qr-headline">ever DM'd first?</div>
     <div class="qr-sub">be honest.</div>
     <div class="qr-pick">
@@ -3255,7 +3345,7 @@ function qrStepTeaser(){
 function qrStepSkillRating(){
   const buttons=[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="qr-skill-btn" data-n="${n}" onclick="qrPickSkill(${n})">${n}</button>`).join('');
   return `<div class="qr-card">
-    <div class="qr-eyebrow">04 / 05</div>
+    <div class="qr-eyebrow">05 / 07</div>
     <div class="qr-headline">rate your texting.</div>
     <div class="qr-sub">scale of ten. don't lowball.</div>
     <div class="qr-skill-grid">${buttons}</div>
@@ -3270,7 +3360,31 @@ function qrPickSkill(n){
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
 }
 
-// ── STEP 6: AI Homies — sequential reveal, one per tap ──
+// ── STEP 7: Texting style ──
+// Gives us a richer training signal than age alone — captures actual register/voice the contributor uses.
+const QR_TEXTING_STYLES=[
+  {id:'deadpan',label:'deadpan / dry',sub:'less is more',emoji:'💀'},
+  {id:'playful',label:'playful / teasing',sub:'i\'m always joking',emoji:'😏'},
+  {id:'chaotic',label:'chaotic / chronically online',sub:'unhinged but loved',emoji:'🌀'},
+  {id:'longform',label:'thoughtful / longform',sub:'i actually write back',emoji:'📝'}
+];
+function qrStepTextingStyle(){
+  const btns=QR_TEXTING_STYLES.map(s=>`<button class="qr-style-btn" data-id="${s.id}" onclick="qrPickStyle('${s.id}')"><span class="qr-style-emoji">${s.emoji}</span><span class="qr-style-label">${s.label}</span><span class="qr-style-sub">${s.sub}</span></button>`).join('');
+  return `<div class="qr-card">
+    <div class="qr-eyebrow">06 / 07</div>
+    <div class="qr-headline">how do you actually text?</div>
+    <div class="qr-sub">your default vibe — pick the one that fits most.</div>
+    <div class="qr-style-grid">${btns}</div>
+  </div>`;
+}
+function qrPickStyle(id){
+  contribState.textingStyle=id;
+  document.querySelectorAll('.qr-style-btn').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
+  // small delay so the selection state can register visually before advancing
+  setTimeout(qrAdvance,280);
+}
+
+// ── STEP 8: AI Homies — sequential reveal, one per tap ──
 // Each homie gets revealed one at a time with a mysterious one-liner tagline.
 // Previously revealed homies stay on screen.
 let qrSlideshowState={slide:0};
@@ -3284,7 +3398,7 @@ const QR_FINAL_TAGLINE='your move.';
 
 function qrStepSlideshow(){
   return `<div class="qr-card">
-    <div class="qr-eyebrow">05 / 05 · the crew</div>
+    <div class="qr-eyebrow">07 / 07 · the crew</div>
     <div class="qr-headline" id="qr-slide-headline">meet who built it.</div>
     <div class="qr-homies-stage" id="qr-homies-stage"></div>
     <div class="qr-tagline" id="qr-tagline">tap to reveal.</div>
@@ -3410,6 +3524,8 @@ let contribState={
   entrySource:'',    // 'qr' if scanned, '' if direct from login page CTA
   skillRating:null,  // 1-10 self-rating (only collected via QR flow)
   dmExperience:null, // bool (only collected via QR flow)
+  textingStyle:null, // 'deadpan' | 'playful' | 'chaotic' | 'longform' (only collected via QR flow)
+  email:null,        // optional — collected via QR flow only, lets tris email updates
   answers:[],        // {scenarioIdx, tone, context, message, reply OR rating, feedback, ts}
   currentIdx:0,      // index into shuffled queue
   queue:[],          // shuffled scenario indexes
@@ -3426,7 +3542,7 @@ function closeContribute(){
   if(contribState.answers.length>0&&!confirm('You have '+contribState.answers.length+' un-exported answers. Close anyway? They\'ll be lost.'))return;
   document.getElementById('contrib-overlay').classList.remove('open');
   const wasQr=contribState.entrySource==='qr';
-  contribState={name:'',gender:'',entrySource:'',skillRating:null,dmExperience:null,answers:[],currentIdx:0,queue:[],promptShownAt:0};
+  contribState={name:'',gender:'',entrySource:'',skillRating:null,dmExperience:null,textingStyle:null,email:null,answers:[],currentIdx:0,queue:[],promptShownAt:0};
   document.getElementById('contrib-export-fab').style.display='none';
   // QR users: hide the QR overlay too, restore the login screen so the app is usable
   if(wasQr){
@@ -3928,6 +4044,8 @@ async function autoSendToDiscord(){
     entrySource:contribState.entrySource||'direct',
     skillRating:contribState.skillRating,
     dmExperience:contribState.dmExperience,
+    textingStyle:contribState.textingStyle,
+    email:contribState.email,
     exportedAt:Date.now(),
     count:contribState.answers.length,
     answers:contribState.answers
@@ -3939,10 +4057,13 @@ async function autoSendToDiscord(){
   const skillLine=contribState.skillRating?` · self-rated ${contribState.skillRating}/10`:'';
   const sourceLine=contribState.entrySource==='qr'?' · 📲 via QR':'';
   const dmExpLine=contribState.dmExperience===true?' · 😏 has DM\'d before':contribState.dmExperience===false?' · 🥹 first-timer':'';
+  const styleEmoji={deadpan:'💀',playful:'😏',chaotic:'🌀',longform:'📝'}[contribState.textingStyle]||'';
+  const styleLine=contribState.textingStyle?` · ${styleEmoji} ${contribState.textingStyle}`:'';
+  const emailLine=contribState.email?`\n📧 ${contribState.email}`:'';
   // Quick stats for at-a-glance review
   const wtfCount=contribState.answers.filter(a=>a.type==='female_wtf_flag').length;
   const wtfLine=wtfCount?`  ·  🚩 ${wtfCount} WTF flags`:'';
-  const content=`📥 **new contrib** — **${contribState.name||'anon'}** (${contribState.gender})\n${contribState.answers.length} answers${skillLine}${sourceLine}${dmExpLine}${wtfLine}`;
+  const content=`📥 **new contrib** — **${contribState.name||'anon'}** (${contribState.gender})\n${contribState.answers.length} answers${skillLine}${styleLine}${sourceLine}${dmExpLine}${wtfLine}${emailLine}`;
   const form=new FormData();
   form.append('content',content.slice(0,1900));
   form.append('file',file,filename);
@@ -3968,6 +4089,8 @@ function exportContribAnswers(){
     entrySource:contribState.entrySource||'direct',
     skillRating:contribState.skillRating,
     dmExperience:contribState.dmExperience,
+    textingStyle:contribState.textingStyle,
+    email:contribState.email,
     exportedAt:Date.now(),
     count:contribState.answers.length,
     answers:contribState.answers
