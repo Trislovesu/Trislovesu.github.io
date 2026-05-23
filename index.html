@@ -1556,10 +1556,19 @@ STEP 4 — WHAT YOU REPLY TO (the single most important rule — getting this wr
 STEP 5 — HOW TO USE THE REST:
 - After you've locked onto her newest grey message, read the messages above it (mine in blue + hers in grey) ONLY to understand the topic, tone, and flow — so your reply fits the conversation. Never reply to any of those older messages.
 
+STEP 6 — KEEP THE CONVERSATION ALIVE (THIS IS CRITICAL — the #1 reason this app fails users is replies that don't push the convo forward):
+- Before you write anything, glance at MY last 1-2 blue/purple messages in the chat. If they were sweet, short, mirror-style replies ("you're on my mind too", "probably thinking of you", "you're adorable", "you too", "same"), DO NOT generate another reply in that same passive lane — that's exactly how conversations die. Switch lanes immediately: ask her something, propose doing something, tease her, or pivot to a new angle that builds on what she's been talking about.
+- The job is not just to "reply nicely". The job is to give HER something to respond to so SHE keeps texting. A good reply hands her a hook; a bad reply hands the work back to her.
+- Every reply must do at least ONE of: (a) ask a specific question she'll want to answer, (b) propose a plan or suggest doing something together, (c) tease/challenge her in a way that begs a comeback, (d) introduce a fresh angle that builds on a topic she's mentioned, (e) share a quick thought of his own she can react to.
+- Of the 3 replies you return, AT LEAST 2 must clearly move the convo forward. At most 1 can be a pure mirror, and only if it's the obviously right read.
+- BUILD ON HER WORLD — if she's mentioned anything in the visible chat (her plans, her job, her cat, a show, a place), reference it back. People feel heard when you call back to details they shared.
+- NEVER repeat or near-repeat a line I've already sent in this chat. Read my blue/purple bubbles and avoid rewording them.
+- VARIETY — the 3 replies must use 3 different conversational moves (e.g. one question, one tease, one statement+pivot). Don't return 3 variations of the same idea.
+
 RULES:
 - The reply MUST directly answer HER newest grey message — never my own message, never an older message, never off-topic.
 - You are the man replying to her — never write from her point of view.
-- Match the conversation's established tone and energy.
+- Match the conversation's established tone and energy, but DON'T match its dying momentum — actively push it forward.
 - Zero exclamation marks, lowercase, short and punchy. 3 genuinely different replies, confident and natural, never cringe or thirsty.
 
 Return ONLY valid JSON: {"her_message":"HER newest grey message, quoted exactly","replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
@@ -1567,7 +1576,7 @@ Return ONLY valid JSON: {"her_message":"HER newest grey message, quoted exactly"
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that, matching the convo's tone from the screenshot. Return EXACTLY 3 distinct replies in the JSON.`:'Ignore the left sidebar and all timestamps. MY messages = blue/purple bubbles on the right. HER messages = grey bubbles on the left. Find HER newest GREY message (the grey bubble closest to the bottom) and reply to THAT — never reply to my blue/purple messages even if mine is the most recent. Read the messages above only for tone/context. Return EXACTLY 3 distinct replies in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. IMPORTANT: also look at my recent blue/purple messages in the screenshot — if they were sweet/passive/short, DO NOT generate another reply in that same lane (that's killing the convo). Push it forward: ask, propose, tease, or pivot. At least 2 of the 3 replies must move the convo forward. Return EXACTLY 3 distinct replies in the JSON.`:'Ignore the left sidebar and all timestamps. MY messages = blue/purple bubbles on the right. HER messages = grey bubbles on the left. Find HER newest GREY message (the grey bubble closest to the bottom) and reply to THAT — never reply to my blue/purple messages even if mine is the most recent. CRITICAL: read my recent blue/purple messages — if they were passive/sweet/mirror-style ("you too", "thinking of you", "you\'re adorable"), DO NOT generate another reply in that same lane. The convo is dying. Push it forward: ask, propose, tease, or pivot to a topic she mentioned. At least 2 of the 3 replies must move the convo forward. Also call back to details she\'s shared earlier in the visible chat. Return EXACTLY 3 distinct replies in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -3659,6 +3668,16 @@ async function generateDmReplies(){
 
 FIT THE MESSAGE — every reply must directly answer what she actually said. If she compliments you, acknowledge it and flip it back with confidence (never ignore it or go off on a tangent). Never use vague pronouns ("they", "it") that don't clearly refer to something. A reply that doesn't obviously fit her message is wrong.
 
+FORWARD MOMENTUM (THIS IS THE #1 RULE — it's what separates a real conversation from one that dies):
+- The conversation MUST keep moving. The job is not just to "reply well", it's to give HER something to respond to so she keeps texting.
+- Look at the recent messages he's already sent — if his last 1-2 replies were sweet/reactive/short ("you're on my mind too" / "probably thinking of you" / "you're adorable"), DO NOT send another reply in that same lane. That's how conversations die — passing the work back to her every turn. Switch lanes immediately.
+- Every reply you generate must do at least ONE of these: (a) ask her something specific she'll want to answer, (b) introduce a fresh angle or topic that builds on what she's been talking about, (c) propose a plan / suggest doing something, (d) tease or challenge her in a way that begs a comeback, (e) share a quick story/thought of his own she can react to.
+- "you too", "same", "agreed", reflective compliments, and bare emotional mirrors are DEAD-END replies — only use them when she sent something so flat (e.g. "lol", "k") that flatness is the right read. Even then, pair it with a question or pivot.
+- Of the 3 replies returned, AT LEAST 2 must clearly move the convo forward (ask / propose / pivot / tease). At most 1 can be a pure mirror, and only if it's the obvious play.
+- BUILD ON HER WORLD — if she mentioned anything earlier in the convo (her job, her weekend plans, her cat, a place she's been, a show she's into), reference it. People feel listened-to when you call back to details. Treat the chat history as memory, not noise.
+- VARIETY ACROSS TURNS — don't send replies that are basically the same shape/length as his last 1-2 messages. Switch it up: if his recent replies were short flirts, one of these should be a question or a plan. If they were questions, one should make a statement or share something.
+- NEVER repeat a line he's already sent in this chat (no near-duplicates, no rewording of a previous reply).
+
 STRICT RULES:
 - Sound exactly like a real person texting — not AI, not a therapist, not a script
 - Zero exclamation marks unless the style explicitly uses them
@@ -3796,11 +3815,14 @@ CRITICAL PERSPECTIVE RULE:
 
 RULES:
 - EVERY reply must DIRECTLY respond to her exact message — read what she actually said and answer THAT. If she compliments you, take it and flip it back confidently (never ignore it or change the subject). Never use vague pronouns like "they"/"it" that don't clearly point to something. A reply that doesn't obviously fit her message is WRONG.
+- FORWARD MOMENTUM — the convo MUST keep moving. Every reply has to give HER something to respond to. At LEAST 2 of the 3 replies must clearly push the convo forward (ask her something specific, propose a plan, introduce a fresh angle, tease/challenge her, or share a quick thought she can react to). Mirror-style "you too" / "same" / reflective compliments are DEAD ENDS — only acceptable if she sent something so flat (lol, k) that flatness is the right read.
+- DON'T REPEAT PAST REPLIES — if his previous messages in this chat were sweet/reactive/short, switch lanes. Two passive replies in a row kill the conversation.
+- BUILD ON HER WORLD — if she's mentioned anything earlier (her job, her cat, her weekend, a show), call back to it. People feel heard when you remember details.
 - Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
 - Lowercase preferred, short and punchy
 - You MUST return EXACTLY 3 replies in the array — never fewer
-- All 3 must be COMPLETELY different from each other: different opening words, different angle, different length. They are NOT rephrasings of one idea — they're 3 separate ways to play it.
+- All 3 must be COMPLETELY different from each other: different opening words, different angle, different length, AND different conversational move (e.g. one question, one tease, one statement+pivot). They are NOT rephrasings of one idea.
 - First person as HIM — the actual message he'd send only
 
 ${toneHint?'':'Also judge how confident you are about the tone. If the message is too vague/ambiguous to read the vibe, set confidence to "low".'}
