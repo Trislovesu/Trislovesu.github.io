@@ -2079,7 +2079,14 @@ async function storyReplyLive(targetDoc){
   let toneLine='';
   if(liveTones.length>=2)toneLine=`\nReply 1 = ${liveTones[0]} tone, Reply 2 = ${liveTones[1]} tone, Reply 3 = your best call. All must fit the story.`;
   else if(liveTones.length===1)toneLine=`\nReply 1 = ${liveTones[0]} tone; 2 & 3 = your best call.`;
-  const system=`You are writing Instagram DM openers for a confident guy reacting to a girl's STORY. Her story has been seen by 100+ guys today and 90% of them sent something forgettable. Your job is to write the message that actually makes her stop, smile, and reply.${getRefinedContext('',3)}${getGoodsContext('',3)}${getReportsContext('',3)}${toneLine}
+  const system=`You are writing Instagram DM openers for a confident guy reacting to a girl's STORY. Her story has been seen by 100+ guys today and 90% of them sent something forgettable. Your job is to write the message that actually makes her stop, smile, and reply.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${getFemaleReactionsContext(3)}${toneLine}
+
+🔒 PERSPECTIVE LOCK — THIS IS NON-NEGOTIABLE:
+- You are writing what HE sends to HER. First person, as HIM.
+- NEVER write in third person ("he would say...", "the guy could send...", "one might reply...") — those are DESCRIPTIONS, not messages. Only output the actual DM he'd send.
+- NEVER write from HER perspective. The opener is HIS voice, directed AT her.
+- Each "text" field in the JSON must be the literal message he'd type into Instagram — nothing more.
+- If you catch yourself describing the reply instead of writing it, REWRITE as the direct message.
 
 WHICH STORY: the screen shows a story viewer. The story she's WATCHING is the ONE BIG, BRIGHT, IN-FOCUS panel in the centre. The smaller, dimmed, greyed-out panels to the sides are OTHER people's stories (next/previous previews) — IGNORE them completely. Read ONLY the big central story.
 
@@ -2159,7 +2166,7 @@ Return ONLY JSON: {"her_message":"brief description of the specific scene (speci
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.05,top_p:0.95,frequency_penalty:0.7,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details (item / pose / song / sticker / caption / object in frame — not "her vibe"). Each opener uses a DIFFERENT opener MOVE from the system prompt. The TWIST must actually be witty — don\'t just glue a generic tease onto a callout. Re-read each opener before returning: would she smile and want to reply? If no, rewrite. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "you look amazing/beautiful/stunning". BANNED topics: anything about how her body looks or how clothes FIT her — only her STYLE CHOICES (the colour pairing, the song pick, the location, the pose intent). Emojis allowed sparingly — MAX 1 per opener, and at least 2 of the 3 should have NO emoji. Use them to punch up a line, never as a substitute for wit. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Lowercase. At least 1 of the 3 must be 10+ words with real substance — not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.05,top_p:0.95,frequency_penalty:0.7,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 DIFFERENT specific details (item / pose / song / sticker / caption / object in frame — not "her vibe"). Each opener uses a DIFFERENT opener MOVE from the system prompt. The TWIST must actually be witty — don\'t just glue a generic tease onto a callout. 🔒 EACH "text" FIELD MUST BE THE LITERAL DM HE\'D TYPE — never 3rd person ("he would say...", "the guy could..."), never narration about the reply, never wrapped in "reply:" labels, never hedged with "something like". Write FROM his mouth, AT her. Re-read each opener: would she smile and want to reply? If no, rewrite. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "you look amazing/beautiful/stunning", "he would", "i\'d probably", "if it were me", "as a confident guy", "a reply might be". BANNED topics: anything about how her body looks or how clothes FIT her — only her STYLE CHOICES (the colour pairing, the song pick, the location, the pose intent). Emojis allowed sparingly — MAX 1 per opener, and at least 2 of the 3 should have NO emoji. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Lowercase. At least 1 of the 3 must be 10+ words with real substance — not all one-liners. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -2840,12 +2847,21 @@ async function preloadAngleSuggestions(angles,id){
 
   const angleList=angles.map((a,i)=>`${i}. "${a.label}" — ${a.approach}`).join('\n');
   const refinedCtx=getRefinedContext('',3);
-  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options.${refinedCtx}
+  const goodsCtx=getGoodsContext('',4);
+  const reportsCtx=getReportsContext('',4);
+  const reactionsCtx=getFemaleReactionsContext(3);
+  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options.${refinedCtx}${goodsCtx}${reportsCtx}${reactionsCtx}
 
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
 
-You are ALWAYS the GUY replying to HER. Write what HE sends — never from her point of view.
+🔒 PERSPECTIVE LOCK — THIS IS NON-NEGOTIABLE:
+- You are writing what HE sends to HER. First person, as HIM.
+- NEVER write in third person ("he would say...", "the guy could send...", "one might reply...") — those are DESCRIPTIONS, not messages. Only output the actual DM he'd send.
+- NEVER write from HER perspective. The opener is HIS voice, directed AT her.
+- Every reply in the JSON arrays must be the literal message he'd type into Instagram — nothing more, nothing wrapped.
+- If you catch yourself describing the reply instead of writing it, REWRITE as the direct message.
+- The system has injected examples of openers that real women have replied to — use those as benchmarks, but DO NOT copy her reactions as your voice (her words are HER, your output is HIS).
 
 Look carefully at the image first. Identify the most striking specific details — what the person looks like, their exact outfit, expression, body language, what they're doing, the location. These details are what you write FROM.
 
@@ -2910,7 +2926,7 @@ Return ONLY raw JSON, no markdown:
 {"0":{"replies":["r1","r2","r3"],"recommended":0},"1":{"replies":["r1","r2","r3"],"recommended":0},...}`;
 
   const userText=isStory
-    ?'Look at this story screenshot like a detective. Find SPECIFIC details — exact outfit pieces, expression, location name, song title, text overlay, props in frame. For each angle, generate 3 replies using DIFFERENT opener moves (playful accusation, wrong-on-purpose guess, deadpan tease, micro-callout, bold claim, shared-experience hook). Each opener: CALLOUT + TWIST + HOOK. NO "looks fun", "vibes", "you look amazing", "what\'s the song", "hey", or any generic flattery — those die instantly. NO horny / body-focused. Mix lengths — at least 1 per angle is a real sentence. Lowercase, no exclamation marks, confident, never thirsty.'
+    ?'Look at this story screenshot like a detective. Find SPECIFIC details — exact outfit pieces, expression, location name, song title, text overlay, props in frame. For each angle, generate 3 replies using DIFFERENT opener moves (playful accusation, wrong-on-purpose guess, deadpan tease, micro-callout, bold claim, shared-experience hook). Each opener: CALLOUT + TWIST + HOOK. 🔒 EVERY reply must be the LITERAL DM HE\'D TYPE — first person, AT her, never 3rd person ("he would...", "the guy could...", "as a confident guy...", "i\'d probably..."). No narration about the reply, no wrappers, no labels. NO "looks fun", "vibes", "you look amazing", "what\'s the song", "hey", or any generic flattery — those die instantly. NO horny / body-focused. Mix lengths — at least 1 per angle is a real sentence. Lowercase, no exclamation marks, confident, never thirsty.'
     :'Instagram DM screenshot. ONLY read the actual message bubbles. RIGHT = my messages, LEFT = hers. The bottom-most LEFT bubble is what I need to reply to. Read those exact words. Generate 3 replies per angle that directly respond to what she literally said — quote-level relevance. Ignore the username, status bar, icons, timestamps, all UI.';
 
   try{
@@ -5689,7 +5705,15 @@ const BAKED_REPORTS=[
   {message:"what do you actually want from your life like end goal",reply:"that's not a small question",reason:"FEMALE-RATED 2/10 with '….okay? so answer?😐'. Dodging a real question with meta-commentary doesn't fly. Real one-liner answer required."},
   {message:"wait where are you in that story",reply:"don't worry about it",reason:"FEMALE-RATED 5/10 with 'k.' — meta-evasion to a simple question reads suspicious / rude. Just answer; if it's complicated, give a short version."},
   {message:"are you ever going to say something nice to me",reply:"you're nice",reason:"FEMALE-RATED 7/10 with 'how thoughtful' (sarcasm). Bare-minimum compliment registers as effortless. Pick something SPECIFIC about her."},
-  {message:"my friend thinks you're cute btw",reply:"send her thanks",reason:"FEMALE-RATED 5/10 — completely misses the obvious play: she's using the friend as cover for her own attraction. Flip it back to HER, not the friend."}
+  {message:"my friend thinks you're cute btw",reply:"send her thanks",reason:"FEMALE-RATED 5/10 — completely misses the obvious play: she's using the friend as cover for her own attraction. Flip it back to HER, not the friend."},
+
+  // ── 🔒 PERSPECTIVE / 3RD-PERSON FAILURES (story replies especially — these break immersion) ──
+  {message:"[Story]",reply:"he would say something about the boots",reason:"WRITTEN IN 3RD PERSON. This is a DESCRIPTION of a reply, not a reply itself. NEVER output 'he would...', 'the guy could...', 'one might...' — write the literal message HE'd type."},
+  {message:"[Story]",reply:"the guy could compliment her outfit here",reason:"3RD PERSON META-COMMENTARY. The output must be the direct DM, not narration ABOUT the DM. Catch yourself before doing this."},
+  {message:"[Story]",reply:"a confident reply might be something like 'nice boots'",reason:"3RD PERSON + HEDGING ('might be something like'). NEVER hedge with 'something like' — output the FINAL message, not a candidate description."},
+  {message:"[Story]",reply:"reply: 'okay but those boots'",reason:"WRAPPED in a label ('reply: ...'). NEVER prefix with 'reply:' or wrap in extra quotes. The text field IS the reply — no scaffolding around it."},
+  {message:"[Story showing a girl in a kitchen]",reply:"as a confident guy, i'd say something playful about her cooking",reason:"3RD PERSON + ROLE-NARRATION ('as a confident guy, i'd...'). NEVER narrate the persona — embody it and just write the line."},
+  {message:"[Story]",reply:"if it were me i'd probably say nice fit",reason:"3RD PERSON CONDITIONAL ('if it were me i'd probably...'). NEVER use 'i'd probably' or 'i would' as opener — just send the line directly."}
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -6502,10 +6526,21 @@ async function generate(){
 
   const avoidLine=lastReply?`\n- Do NOT repeat or closely paraphrase your last reply: "${lastReply}"`:'';
   const trainingCtx=getTrainingExamples(tone);
-  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options and he knows it.${trainingCtx}
+  const refinedCtx=getRefinedContext('',3);
+  const goodsCtx=getGoodsContext('',4);
+  const reportsCtx=getReportsContext('',4);
+  const reactionsCtx=getFemaleReactionsContext(3);
+  const system=`You write Instagram DMs for a guy in 2026 with real rizz — confident, a little unpredictable, always interesting. Texts like he has options and he knows it.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}${reactionsCtx}
 
 Tone: ${TONE_PROMPTS[tone]||TONE_PROMPTS.chill}
 ${ctx?`Context: ${ctx}`:''}
+
+🔒 PERSPECTIVE LOCK — THIS IS NON-NEGOTIABLE:
+- You are writing what HE sends to HER. First person, as HIM.
+- NEVER write in third person ("he would say...", "the guy could send...", "one might reply...") — those are DESCRIPTIONS, not messages. Output ONLY the actual DM he'd send.
+- NEVER write from HER perspective. The opener is HIS voice, directed AT her.
+- Output ONLY the literal message text he'd type into Instagram — no quotes, no labels, no commentary.
+- If you catch yourself describing the reply instead of writing it, REWRITE as the direct message.
 
 STORY OPENER QUALITY BAR (she's been DMed by 100+ guys today — your reply needs to actually land):
 
@@ -6560,6 +6595,8 @@ STRICT RULES:
 If there's a girl/woman visible: react to HER specifically — what she's wearing, her expression, the moment. Feel like you actually noticed her, not just the photo.
 
 If it's scenery, food, or no people: react to what's actually happening.${angleText}
+
+🔒 Output the LITERAL DM HE'D TYPE — first person, AT her, never 3rd person ("he would...", "the guy could...", "as a confident guy...", "i'd probably..."). No narration, no labels like "reply:", no wrapping quotes. Just the message text he'd send.
 
 Write ONLY the DM reply text. Nothing else.`}];
 
