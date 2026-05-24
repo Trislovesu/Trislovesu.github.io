@@ -2209,7 +2209,7 @@ async function doLiveGenerate(targetDoc,b64,overrideMsg){
   // Per-conversation memory — injected from the previous scan of THIS specific chat
   const memoryBlock=buildLiveMemoryBlock(liveCurrentHandle);
 
-  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${toneLine}${overrideBlock}${memoryBlock}
+  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${getFemaleReactionsContext(3)}${toneLine}${overrideBlock}${memoryBlock}
 
 STEP 1 — ONLY look at the active conversation panel (the RIGHT side of the screen):
 - IGNORE EVERYTHING on the LEFT SIDEBAR — that's MY chat list, MY username, MY notes, MY story circles, MY profile picture, search bar, navigation icons. The username at the top of the left sidebar (e.g. "trislovesu.7") is MINE — NEVER use that as her name.
@@ -5648,7 +5648,48 @@ const BAKED_REPORTS=[
   {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"make sure to swim with me",reason:"completely misses the innuendo punchline she set up. Match the energy or flip it, don't ignore it."},
   {message:"let's play titanic you'll be the iceberg and i'll go down",reply:"go ahead, i'm not that scary",reason:"corny + outdated, kills the joke instead of building on it."},
   {message:"[Story video of a woman with brown off-shoulder top, song 'TEE BONE - Body Good', heart emojis]",reply:"tee bone's on the playlist now i'm judging",reason:"reads slightly feminizing / wrong POV — also too short, no real twist. Story replies need a sharper callout + twist."},
-  {message:"[Story]",reply:"you're lowkey lit rn or is that just the lighting",reason:"off-topic / doesn't fit a specific story. Generic 'lit' opener with no callout = dies."}
+  {message:"[Story]",reply:"you're lowkey lit rn or is that just the lighting",reason:"off-topic / doesn't fit a specific story. Generic 'lit' opener with no callout = dies."},
+
+  // ── 👩 FEMALE-VALIDATED FAILURES (rated 1-3/10 by real women — direct quotes from their feedback as proof) ──
+  {message:"you genuinely made my day better today",reply:"aw thanks",reason:"FEMALE-RATED 1/10 — 'aw thanks' is the laziest possible response to genuine warmth. Sounds disinterested. NEVER use 'aw thanks' for wholesome openers — match the warmth with something specific."},
+  {message:"you're so patient with me I don't deserve it",reply:"aw thanks",reason:"FEMALE-RATED 1/10 — wholesome moment killed by a default fallback. Real reply was 'what is wrong with you?'. The AI uses 'aw thanks' as a crutch for any emotional message; it must STOP."},
+  {message:"thanks for actually listening earlier",reply:"aw thanks",reason:"FEMALE-RATED 3/10 — she's appreciating you, deflecting with 'aw thanks' makes it weird. Receive the gratitude warmly and reflect it back."},
+  {message:"I miss talking to you",reply:"aw thanks",reason:"FEMALE-RATED 5/10 — she literally wrote 'wasn't a compliment'. 'aw thanks' treats missing-you as a compliment to deflect. Match her vulnerability — 'i've been thinking that too' / 'we should fix that'."},
+  {message:"you're different from who I thought you were (in a good way)",reply:"aw thanks",reason:"FEMALE-RATED 5/10 — bare 'aw thanks' wastes the opening to ask what she expected before. Curious flip wins, deflection loses."},
+  {message:"i miss my mom today",reply:"aw thanks",reason:"FEMALE-RATED — 'aw thanks' is wildly wrong for vulnerability. She's sharing pain; you sit with it ('that's hard, want to talk about it')."},
+  {message:"i feel like you don't really care",reply:"idk",reason:"FEMALE-RATED 1/10 — 'idk' as a reply to her insecurity = confirms she's right. ANY emotional or vulnerable message needs a real answer, not 'idk'."},
+  {message:"do you ever feel like you're supposed to be somewhere else",reply:"idk",reason:"FEMALE-RATED 1/10 — late-night reflective question needs engagement, not 'idk'. Give a real opinion."},
+  {message:"tell me something nobody else knows about you",reply:"idk",reason:"FEMALE-RATED 1/10 — direct invitation to vulnerability met with 'idk'. Tease something specific without revealing it."},
+  {message:"what's your dating history actually like",reply:"idk",reason:"FEMALE-RATED 1/10 — 'idk' to a personal question = stonewalling. Honest one-liner, then redirect."},
+  {message:"what's actually going on in your head right now",reply:"idk",reason:"FEMALE-RATED 6/10 with 'come on, give me something' — proves 'idk' always under-delivers when she asks a real question."},
+  {message:"why does your taste in music make absolutely no sense",reply:"sorry",reason:"FEMALE-RATED 1/10 — 'sorry' to a playful music roast surrenders the bit. Defend the taste absurdly or own it confidently."},
+  {message:"I'm bored",reply:"sucks",reason:"FEMALE-RATED 1/10 — 'sucks' as a reply to boredom = you're now boring her too. Give her something to do or a tease."},
+  {message:"okay that last post was actually a vibe",reply:"appreciate it",reason:"FEMALE-RATED 1/10 — 'appreciate it' is too corporate/distant when she's complimenting your post. Be playful: 'you finally noticed' / 'glad it landed'."},
+  {message:"k",reply:"wrd",reason:"FEMALE-RATED 1/10 — 'wrd' mirroring her 'k' gives her nothing back. Acknowledge the dryness with a tease ('that's all i get')."},
+  {message:"you're honestly so annoying sometimes",reply:"whatever",reason:"FEMALE-RATED 1/10 — 'whatever' to playful attitude is dismissive and immature. Match the heat: 'but yet you keep texting me'."},
+  {message:"I'm not one of those girls who waits around fyi",reply:"whatever",reason:"FEMALE-RATED 1/10 — she's setting a real boundary; 'whatever' looks careless. Acknowledge it ('respect') or flip it confidently."},
+  {message:"yeah no I see it",reply:"k",reason:"FEMALE-RATED 1/10 — 'k' is a dead end. Match her with substance ('go on') or a callback."},
+  {message:"I keep thinking about that time we [shared moment]",reply:"aw thanks",reason:"FEMALE-FLAGGED WTF — 'aw thanks' completely misses a nostalgic memory cue. She wants the moment relived, not thanked-at."},
+  {message:"you remembered that?? you're sweet",reply:"that means a lot",reason:"FEMALE-FLAGGED WTF — 'that means a lot' is what SHE should say to YOU, not the other way around. Confident reply: 'i remember everything' / 'i pay attention to you'."},
+  {message:"I'm not gonna chase you",reply:"maybe",reason:"FEMALE-FLAGGED WTF — 'maybe' to a hard boundary is non-committal cowardice. Respect the boundary with a real stance."},
+  {message:"I don't do the back and forth thing just so you know",reply:"maybe",reason:"FEMALE-FLAGGED WTF — same issue, 'maybe' to a stated standard = weak. Confirm or counter, don't shrug."},
+  {message:"do you treat everyone like this or just me",reply:"that's a you problem 🤷‍♂️",reason:"FEMALE-FLAGGED WTF — she's asking a vulnerable/accusatory question. 'that's a you problem' weaponises a savage line in a context that needs engagement. Context-guard: that phrase only works for PLAYFUL jabs ('boys like you are all the same'), never for personal confrontation."},
+  {message:"didn't you say the opposite last week though",reply:"that's a you problem 🤷‍♂️",reason:"FEMALE-RATED 1/10 — she caught you in a contradiction and you deflected. Owning it / explaining is the win, not dismissing."},
+  {message:"I'm free this weekend randomly",reply:"sure sometime",reason:"FEMALE-FLAGGED WTF — she's HANDING you a window to lock in plans. 'sure sometime' fumbles it completely. Propose a specific day + time IMMEDIATELY."},
+  {message:"💀",reply:"bet",reason:"FEMALE-FLAGGED WTF — single-emoji message + 'bet' = two empty bubbles. Either match the emoji with one of yours, or call out what made her send 💀."},
+  {message:"mmm okay",reply:"bet",reason:"FEMALE-FLAGGED WTF — 'bet' as response to dry distance reinforces the dead air. Don't push; ask what's up or fall back."},
+  {message:"why though",reply:"bet",reason:"FEMALE-FLAGGED WTF — 'bet' doesn't answer 'why'. Either explain confidently or flip the question."},
+  {message:"you're so much",reply:"that's all 💀",reason:"FEMALE-FLAGGED WTF — 'that's all 💀' to her calling you 'a lot' is non-sequitur. Lean in: 'and you still text me'."},
+  {message:"I can't friday but how about saturday",reply:"i'm in, pick a day",reason:"FEMALE-RATED 5/10 with 'I JUST SAID SATURDAY'. Critical AI failure: ignores the specific day she just suggested. RULE: if she names a day/time, CONFIRM that exact day/time, do not re-ask."},
+  {message:"what about friday at 8",reply:"down, when",reason:"FEMALE-RATED 7/10 with 'read over my message real quick'. Same rule: she gave a specific time, the reply asked again. ALWAYS lock the time she suggested."},
+  {message:"okay so when are we actually doing something",reply:"down, when",reason:"FEMALE-RATED 8/10 with 'I just asked YOU when'. She's pushing for HIM to commit to a day; 'down, when' bounces it back. PROPOSE a specific day."},
+  {message:"wait you know [mutual] too? small world",reply:"crazy small",reason:"FEMALE-RATED 2/10 with 'a bit dry okay🫤'. Echo-replies kill mutual-connection openers. Ask how she knows them — that's the actual hook."},
+  {message:"you're actually so random lol",reply:"thanks",reason:"FEMALE-RATED 2/10 with '**seen**' — meaning he just got left on read. Bare 'thanks' = end of conversation."},
+  {message:"you're literally everywhere on my explore page 😭",reply:"yeah they notice me",reason:"FEMALE-RATED 4/10 with 'a bit cocky much🫤?'. Confidence works, cocky-without-warmth doesn't. Curiosity ('maybe that's a sign') wins."},
+  {message:"what do you actually want from your life like end goal",reply:"that's not a small question",reason:"FEMALE-RATED 2/10 with '….okay? so answer?😐'. Dodging a real question with meta-commentary doesn't fly. Real one-liner answer required."},
+  {message:"wait where are you in that story",reply:"don't worry about it",reason:"FEMALE-RATED 5/10 with 'k.' — meta-evasion to a simple question reads suspicious / rude. Just answer; if it's complicated, give a short version."},
+  {message:"are you ever going to say something nice to me",reply:"you're nice",reason:"FEMALE-RATED 7/10 with 'how thoughtful' (sarcasm). Bare-minimum compliment registers as effortless. Pick something SPECIFIC about her."},
+  {message:"my friend thinks you're cute btw",reply:"send her thanks",reason:"FEMALE-RATED 5/10 — completely misses the obvious play: she's using the friend as cover for her own attraction. Flip it back to HER, not the friend."}
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -5805,7 +5846,97 @@ const BAKED_GUIDE=[
   {message:"hey daddy come play with my pussy",reply:"slow down, we just got here",tone:"confident"},
   {message:"let me gargle your cock prettyboy",reply:"straight to the point i see",tone:"confident"},
   {message:"let me gargle your cock prettyboy",reply:"you don't waste any time huh",tone:"teasing"},
+
+  // ── 👩 FEMALE-VALIDATED WINS (rated 9-10/10 by real women — provenReaction = her actual text-back, NOT his voice) ──
+  {message:"what was that story you just posted",reply:"a moment of poor judgment honestly 😭",tone:"funny",validated:'female',provenReaction:"got the laugh / kept it going"},
+  {message:"i've been thinking about that conversation we had",reply:"keep going, i'm listening 👀",tone:"spicy",validated:'female',provenReaction:"she proceeded to bring the conversation back up"},
+  {message:"i got in btw",reply:"absolute legend, we celebrating",tone:"wholesome",validated:'female',provenReaction:"thank you so much that's so sweet, let's do it then"},
+  {message:"i got in btw",reply:"i knew you would",tone:"wholesome",validated:'female'},
+  {message:"i can't stop thinking about that night",reply:"same, we should fix that",tone:"spicy",validated:'female',provenReaction:"how should we do that?"},
+  {message:"i need to see you soon",reply:"name the day",tone:"spicy",validated:'female'},
+  {message:"i need to see you soon",reply:"saturday, my place",tone:"spicy",validated:'female',provenReaction:"okay"},
+  {message:"what are you tryna do tonight",reply:"see you, that's the plan",tone:"plans",validated:'female'},
+  {message:"okay you're cooking for me when",reply:"sunday, what do you like",tone:"plans",validated:'female',provenReaction:"you can't cook what i like 😱 (proves the question lands)"},
+  {message:"okay you're cooking for me when",reply:"name a night",tone:"plans",validated:'female',provenReaction:"tomorrow"},
+  {message:"we could just stay in and watch something",reply:"yes, you pick the show",tone:"plans",validated:'female',provenReaction:"the flash or one tree hill 😱"},
+  {message:"i want to do something but idk what",reply:"let's drive nowhere",tone:"plans",validated:'female'},
+  {message:"my place tonight if you're free",reply:"what time",tone:"spicy",validated:'female'},
+  {message:"i really wanna go [place/activity] this week",reply:"down, when",tone:"plans",validated:'female',provenReaction:"friday — works only when SHE has not yet given a day"},
+  {message:"what would actually make you leave",reply:"feeling like an option",tone:"bold",validated:'female'},
+  {message:"would you stand up for me if it came to it",reply:"yes, what's the next move",tone:"bold",validated:'female'},
+  {message:"would you actually date me",reply:"yes",tone:"bold",validated:'female'},
+  {message:"do you actually see a future with me or nah",reply:"direct answer is yes",tone:"bold",validated:'female'},
+  {message:"if you like me just say it",reply:"direct answer is yes",tone:"bold",validated:'female'},
+  {message:"i feel like you don't really care",reply:"what's making you feel that, talk to me",tone:"bold",validated:'female',provenReaction:"opens her up — rated 10 twice"},
+  {message:"can't sleep",reply:"come keep me company then",tone:"chill",validated:'female',provenReaction:"you come keep me company"},
+  {message:"how was your day",reply:"long but chill, yours?",tone:"chill",validated:'female',provenReaction:"it was too good but i'm tired now"},
+  {message:"just woke up. don't judge",reply:"same energy",tone:"chill",validated:'female'},
+  {message:"that's wild",reply:"the wildest part is still coming",tone:"dry",validated:'female'},
+  {message:"sure",reply:"convincing",tone:"dry",validated:'female',provenReaction:"great"},
+  {message:"i still think about cringe things i did in 2018",reply:"2018 me would lose to current me in a fight",tone:"funny",validated:'female',provenReaction:"lmfao"},
+  {message:"my uber driver just asked me if i believed in time travel",reply:"this is content",tone:"funny",validated:'female',provenReaction:"do you believe in time travel?"},
+  {message:"i swear my cat is planning my downfall",reply:"team cat 🤷‍♂️",tone:"funny",validated:'female',provenReaction:"trying to get on my cat's good side huh?"},
+  {message:"i just bought a 90 dollar candle and i have no regrets",reply:"a 90 dollar candle better cure something",tone:"funny",validated:'female',provenReaction:"lmao"},
+  {message:"be honest, were you always this weird or is it just with me",reply:"you bring it out",tone:"funny",validated:'female',provenReaction:"good"},
+  {message:"no offense but your handwriting is criminal",reply:"it's a feature",tone:"funny",validated:'female'},
+  {message:"you're so easy to read btw",reply:"prove it",tone:"flirty",validated:'female'},
+  {message:"you're distracting me from actual work stop",reply:"that's the goal",tone:"flirty",validated:'female'},
+  {message:"so are you actually single or",reply:"i am, you?",tone:"flirty",validated:'female',provenReaction:"yeah"},
+  {message:"your friends seem fun lol",reply:"they are, you'd like them",tone:"flirty",validated:'female'},
+  {message:"that was your hand in the story right",reply:"detective work",tone:"flirty",validated:'female',provenReaction:"lmao"},
+  {message:"you're actually so different from the guys i usually talk to",reply:"what do you usually talk to",tone:"flirty",validated:'female'},
+  {message:"what made you actually text me",reply:"the way you carry yourself in your stories",tone:"flirty",validated:'female',provenReaction:"how do i carry myself in my stories?"},
+  {message:"if i was there right now what would you do",reply:"depends on your mood",tone:"flirty",validated:'female',provenReaction:"oh i'm in a good mood"},
+  {message:"why do you look so serious in all your pics",reply:"that's my brand",tone:"flirty",validated:'female'},
+  {message:"what's your honest read on me",reply:"you act unbothered but you notice everything",tone:"mysterious",validated:'female',provenReaction:"oh (the single-word reply = direct hit)"},
+  {message:"boys like you are all the same",reply:"that's a you problem 🤷‍♂️",tone:"savage",validated:'female',contextNote:"works for general/playful jabs — DO NOT use for personal accusations or vulnerability"},
+  {message:"you're kinda full of yourself you know that",reply:"with reason",tone:"savage",validated:'female'},
+  {message:"what would you actually do if i was there",reply:"lots of things",tone:"spicy",validated:'female',provenReaction:"oh yeah? like what?😦 — vague-mysterious can create intrigue if she's already engaged"},
+  {message:"what would you do if i was there right now",reply:"is that a dare",tone:"spicy",validated:'female',provenReaction:"absofuckinglutely"},
+  {message:"i'm wearing what you said you liked btw",reply:"is that a dare",tone:"spicy",validated:'female'},
+  {message:"i literally cannot stop thinking about you",reply:"is that a dare",tone:"spicy",validated:'female',provenReaction:"absolutely"},
+  {message:"i feel like i can talk to you about anything",reply:"i'm here for it",tone:"wholesome",validated:'female'},
+  {message:"i'm actually really proud of myself today",reply:"i'm here for it",tone:"wholesome",validated:'female'},
+  {message:"i passed!!",reply:"LET'S GO, knew you would",tone:"wholesome",validated:'female',provenReaction:"should've believed you 😧"}
 ];
+
+// 👩 FEMALE REACTION PROOF POOL — separate, READ-ONLY metadata that proves which male openers actually pulled female replies.
+// Used purely as calibration evidence in the system prompt — never as voice examples for him.
+// Each entry: { hisOpener, herReaction } — she replied to his opener with herReaction. The AI sees this as "this opener has a track record."
+const BAKED_FEMALE_REACTIONS=[
+  {hisOpener:"a moment of poor judgment honestly 😭",herReaction:"got a laugh + kept the convo open"},
+  {hisOpener:"keep going, i'm listening 👀",herReaction:"she actually brought the conversation back up"},
+  {hisOpener:"absolute legend, we celebrating",herReaction:"thank you so much that's so sweet, let's do it then"},
+  {hisOpener:"same, we should fix that",herReaction:"how should we do that?"},
+  {hisOpener:"saturday, my place",herReaction:"okay"},
+  {hisOpener:"sunday, what do you like",herReaction:"you can't cook what i like 😱"},
+  {hisOpener:"name a night",herReaction:"tomorrow"},
+  {hisOpener:"yes, you pick the show",herReaction:"the flash or one tree hill 😱"},
+  {hisOpener:"come keep me company then",herReaction:"you come keep me company"},
+  {hisOpener:"long but chill, yours?",herReaction:"it was too good but i'm tired now"},
+  {hisOpener:"convincing",herReaction:"great"},
+  {hisOpener:"2018 me would lose to current me in a fight",herReaction:"lmfao"},
+  {hisOpener:"this is content",herReaction:"do you believe in time travel?"},
+  {hisOpener:"team cat 🤷‍♂️",herReaction:"trying to get on my cat's good side huh?"},
+  {hisOpener:"a 90 dollar candle better cure something",herReaction:"lmao"},
+  {hisOpener:"you bring it out",herReaction:"good"},
+  {hisOpener:"i am, you?",herReaction:"yeah"},
+  {hisOpener:"detective work",herReaction:"lmao"},
+  {hisOpener:"the way you carry yourself in your stories",herReaction:"how do i carry myself in my stories?"},
+  {hisOpener:"depends on your mood",herReaction:"oh i'm in a good mood"},
+  {hisOpener:"you act unbothered but you notice everything",herReaction:"oh"},
+  {hisOpener:"is that a dare",herReaction:"absofuckinglutely / absolutely (multiple times)"},
+  {hisOpener:"LET'S GO, knew you would",herReaction:"should've believed you 😧"}
+];
+
+// Get a short "proven reactions" block for the system prompt — proves which openers have a track record
+function getFemaleReactionsContext(limit=4){
+  if(!BAKED_FEMALE_REACTIONS.length)return'';
+  // shuffle + take a few so the AI sees rotating proof
+  const shuffled=[...BAKED_FEMALE_REACTIONS].sort(()=>Math.random()-0.5).slice(0,limit);
+  return `\n\n👩 PROVEN-TO-PULL OPENERS — real women have replied to these. Treat them as benchmarks of what actually lands (her reactions are HER voice, NOT a template for you):\n`+
+    shuffled.map(r=>`• you sent: "${r.hisOpener}" → she replied: "${r.herReaction}"`).join('\n');
+}
 
 function getGoodsContext(userMsg,limit=4){
   const all=[...BAKED_GOODS,...BAKED_GUIDE,...savedGoodReplies];
@@ -6068,7 +6199,8 @@ STRICT RULES:
   const refinedCtx=getRefinedContext(isImage?'':textMsg,3);
   const reportsCtx=getReportsContext(isImage?'':textMsg,4);
   const goodsCtx=getGoodsContext(isImage?'':textMsg,4);
-  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}
+  const reactionsCtx=getFemaleReactionsContext(3);
+  const system=`You are a natural texting assistant for a confident guy who texts authentically.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}${reactionsCtx}
 
 Generate 3 genuinely different reply options.
 
@@ -6172,7 +6304,8 @@ async function quickGenerate(forcedTone){
   const refinedCtx=getRefinedContext(textMsg||'',3);
   const reportsCtx=getReportsContext(textMsg||'',4);
   const goodsCtx=getGoodsContext(textMsg||'',4);
-  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}
+  const reactionsCtx=getFemaleReactionsContext(3);
+  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}${reactionsCtx}
 
 ${ctx?`Extra context from the user: ${ctx}`:''}
 ${toneHint?`The user wants a ${toneHint} tone — use it.`:''}${prefLine}
