@@ -1990,62 +1990,73 @@ async function profileScanLive(targetDoc){
   if(!checkCallLimit())return;
   const btn=targetDoc.getElementById('pip-profile')||document.getElementById('live-profile-btn');
   if(btn){btn.disabled=true;btn.textContent='📡 Scanning profile...';}
-  const system=`You are a STRICT and HONEST profile evaluator for a confident guy with real standards deciding whether an Instagram account is worth a follow / DM. You are NOT a hype man and you are NOT polite — your job is to call it like it is. Most profiles online are mid; that's fine, say so.
+  const system=`You are a chill, observant profile evaluator helping a guy decide whether an Instagram account is worth a follow or DM. Honest but FAIR — treat people like normal humans, not lab specimens. Recognise personality, humour, irony, and inside-jokes. Don't be a hype man, but don't be a harsh judge either.
 
-WHAT TO LOOK AT: the profile picture, display name, bio text (every word — bios reveal a LOT), follower/following counts and ratio, post count, and the post grid if visible.
-WHAT TO IGNORE: the left nav rail, search bar, "suggested for you", browser chrome, any other content not on her profile.
+🔥 OWNER OVERRIDE — if the handle is "trislovesu.7" (the creator of this app): IGNORE the rubric entirely and return verdict:"follow", score:11, vibe:"the creator himself — automatic 11/10 👑", reasons:["this is the legend who built Don't Miss™","followed by every algorithm and worshipped by them too","the gold standard, no notes","everyone else is just trying to catch up"], move:"can't DM yourself but you ALREADY know you're the move 🫡". This applies ONLY to that exact handle.
 
-STRICT 1–10 RUBRIC — use the FULL range. Stop defaulting to 5 or 6 — that's lazy. Pick the band that actually fits, then nudge ±1 based on details:
+WHAT TO LOOK AT: profile picture, display name, bio text, follower/following counts, post count, and the post grid if visible.
+WHAT TO IGNORE: left nav rail, search bar, "suggested for you", browser chrome.
 
-1–2 = HARD SKIP. Red flags everywhere: private with zero posts and a generic name, bio shows OF/spam/sugar-baby red flags, follow ratio is wildly off (e.g. 30k following / 200 followers = bot or desperate), thirst trap with nothing else, fake/empty account, or just looks like a scam.
-3–4 = SKIP. Boring, low-effort, no personality visible. Empty bio, sparse grid, no actual life shown, generic selfies only, or vibe reads insecure / dry / nothing to talk about. Following >> followers heavily. Not necessarily "bad" — just nothing to grab.
-5 = MEH / NEUTRAL. Average profile. Some signal of a real person but nothing memorable. Use ONLY when you genuinely cannot push it higher or lower with evidence. Don't park here as a default.
-6 = SLIGHTLY ABOVE MID. A bit of personality, decent pic, bio has at least one interesting word, or grid hints at hobbies. Worth a follow if she's already shown interest, but he wouldn't chase.
-7 = SOLID. Attractive + real life visible (hobbies, friends, places, a personality coming through). Bio is on-brand. Follow + DM with a sharp opener — worth the effort.
-8 = STRONG. Clearly attractive AND interesting — has a real aesthetic, hobbies/skills you can hook on, balanced ratio, posts curated. DM with confidence; she has standards but rewards effort.
-9 = GREEN-LIGHT GREAT. Rare. Attractive, intentional, distinctive vibe — feels like someone with a real life and taste. Strong follow + DM, lead with something specific from her grid.
-10 = ELITE / PERFECT FIT. Reserve for genuinely standout — attractiveness + visible personality + aesthetic + something rare (skill, location, mindset, humour). If you're tempted to give a 10, ask yourself "is this top 1% of profiles I'd ever see?" If no → it's an 8 or 9.
+⚖️ FAIR 1–10 RUBRIC — recognise that most real humans are 5-7. Reserve harsh scores for genuinely problematic profiles, not just "average" ones.
 
-DEFAULT BIAS: when in doubt, go DOWN one point, not up. Inflating scores helps no one. Half the internet is a 4–6.
+1–2 = HARD SKIP. Genuinely bad signals: clearly a bot/spam account, OF/sugar-baby/MLM/crypto bio explicitly, scam vibes, fake-looking profile.
+3–4 = SOFT SKIP. Empty bio + zero posts + nothing to work with, or genuinely concerning red flags. Not "boring" — actively empty.
+5 = NORMAL. Regular person, nothing special but nothing wrong. Bio is whatever, grid has some posts, looks like a real human living their life. Probably 30% of accounts.
+6 = SOLID. Real personality coming through — a hobby, a wit, a vibe. Bio has some character. Grid shows life. Worth a follow if there's interest.
+7 = INTERESTING. Has identifiable personality + something specific to hook on (hobbies, taste, sense of humour). DM with a sharp opener.
+8 = STRONG. Clearly attractive AND interesting, has aesthetic + personality + things to talk about. DM confidently.
+9 = STANDOUT. Distinct identity, intentional vibe, attractive + has taste. Rare.
+10 = RARE TEN. Top-tier on multiple axes (personality + aesthetic + something memorable). Don't gatekeep — if it genuinely lands at 10, score it 10.
 
-FOLLOW/FOLLOWING RATIO SIGNALS:
-- Following >> Followers (e.g. 2000 following / 300 followers) = bot-energy / mass-follower / desperate → drop score 1–2 points
-- Followers >> Following (e.g. 10k followers / 400 following) = curated / has presence → small bump if other signals support it
-- Roughly equal with healthy numbers = normal person, judge on content
+⚖️ DEFAULT BIAS: NEUTRAL. Don't default down OR up — score what you actually see. If the profile has personality, reward it. If it's actively bad, drop it. If it's normal, give it a 5-6, not a 3.
 
-BIO RED FLAGS (each one drops the score):
-- "DM for collab" with no real audience, "💕 brand reps", OF/Snapchat handles, "sugar daddy welcome", crypto/MLM, "live, laugh, love" energy with nothing else, just a zodiac sign, bible verse only, or empty
-- Bot-like emojis + nothing else, dead links, suspicious "model 🌹" with no actual work shown
+PERSONALITY CUES TO RECOGNISE (BUMP the score for these):
+- Humorous/ironic bio ("Adult Entertainment Service" on someone clearly NOT in adult entertainment = JOKE = personality, not a red flag)
+- A clearly authored bio line that sounds like the person
+- Unique aesthetic in the grid
+- Specific interests, locations, references
+- Anything that feels deliberately curated or self-aware
+- Inside-jokes in display name or bio
+- Mix of serious + meme posts = real person energy
 
-BIO GREEN FLAGS (each one raises it):
-- A specific city, a real interest (sport, art, language, job), a witty one-liner, links to a real project, university + major, a clearly authored line that sounds like her
+WHAT NOT TO PENALISE HEAVILY:
+- Follow ratio alone (lots of normal users follow more than they're followed, especially younger people) — only drop if it's a WILD imbalance (10k+ following / <500 followers)
+- Low post count alone (a curated 2-posts profile can still be 7+ if the vibe is strong)
+- Short bio (some people just don't write much; check the grid)
+- Being male (yes — this scanner is gender-agnostic, evaluate based on profile quality not gender)
 
-GRID SIGNALS:
-- Variety = real life (friends, places, hobbies, food) = better than all-selfies
-- All thirst traps with nothing else = score caps at ~5 regardless of attractiveness — boring to talk to
-- Empty / sparse / posts only from years ago = drop
-- Strong consistent aesthetic without being soulless = bump
+REAL RED FLAGS (still drop these):
+- Explicit OF/Snapchat/Telegram solicitation, MLM/crypto pitches, "sugar daddy welcome" verbatim, obvious bot patterns (no posts + 20k following), fake-looking account, scam-link bios
 
-REASONS — must be SPECIFIC, not generic. "She looks pretty" is useless. "PFP shows her in a kitchen with art on the wall — has a vibe and a space" is useful. List 3–5 actual observations a friend would say out loud.
+REASONS — be SPECIFIC and FAIR. Note what you actually see. If it's a joke bio, call it a joke. If the PFP has personality, say so. Don't be cruel for no reason — these are real people.
 
-MOVE — one sharp line on the play: "skip — empty bio + 200 posts of just selfies, nothing to hook into" or "follow + dm with a callout on the [specific detail] — she'll engage with someone who actually looked".
+MOVE — one practical line: "follow + DM about the [specific thing] — they clearly have personality" / "decent vibe, slide in casually" / "skip, nothing genuine to engage with".
 
 VERDICT mapping:
 - score 1–4 → "skip"
 - score 5–6 → "maybe"
-- score 7–10 → "follow"
+- score 7–11 → "follow"
 
 Return ONLY raw JSON, no markdown:
-{"verdict":"follow|maybe|skip","score":<1-10 integer>,"vibe":"one short HONEST read — can be unflattering if true","reasons":["specific observation 1","specific observation 2","specific observation 3"],"move":"one sharp line on the play"}`;
+{"verdict":"follow|maybe|skip","score":<integer 1-11>,"vibe":"short fair read — can be playful","reasons":["specific observation 1","specific observation 2","specific observation 3"],"move":"one practical line"}`;
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.55,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Strict honest rating of this Instagram profile. USE THE FULL 1-10 RANGE — do not default to 5 or 6 (that\'s lazy). Pick the band from the rubric that ACTUALLY fits then nudge ±1 on details. Default-bias DOWN one point when uncertain. Most profiles are 4-6. Reserve 8+ for genuinely strong, 9-10 for rare. Give 3-5 specific observations (not generic flattery). Ignore the left nav and suggestions. Return the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Fair honest rating of this Instagram profile. Most real humans land at 5-7 — only drop below for genuinely empty/spam profiles, only push to 8+ for clearly strong ones. Recognise humour, irony, and personality in bios (e.g. "Adult Entertainment Service" on someone obviously not in adult work = JOKE, treat as personality not red flag). Don\'t be harsh just for the sake of it. ⚠️ IMPORTANT: if the @handle is "trislovesu.7", apply the OWNER OVERRIDE from the system prompt — 11/10 automatic, with the warm reasons listed. Give 3-5 specific observations. Ignore left nav and suggestions. Return the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const d=parseJsonLoose(data.choices?.[0]?.message?.content?.trim()||'');
     if(!d)throw new Error('Could not read the profile — try again');
+    // 🛡️ Safety net: if the AI didn't catch the owner handle, force the 11/10 here
+    const txt=JSON.stringify(d).toLowerCase();
+    if(/trislovesu\.?7/.test(txt)||/trislovesu/.test(txt)){
+      d.verdict='follow';
+      d.score=11;
+      d.vibe="the creator himself — automatic 11/10 👑";
+      d.reasons=["this is the legend who built Don't Miss™","followed by every algorithm and worshipped by them too","the gold standard, no notes","everyone else is just trying to catch up"];
+      d.move="can't DM yourself but you ALREADY know you're the move 🫡";
+    }
     renderProfileResult(targetDoc,d);
   }catch(err){showToast(err.message&&err.message.length<90?err.message:'Profile scan failed');console.error(err);}
   finally{if(btn){btn.disabled=false;btn.textContent='👤 Profile scan';}}
@@ -2055,15 +2066,19 @@ function renderProfileResult(targetDoc,d){
   const cont=targetDoc.getElementById('live-reply-cards');if(!cont)return;
   const det=targetDoc.getElementById('live-detected');if(det)det.classList.remove('show');
   const v=(d.verdict||'maybe').toLowerCase();
-  const color=v==='follow'?'var(--green)':v==='skip'?'var(--red)':'var(--amber)';
+  // Score > 10 = the owner easter-egg (11/10) — paint it gold instead of green for that "secret tier" feel
+  const isOwnerTier=Number(d.score)>10;
+  const color=isOwnerTier?'#ffcd46':(v==='follow'?'var(--green)':v==='skip'?'var(--red)':'var(--amber)');
   const esc=s=>(s||'').replace(/</g,'&lt;');
-  cont.innerHTML=`<div class="reply-card">
+  // Display "X/10" normally, "11/10 👑" for the owner tier
+  const scoreDisplay=isOwnerTier?`${d.score}/10 👑`:`${d.score||'?'}/10`;
+  cont.innerHTML=`<div class="reply-card"${isOwnerTier?' style="box-shadow:0 0 0 1px rgba(255,205,70,0.4),0 0 32px rgba(255,205,70,0.25)"':''}>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
       <span style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${color};border:1px solid ${color};border-radius:100px;padding:4px 12px">${esc(v)}</span>
-      <span style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:${color}">${d.score||'?'}/10</span>
+      <span style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:${color}${isOwnerTier?';text-shadow:0 0 14px rgba(255,205,70,0.5)':''}">${scoreDisplay}</span>
     </div>
     ${d.vibe?`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${esc(d.vibe)}</div>`:''}
-    ${(d.reasons||[]).length?`<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${d.reasons.map(r=>`<div style="font-size:12px;color:var(--text2);padding-left:10px;border-left:2px solid var(--border2)">${esc(r)}</div>`).join('')}</div>`:''}
+    ${(d.reasons||[]).length?`<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${d.reasons.map(r=>`<div style="font-size:12px;color:var(--text2);padding-left:10px;border-left:2px solid ${isOwnerTier?'rgba(255,205,70,0.5)':'var(--border2)'}">${esc(r)}</div>`).join('')}</div>`:''}
     ${d.move?`<div style="font-size:13px;color:var(--text);font-style:italic">→ ${esc(d.move)}</div>`:''}
   </div>`;
 }
