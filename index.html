@@ -1952,14 +1952,16 @@ function buildLiveMemoryBlock(handle){
   const mem=loadLiveMemory(handle);
   if(!mem)return '';
   const parts=[];
-  parts.push(`\n\n═══ WHAT YOU ALREADY KNOW ABOUT THIS CONVERSATION (use this to write sharper, more personal replies) ═══`);
+  parts.push(`\n\n═══ WHAT YOU ALREADY KNOW ABOUT THIS CONVERSATION (background context — NOT your reply target) ═══`);
   parts.push(`Chatting with: ${mem.handle}  (scan #${(mem.scanCount||0)+1} with her)`);
   if(mem.herStyle)parts.push(`HER texting style: ${mem.herStyle}`);
-  if(mem.facts&&mem.facts.length)parts.push(`THINGS YOU KNOW ABOUT HER (call back to these when relevant — proves you actually listen):\n- ${mem.facts.slice(0,15).join('\n- ')}`);
-  if(mem.topics&&mem.topics.length)parts.push(`TOPICS ALREADY COVERED in this convo: ${mem.topics.slice(0,10).join(', ')}  →  don't rehash these, build forward from them`);
-  if(mem.myRecentSends&&mem.myRecentSends.length)parts.push(`MY LAST FEW SENDS (do NOT repeat or reword these — switch lanes):\n- "${mem.myRecentSends.slice(0,6).join('"\n- "')}"`);
-  if(mem.herRecentSends&&mem.herRecentSends.length)parts.push(`HER LAST FEW SENDS (context only):\n- "${mem.herRecentSends.slice(0,6).join('"\n- "')}"`);
-  parts.push(`═══ END MEMORY ═══`);
+  if(mem.facts&&mem.facts.length)parts.push(`THINGS YOU KNOW ABOUT HER (call back to these when relevant):\n- ${mem.facts.slice(0,15).join('\n- ')}`);
+  if(mem.topics&&mem.topics.length)parts.push(`TOPICS ALREADY COVERED: ${mem.topics.slice(0,10).join(', ')}  →  don't rehash, build forward`);
+  if(mem.myRecentSends&&mem.myRecentSends.length)parts.push(`MY HISTORICAL SENDS from past scans (DO NOT repeat or reword — switch lanes):\n- "${mem.myRecentSends.slice(0,6).join('"\n- "')}"`);
+  if(mem.herRecentSends&&mem.herRecentSends.length)parts.push(`HER HISTORICAL SENDS from past scans (these are OLD — already replied to. DO NOT reply to any of these. Only here so you understand her recent pattern):\n- "${mem.herRecentSends.slice(0,6).join('"\n- "')}"`);
+  parts.push(`═══ END MEMORY — the above is HISTORY ═══
+
+🚨 CRITICAL: your reply target comes ONLY from THIS SCREENSHOT, not from the memory above. The memory shows what was said BEFORE — your job is to reply to whatever NEW grey bubble she sent since the last scan. If her current screenshot bottom-most grey message MATCHES something in "HER HISTORICAL SENDS" — that means she repeated herself or you're looking at a stale screenshot — but you STILL reply only to whatever the screenshot's bottom-most grey bubble says (use the scan-from-bottom-up algorithm from STEP 4 above, do not let the memory list override what's actually on screen RIGHT NOW).`);
   return parts.join('\n');
 }
 
@@ -2473,7 +2475,25 @@ Return ONLY valid JSON with EXACTLY this shape:
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:850,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes (don't send another reply in that lane — convo will die). At least 2 of the 3 replies must push the convo forward (ask, propose, tease, or pivot). At least 1 of the 3 must be SUBSTANTIVE (a real sentence or two, not a one-liner) — flat "yeah/bet" replies are dead ends. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends from the screenshot so I get smarter next scan. Return EXACTLY 3 distinct replies + the learning fields in the JSON.`:'Ignore the left sidebar and all timestamps. MY messages = blue/purple (right). HER messages = grey (left). READ FROM THE BOTTOM UP. Her newest message = the LOWEST grey bubble. IF she sent multiple grey bubbles in a row at the bottom with no blue between them, those are ONE message split across bubbles — read ALL of them together and reply to the WHOLE thing, anchored on the BOTTOM grey bubble. NEVER reply to just the TOP grey bubble in a run (the top is the OLDEST). NEVER reply to my blue/purple messages — they are context only. ANSWER HER QUESTIONS directly if she asked one — no dodging. Look at my recent blue/purple messages — if they were passive/sweet/mirror-style ("you too", "thinking of you", "you\'re adorable", "yeah", "bet"), DO NOT generate another reply in that lane — the convo is dying. Switch: ask her something, propose a plan, tease, or pivot to a topic she mentioned. At least 2 of the 3 replies must push forward. At least 1 of the 3 must be SUBSTANTIVE (a real sentence or two with content — not all one-liners). Carry the convo — bring HIS world to the table too. Call back to details she\'s shared earlier in the chat. ALSO extract her_handle (from chat header), new_facts (concrete things you just learned about her), her_style (how she texts), topics_now (what this scan is about), my_recent_sends (my last 2-4 blue/purple bubbles verbatim), her_recent_sends (her last 2-4 grey bubbles verbatim) — these get saved so you remember her next scan. Return EXACTLY 3 distinct replies + the learning fields in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:850,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends. Return EXACTLY 3 distinct replies + learning fields in the JSON.`:`🚨 BEFORE ANYTHING ELSE — IDENTIFY HER NEWEST MESSAGE CORRECTLY:
+
+Step 1: Find the message INPUT BOX at the very bottom of the active chat (it says "Message..." with mic/image/sticker icons).
+Step 2: Starting from that input box, scan UPWARDS one bubble at a time.
+Step 3: The FIRST GREY (left-side) bubble you hit going up = HER NEWEST MESSAGE. THIS IS YOUR REPLY TARGET. (If you hit a blue/purple bubble first, KEEP going up — blue is mine.)
+Step 4: Check directly above that grey bubble — if more greys are stacked with no blue between, group them as ONE message. Anchor on the BOTTOM grey of the group.
+Step 5: STOP scanning up as soon as you hit a blue bubble. Anything above blue is OLD — DO NOT reply to it.
+
+⚠️ COMMON FAILURE you keep making: anchoring on a grey bubble HIGHER up because it has a clearer topic or because the memory block mentioned a similar message. STOP. Always pick the LOWEST grey bubble in the active chat. The bottom grey bubble in the screenshot wins, ALWAYS, even if its content is short or vague ("ou", "lol", "k", "yeah").
+
+⚠️ THE MEMORY BLOCK ABOVE shows HISTORICAL messages from PAST scans — those have already been replied to. You are NOT reading the memory for your reply target. You read the SCREENSHOT for that. Memory is background only.
+
+Ignore the left sidebar (other chats). Ignore all timestamps and "New messages" dividers. MY messages = blue/purple right. HER messages = grey left.
+
+After locking onto her newest grey: ANSWER any question she asked. Look at my recent blue/purple bubbles in the screenshot — if they were passive/mirror-style ("you too", "thinking of you", "yeah", "bet"), DON'T send another in that lane. Switch: ask her something, propose a plan, tease, pivot. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE (a real sentence or two with content — not all one-liners). Bring his world to the table too. Call back to details she's shared.
+
+ALSO extract: her_handle (from chat header), new_facts (concrete things you just learned), her_style (how she texts), topics_now (what this scan is about), my_recent_sends (my last 2-4 blue/purple bubbles verbatim), her_recent_sends (her last 2-4 grey bubbles verbatim).
+
+Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -6008,7 +6028,14 @@ const BAKED_REPORTS=[
   {message:"[Story]",reply:"this song is unreal",reason:"REPLY-DEAD STATEMENT — she just says 'ikr' and you're stuck. Make it a question: 'what's the song called'."},
   {message:"[Story]",reply:"this looks fire",reason:"REPLY-DEAD STATEMENT (also banned vocab 'fire'). Pure compliment gets 'thanks' — needs to be a question or tease that pulls info."},
   {message:"[Story with a friend]",reply:"okay influencer",reason:"MOCK-JUDGMENT ALONE = reply-dead. She might laugh but has nothing to TELL you. ONLY use this paired with a question: 'okay influencer where is this' / 'okay influencer drop the location'."},
-  {message:"[Story]",reply:"the shades doing work",reason:"REPLY-DEAD naming-with-praise. She says 'thanks lol' and dies. Make it a question: 'where you get those shades'."}
+  {message:"[Story]",reply:"the shades doing work",reason:"REPLY-DEAD naming-with-praise. She says 'thanks lol' and dies. Make it a question: 'where you get those shades'."},
+
+  // ── 🚨 LIVE DM SCAN FAILURES — anchoring on the WRONG (older) grey bubble ──
+  // The most common Live DM failure: AI picks a grey message that is NOT the bottom-most grey bubble. Almost always because it found a "richer" / "more interesting" topic higher up.
+  {message:"[Live DM scan — her latest grey is short like 'ou' or 'k' at the bottom]",reply:"(any reply that addresses an older/richer grey message instead of the bottom grey 'ou')",reason:"🚨 LIVE DM FAILURE: anchored on an OLDER grey bubble because its content was richer. NEVER. The bottom-most grey bubble is ALWAYS the reply target, even if it's just 'ou' / 'k' / 'lol' / 'yeah'. Use the scan-from-bottom-up algorithm. The TOP grey of a stack is the OLDEST."},
+  {message:"[Live DM scan — grey 'hi' at top, blue 'hey' below, grey 'how was your day' at bottom]",reply:"hi back",reason:"🚨 LIVE DM FAILURE: replied to the TOP grey ('hi') when the actual newest is the BOTTOM grey ('how was your day'). The scan went TOP-DOWN instead of BOTTOM-UP. Always reverse: start at the input box, scan upward."},
+  {message:"[Live DM scan — multi-bubble stack: grey 'wait' → grey 'actually' → grey 'are you free saturday?']",reply:"about what",reason:"🚨 LIVE DM FAILURE: replied to the TOP of the multi-bubble stack ('wait') instead of the BOTTOM ('are you free saturday?'). When she sends multiple greys in a row, the BOTTOM is the actual point — anchor there."},
+  {message:"[Live DM scan — memory block lists past 'how was your day' message]",reply:"(reply that addresses the historical 'how was your day' from memory, ignoring the new screenshot)",reason:"🚨 LIVE DM FAILURE: AI replied to a HISTORICAL message from the memory block instead of the actual new message in the screenshot. The memory shows OLD messages already replied to. The reply target comes ONLY from the screenshot, never from the memory list."}
 ];
 
 function getReportsContext(userMsg,limit=4){
