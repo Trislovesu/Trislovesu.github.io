@@ -2154,16 +2154,79 @@ Three openers all picking the DEFENSE archetype = three of the same conversation
 - "and you didn't invite me, crazy"
 - "[song] at 11pm is a personality choice"
 
-🎯 BUT THE REAL BAR — most landing texts are SHORTER + LAZIER than that. 80% of real guys' story-replies are just one of these shapes:
+🎯 BUT THE REAL BAR — short + casual, BUT the opener MUST PULL A SUBSTANTIVE REPLY. "Sounds natural" alone isn't enough — if she can only respond with "yeah" / "ikr" / 😂, the convo dies on her end. Your opener has to give her SOMETHING SPECIFIC TO TELL YOU.
 
-- Just naming the thing: "the boots" / "the necklace 👀" / "the song fr"
-- Mock-judgment in 2 words: "okay influencer" / "okay supermodel" / "okay barista" / "okay photographer"
-- A one-word reaction: "criminal." / "obsessed." / "sick." / "unreal."
-- A short tease that's basically a thought-fragment: "wait you outside?" / "this is u rn?" / "you really posting this?"
-- A question that's ALMOST an accusation: "who took this" / "where you at" / "what time you done"
-- A modern slang fragment: "this fr?" / "nah this song" / "ngl that fit"
+✅ REPLY-PULLING SHAPES (these get a real text back, not just an emoji):
 
-These are SHORTER than the polished examples above and they land HARDER because they don't try.
+1. OPEN-ENDED QUESTION she has info to share:
+   - "where is this i need to go"
+   - "okay drop the location"
+   - "okay drop the playlist"
+   - "what's the song called"
+   - "who took this i need to hire them"
+
+2. WRONG-GUESS she has to correct (she'll explain + add context):
+   - "wait is this trinidad?"
+   - "you in mexico?"
+   - "is this from your trip last week?"
+   - "this is the spot on king st right?"
+
+3. CALLBACK that shows you remember (she'll confirm + tell you more):
+   - "wait this is where you went last time too no?"
+   - "is this the same boat from the other story"
+
+4. TEASE-QUESTION that begs explanation:
+   - "you actually on a boat or staged this"
+   - "this is u rn or from the trip"
+   - "are you in love island or what"
+
+5. PLAYFUL DEMAND for info:
+   - "okay influencer drop the photographer's @"
+   - "i need the full context behind this"
+   - "okay context i need details"
+
+❌ REPLY-DEAD SHAPES (sound natural BUT die — she has nothing to say back):
+
+- Just naming the thing: "the boots" / "the necklace" / "the song fr" / "the location 😭" → she replies "yeah" / "thanks" / 😂 → DEAD
+- One-word reactions: "criminal." / "unreal." / "obsessed." → she has NOTHING to add → DEAD
+- Closed yes/no questions: "you in trinidad?" / "did you go?" → "yeah" → DEAD (FIX: make it open-ended → "where is this")
+- Statements that just need agreement: "this song is unreal" / "this looks fire" → "ikr" → DEAD
+- Mock-judgment alone: "okay influencer" → she might laugh but has nothing to TELL you → DEAD-ish (use ONLY if paired with a question: "okay influencer where is this")
+
+THE RULE: short is fine, but EVERY OPENER must either ASK FOR INFO she has OR make a CLAIM she has to engage with. Naming-only and reacting-only replies die fast.
+
+THE TWO-STEP TEST (now mandatory): imagine her likely reply. If the realistic reply is "yeah" / "lol" / "ikr" / an emoji → REWRITE. Your opener should pull a SENTENCE out of her, not a reaction.
+
+💕 FLIRTY MANDATE — AT LEAST 1 OF THE 3 OPENERS MUST HAVE A FLIRTY EDGE:
+The other 2 can be pure curiosity-questions, but at least 1 needs to telegraph "i'm interested" with a tease or playful claim. NOT a compliment, NOT thirsty — just a confident hint of interest that still PULLS A REPLY.
+
+✅ FLIRTY OPENERS THAT WORK (light tease + still pulls a reply):
+- "this is dangerous behaviour for a wednesday" → playful accusation, she defends
+- "okay confident behaviour" → notices her energy, she plays along
+- "tell me you didn't go without me" → mock-betrayal, she explains
+- "what time you done because i need plans" → flirt + asks her schedule
+- "what's a guy gotta do to get an invite" → playful, asks for the invite
+- "are you trying to ruin my day or" → mock-accusation, she'll deny + flirt back
+- "you out solo? i don't believe it" → playful disbelief, she explains
+- "okay you can't keep doing this to me" → mock-overwhelmed, she'll laugh + push back
+- "you taking applications for the next trip" → bold + playful, she has to engage
+- "this should be illegal honestly" → light flirt, she'll deflect + you keep going
+
+❌ FLIRTY THAT FAILS:
+- Pure compliments ("you look amazing") — banned, no edge
+- Body comments — banned, thirsty
+- "i miss you" type heaviness — too much for a story DM
+- Overly suggestive — keep it playful, not horny
+
+The flirty opener should still pull a reply (tease that begs response) AND telegraph interest without making him look thirsty.
+
+⚠️ "JUST NAME THE THING" ≠ NAME ANYTHING — DO NOT name body-adjacent or sexual items:
+- ❌ "that bikini" / "the bikini" / "those legs" / "that body" / "the cleavage" / "those abs" / "that ass" — all body-comments in disguise. ZERO exceptions.
+- ❌ "the swimsuit" / "the lingerie" / "those shorts" (when she's posing) — same problem.
+- ✅ When she's in revealing clothing, find a NON-BODY detail to name instead: the song, the location (the lake / the mountains / the boat), what she's doing (boat day, vacation, golden hour), an accessory (the shades, the necklace, the bracelet), or the energy of the moment.
+- The rule: name something that her GRANDMA could see in the photo and not feel weird about. If it FAILS that test → pick another detail.
+
+⚠️ "boat vibes" / "city vibes" / "summer vibes" / ANY "[noun] vibes" pattern — BANNED. "vibes" alone is overused; "[noun] vibes" is a lazy AI default. Find a SPECIFIC detail instead (the song name, the lake, the boat, the mountains in frame).
 
 🚫 AI-TELL PATTERNS to break out of — these scream "tryhard":
 - "okay but..." / "wait..." / "okay so..." used as manufactured interjection openers (overused as AI signature now)
@@ -2206,7 +2269,7 @@ Return ONLY JSON: {"her_message":"brief description of what's actually in the st
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.15,top_p:0.95,frequency_penalty:0.8,presence_penalty:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore the dimmed side previews). Find 3 specific details — high-priority only (the song, caption/sticker, a chosen outfit piece, named location, what she\'s doing in the moment, who she\'s with, a revealing object in frame). SKIP dead-end details (walls, lighting alone, camera angles, generic furniture, her phone, "the vibe"). 🎯 BIAS LAZY — most landing texts are SHORTER than you think: "the boots" / "the necklace 👀" / "the song fr" / "okay influencer" / "wait you outside?" — these LAND HARDER than polished bits because they don\'t try. AT LEAST 1 of the 3 MUST BE 2-5 words. Mix lengths across the 3 — they should NOT all be polished one-liners. 🚫 STOP using "okay but..." / "wait..." / "okay so..." as manufactured opener-fragments (AI tell). 🚫 STOP using writer-y vocab every time: "criminal" / "doing numbers" / "is a choice" / "i\'m onto you" / "you peaked" / "suspiciously curated" — GOOD once, BAD repeated. 🚫 STOP compound "+ + =" structures and 2-clause setup+punchline replies — real texts are usually ONE clause. Energy = "noticed, took 0 effort, here\'s what i thought" — NOT "i crafted this for you". TWO-STEP TEST: picture her most likely reply, ask "can i say something back to THAT?" — if no, rewrite. The 3 openers should differ in CONVERSATION SHAPE not just detail. 🔒 EACH "text" FIELD MUST BE THE LITERAL DM HE\'D TYPE — never 3rd person ("he would say..."), never narration, never wrapped in "reply:" labels. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "you look amazing/beautiful/stunning", "he would", "i\'d probably", "if it were me", "as a confident guy", "a reply might be". BANNED topics: how her body looks or how clothes FIT her — only her CHOICES. Emojis sparingly — MAX 1 per opener, at least 2 of the 3 should have NO emoji. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍. Lowercase. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.15,top_p:0.95,frequency_penalty:0.8,presence_penalty:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore dimmed side previews). 🎯 PRIMARY GOAL: every opener MUST PULL A SUBSTANTIVE REPLY — give her SOMETHING SPECIFIC TO TELL YOU. If her realistic reply to your opener is "yeah" / "ikr" / 😂 / a single emoji → REWRITE before submitting. ✅ USE THESE SHAPES: (1) OPEN-ENDED Q she has info on ("where is this i need to go" / "okay drop the location" / "okay drop the playlist" / "who took this") (2) WRONG-GUESS she corrects ("wait is this trinidad?" / "you in mexico?") (3) CALLBACK to memory ("wait this is where you went last time too?") (4) TEASE-Q begging context ("you actually on a boat or staged this" / "this is u rn or from the trip") (5) PLAYFUL DEMAND ("okay influencer drop the location" / "i need the full context"). 💕 MANDATORY: AT LEAST 1 of the 3 must have a FLIRTY EDGE — a tease/playful claim that hints at interest WITHOUT being a compliment or thirsty. Examples: "this is dangerous behaviour for a wednesday" / "okay confident behaviour" / "tell me you didn\'t go without me" / "what\'s a guy gotta do to get an invite" / "you taking applications for the next trip" / "are you trying to ruin my day or". The flirty one still has to PULL A REPLY — tease, not compliment. Mix the 3 so they\'re different SHAPES (one flirty + two curiosity), not all the same. ❌ AVOID REPLY-DEAD SHAPES: just-naming ("the boots" / "the song fr" / "the location 😭"), one-word reactions ("criminal." / "unreal."), closed Y/N ("you in trinidad?"), statements needing only agreement ("this song is unreal"), mock-judgment alone ("okay influencer"). ⚠️ HARD GUARDS — REJECT YOUR REPLY IF: (1) it names a bikini/swimsuit/lingerie/shorts/body part — body-coded items count as thirsty even when phrased as observation; (2) it uses "[noun] vibes" ("boat vibes" / "city vibes" / "summer vibes") — banned pattern. When she\'s in revealing clothing pivot to NEUTRAL detail: the song, location, what she\'s doing, accessory, context of the moment. GRANDMA TEST: would her grandma not feel weird? if no, repick. 🎯 KEEP IT SHORT: most replies 4-12 words. AT LEAST 1 of the 3 should be very short (3-6 words) but it MUST still pull a reply (question or tease, not naming). Mix lengths + shapes. 🚫 STOP: "okay but..." / "wait..." / "okay so..." as manufactured fragments. Writer-y vocab repeated: "criminal" / "doing numbers" / "is a choice" / "i\'m onto you" / "you peaked" / "suspiciously curated". Compound "+ + =" structures. 2-clause setup+punchline. 🔒 EACH "text" FIELD = LITERAL DM HE\'D TYPE — never 3rd person, narration, "reply:" labels. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "[noun] vibes", "you look amazing/beautiful/stunning", "he would", "i\'d probably", "as a confident guy", "a reply might be", "that bikini", "those legs". Lowercase. MAX 1 emoji per opener, at least 2 of 3 should have NO emoji. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -2934,12 +2997,35 @@ CONVERSATION KILLERS to avoid: closed yes/no questions ("did you have fun?"), pu
 - "the cross necklace is a bold choice with that top"
 - "and you didn't invite me, crazy"
 
-🎯 BUT MOST landing texts are EVEN SHORTER + LAZIER. Lean into these:
-- Just naming the thing: "the boots" / "the necklace 👀" / "the song fr"
-- Mock-judgment in 2 words: "okay influencer" / "okay supermodel" / "okay photographer"
-- One-word reactions: "criminal." / "obsessed." / "unreal."
-- Thought-fragments: "wait you outside?" / "this is u rn?" / "who took this"
-- Modern slang: "this fr?" / "nah this song" / "ngl that fit"
+🎯 BUT THE REAL BAR — short + casual, BUT the opener MUST PULL A SUBSTANTIVE REPLY. If she can only say "yeah" / "ikr" / 😂 back → DEAD.
+
+✅ REPLY-PULLING SHAPES (use these, they get real sentences back):
+1. OPEN-ENDED Q she has info to share: "where is this i need to go" / "okay drop the playlist" / "who took this"
+2. WRONG-GUESS she has to correct: "wait is this trinidad?" / "you in mexico?"
+3. CALLBACK that shows memory: "wait this is where you went last time too?"
+4. TEASE-QUESTION begging explanation: "you actually on a boat or staged this" / "this is u rn or from the trip"
+5. PLAYFUL DEMAND for info: "okay influencer drop the location" / "i need the full context"
+
+❌ REPLY-DEAD SHAPES (sound natural BUT die):
+- Just naming: "the boots" / "the song fr" / "the location 😭" → she replies "yeah" or 😂 → DEAD
+- One-word reactions: "criminal." / "unreal." → she has nothing to add → DEAD
+- Closed Y/N questions: "you in trinidad?" → "yeah" → DEAD (open it up: "where is this")
+- Statements needing agreement only: "this song is unreal" → "ikr" → DEAD
+- Mock-judgment alone: "okay influencer" → use ONLY paired with a question
+
+THE RULE: every opener must ASK FOR INFO she has OR make a CLAIM she has to engage with. TWO-STEP TEST: if her realistic reply is "yeah"/"lol"/an emoji → REWRITE.
+
+💕 FLIRTY MANDATE — AT LEAST 1 OF THE 3 OPENERS PER ANGLE MUST HAVE A FLIRTY EDGE: a tease or playful claim that telegraphs interest. NOT a compliment, NOT thirsty.
+✅ EXAMPLES: "this is dangerous behaviour for a wednesday" / "okay confident behaviour" / "tell me you didn't go without me" / "what time you done because i need plans" / "what's a guy gotta do to get an invite" / "are you trying to ruin my day or" / "you taking applications for the next trip"
+❌ AVOID: pure compliments, body comments, "i miss you" heaviness, overly suggestive.
+The flirty opener must still PULL A REPLY (tease that begs response) + show interest without thirst.
+
+⚠️ "JUST NAME THE THING" ≠ NAME ANYTHING — DO NOT name body-adjacent items:
+- ❌ "that bikini" / "the bikini" / "those legs" / "that body" / "the swimsuit" — body comments disguised as observations
+- ✅ When she's in revealing clothing, name a NON-BODY detail: the song, the location (lake/mountains/boat), what she's doing, an accessory (shades, necklace), the energy of the moment
+- TEST: would her grandma see this photo and not feel weird about what you named? If not, pick a different detail.
+
+⚠️ "[noun] vibes" PATTERN — BANNED. "boat vibes" / "city vibes" / "summer vibes" all read as the AI's lazy default. Find a specific named detail instead.
 
 🚫 AI-TELL PATTERNS TO BREAK OUT OF:
 - "okay but..." / "wait..." / "okay so..." as manufactured interjection openers (overused as AI signature)
@@ -3266,12 +3352,13 @@ function actuallyRenderStep(stage){
   if(qrStep===1){
     const inp=stage.querySelector('#qr-name-input');
     if(inp){
-      // 🔙 Restore previously typed name if returning via Back
-      if(contribState.name)inp.value=contribState.name;
+      // 🔙 Restore previously typed handle if returning via Back (strip leading @ since we render it as a prefix)
+      if(contribState.igHandle)inp.value=contribState.igHandle;
+      else if(contribState.name)inp.value=(contribState.name||'').replace(/^@/,'');
       inp.focus();
       const syncBtn=()=>{
         const btn=stage.querySelector('#qr-name-next');
-        const ok=inp.value.trim().length>=3;
+        const ok=inp.value.trim().replace(/^@+/,'').length>=2;
         btn.disabled=!ok;
         btn.style.opacity=ok?'1':'.5';
         btn.style.cursor=ok?'pointer':'not-allowed';
@@ -3280,10 +3367,12 @@ function actuallyRenderStep(stage){
       inp.addEventListener('input',()=>{
         syncBtn();
         const errEl=document.getElementById('qr-name-err');
+        const verifyEl=document.getElementById('qr-name-verify');
         if(errEl&&errEl.textContent)errEl.textContent='';
+        if(verifyEl&&verifyEl.textContent)verifyEl.textContent='';
         inp.style.borderColor='';
       });
-      inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().length>=3){qrSubmitName();}});
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&inp.value.trim().replace(/^@+/,'').length>=2){qrSubmitName();}});
     }
   }
   if(qrStep===2){
@@ -3353,10 +3442,14 @@ function qrStepWelcome(){
 function qrStepName(){
   return `<div class="qr-card">
     <div class="qr-eyebrow">01 / 07</div>
-    <div class="qr-headline">what do we call you?</div>
-    <div class="qr-sub">first name or @handle — real one. tris needs to credit you in the contributors panel.</div>
-    <input type="text" class="qr-input" id="qr-name-input" placeholder="e.g. zoey or @zoey.k" maxlength="40" autocomplete="off" />
-    <div id="qr-name-err" style="font-size:11px;color:#e05555;margin:-10px 0 14px;min-height:14px;text-align:center"></div>
+    <div class="qr-headline">your @ handle?</div>
+    <div class="qr-sub">instagram handle only. that's how tris credits you in the contributors panel.</div>
+    <div style="position:relative;margin-bottom:6px">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);font-size:14.5px;font-family:'DM Sans',sans-serif;pointer-events:none;font-weight:600">@</span>
+      <input type="text" class="qr-input" id="qr-name-input" placeholder="yourhandle" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" style="padding-left:30px;margin-bottom:0" />
+    </div>
+    <div id="qr-name-err" style="font-size:11px;color:#e05555;margin:6px 0 8px;min-height:14px;text-align:center"></div>
+    <div id="qr-name-verify" style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:14px;min-height:14px;text-align:center;font-style:italic"></div>
     <button class="qr-primary-btn" id="qr-name-next" onclick="qrSubmitName()" disabled style="opacity:.4;cursor:not-allowed">next →</button>
   </div>`;
 }
@@ -3431,7 +3524,83 @@ function validateContribName(raw){
   return{ok:true,name:v};
 }
 
-function qrSubmitName(){
+// 📸 Instagram handle validator — Instagram's actual format rules
+// + soft existence check via Unavatar (free public image proxy). Returns {ok, handle, msg}.
+function validateInstagramHandle(raw){
+  let v=(raw||'').trim().replace(/^@+/,'').toLowerCase();
+  if(!v)return{ok:false,msg:'need your @ handle'};
+  if(v.length<2)return{ok:false,msg:'handle too short'};
+  if(v.length>30)return{ok:false,msg:'instagram caps at 30 chars'};
+  if(!/^[a-z0-9._]+$/.test(v))return{ok:false,msg:'only letters, numbers, periods, underscores'};
+  if(v.startsWith('.')||v.endsWith('.'))return{ok:false,msg:'can\'t start or end with a period'};
+  if(v.includes('..'))return{ok:false,msg:'no consecutive periods'};
+  // Block obvious placeholders by normalising and checking against the existing blocklist
+  const norm=v.replace(/[._]/g,'');
+  if(NAME_BLOCKLIST.has(norm))return{ok:false,msg:'need a real @ handle — not a placeholder'};
+  if(/^(.)\1+$/.test(norm))return{ok:false,msg:'that\'s not a handle lol — try again'};
+  if(new Set(norm).size<2)return{ok:false,msg:'need a real @ handle'};
+  return{ok:true,handle:'@'+v,bare:v};
+}
+
+// 🔍 Soft-verify the handle exists via Unavatar's free Instagram image proxy.
+// Resolves {exists:true|false|null} where null = couldn't check (timeout/network).
+function probeInstagramHandle(bareHandle){
+  return new Promise(resolve=>{
+    let done=false;
+    const finish=v=>{if(done)return;done=true;resolve(v);};
+    const img=new Image();
+    img.onload=()=>finish({exists:true});
+    img.onerror=()=>finish({exists:false});
+    // 5s safety net so a slow CDN doesn't block the flow
+    setTimeout(()=>finish({exists:null}),5000);
+    // fallback=false makes the service return a 404 (= image error) when the handle doesn't exist,
+    // instead of serving a default avatar
+    img.src=`https://unavatar.io/instagram/${encodeURIComponent(bareHandle)}?fallback=false`;
+  });
+}
+
+async function qrSubmitName(){
+  const errEl=document.getElementById('qr-name-err');
+  const verifyEl=document.getElementById('qr-name-verify');
+  const inp=document.getElementById('qr-name-input');
+  const btn=document.getElementById('qr-name-next');
+  const v=(inp?.value||'').trim();
+  // Step 1: format validation
+  const res=validateInstagramHandle(v);
+  if(!res.ok){
+    if(errEl)errEl.textContent=res.msg;
+    if(verifyEl)verifyEl.textContent='';
+    if(inp){inp.style.borderColor='#e05555';inp.focus();setTimeout(()=>{inp.style.borderColor='';},2500);}
+    return;
+  }
+  if(errEl)errEl.textContent='';
+  // Step 2: soft-verify by probing Unavatar
+  if(verifyEl)verifyEl.textContent='🔍 checking @'+res.bare+' on instagram...';
+  if(btn){btn.disabled=true;btn.style.opacity='.5';btn.style.cursor='wait';btn.textContent='checking...';}
+  const probe=await probeInstagramHandle(res.bare);
+  // Reset button state
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';btn.textContent='next →';}
+  if(probe.exists===false){
+    // Hard-block: handle doesn't exist on instagram
+    if(verifyEl)verifyEl.textContent='';
+    if(errEl)errEl.textContent='couldn\'t find @'+res.bare+' on instagram — check the spelling';
+    if(inp){inp.style.borderColor='#e05555';inp.focus();setTimeout(()=>{inp.style.borderColor='';},3500);}
+    return;
+  }
+  if(probe.exists===true){
+    if(verifyEl){verifyEl.innerHTML='✅ verified @'+res.bare;verifyEl.style.color='#4db37a';}
+  }else{
+    // Couldn't reach the verification service — let them through with a soft note
+    if(verifyEl){verifyEl.textContent='⚠️ couldn\'t verify — saving anyway';verifyEl.style.color='rgba(255,205,70,0.7)';}
+  }
+  contribState.name=res.handle;      // stored as "@handle"
+  contribState.igHandle=res.bare;    // bare form for any future lookup
+  contribState.igVerified=probe.exists===true;
+  setTimeout(qrAdvance,500); // tiny pause so they see the verified ✅
+}
+
+// 🛑 keep the old function name as a wrapper so any stale references don't break (legacy guard)
+function qrSubmitNameLegacy(){
   const errEl=document.getElementById('qr-name-err');
   const inp=document.getElementById('qr-name-input');
   const v=(inp?.value||'').trim();
@@ -3736,6 +3905,8 @@ let contribState={
   dmExperience:null, // bool (only collected via QR flow)
   textingStyle:null, // 'deadpan' | 'playful' | 'chaotic' | 'longform' (only collected via QR flow)
   email:null,        // optional — collected via QR flow only, lets tris email updates
+  igHandle:null,     // bare instagram handle (without @) — collected on step 1
+  igVerified:false,  // true if Unavatar's instagram probe found the handle
   answers:[],        // {scenarioIdx, tone, context, message, reply OR rating, feedback, ts}
   currentIdx:0,      // index into shuffled queue
   queue:[],          // shuffled scenario indexes
@@ -3755,6 +3926,8 @@ function saveContribProfile(){
       dmExperience:contribState.dmExperience,
       textingStyle:contribState.textingStyle,
       email:contribState.email,
+      igHandle:contribState.igHandle,
+      igVerified:contribState.igVerified,
       lastUsed:Date.now()
     };
     store.setItem('rizz_contrib_profile',JSON.stringify(profile));
@@ -3804,14 +3977,14 @@ function continueAsReturning(){
 function restartContribProfile(){
   if(!confirm('clear your saved profile and start fresh? this wipes your name, gender, email + the rest from this device.'))return;
   clearContribProfile();
-  contribState={name:'',gender:'',entrySource:contribState.entrySource||'',skillRating:null,dmExperience:null,textingStyle:null,email:null,answers:[],currentIdx:0,queue:[],promptShownAt:0};
+  contribState={name:'',gender:'',entrySource:contribState.entrySource||'',skillRating:null,dmExperience:null,textingStyle:null,email:null,igHandle:null,igVerified:false,answers:[],currentIdx:0,queue:[],promptShownAt:0};
   renderContribIntake();
 }
 function closeContribute(){
   if(contribState.answers.length>0&&!confirm('You have '+contribState.answers.length+' un-exported answers. Close anyway? They\'ll be lost.'))return;
   document.getElementById('contrib-overlay').classList.remove('open');
   const wasQr=contribState.entrySource==='qr';
-  contribState={name:'',gender:'',entrySource:'',skillRating:null,dmExperience:null,textingStyle:null,email:null,answers:[],currentIdx:0,queue:[],promptShownAt:0};
+  contribState={name:'',gender:'',entrySource:'',skillRating:null,dmExperience:null,textingStyle:null,email:null,igHandle:null,igVerified:false,answers:[],currentIdx:0,queue:[],promptShownAt:0};
   document.getElementById('contrib-export-fab').style.display='none';
   // QR users: hide the QR overlay too, restore the login screen so the app is usable
   if(wasQr){
@@ -4348,6 +4521,8 @@ async function autoSendToDiscord(){
     dmExperience:contribState.dmExperience,
     textingStyle:contribState.textingStyle,
     email:contribState.email,
+    igHandle:contribState.igHandle,
+    igVerified:contribState.igVerified,
     exportedAt:Date.now(),
     count:contribState.answers.length,
     answers:contribState.answers
@@ -4362,10 +4537,11 @@ async function autoSendToDiscord(){
   const styleEmoji={deadpan:'💀',playful:'😏',chaotic:'🌀',longform:'📝'}[contribState.textingStyle]||'';
   const styleLine=contribState.textingStyle?` · ${styleEmoji} ${contribState.textingStyle}`:'';
   const emailLine=contribState.email?`\n📧 ${contribState.email}`:'';
+  const igLine=contribState.igHandle?`\n📸 ${contribState.igVerified?'✅ verified':'⚠️ unverified'} → [@${contribState.igHandle}](https://instagram.com/${contribState.igHandle})`:'';
   // Quick stats for at-a-glance review
   const wtfCount=contribState.answers.filter(a=>a.type==='female_wtf_flag').length;
   const wtfLine=wtfCount?`  ·  🚩 ${wtfCount} WTF flags`:'';
-  const content=`📥 **new contrib** — **${contribState.name||'anon'}** (${contribState.gender})\n${contribState.answers.length} answers${skillLine}${styleLine}${sourceLine}${dmExpLine}${wtfLine}${emailLine}`;
+  const content=`📥 **new contrib** — **${contribState.name||'anon'}** (${contribState.gender})\n${contribState.answers.length} answers${skillLine}${styleLine}${sourceLine}${dmExpLine}${wtfLine}${igLine}${emailLine}`;
   const form=new FormData();
   form.append('content',content.slice(0,1900));
   form.append('file',file,filename);
@@ -4393,6 +4569,8 @@ function exportContribAnswers(){
     dmExperience:contribState.dmExperience,
     textingStyle:contribState.textingStyle,
     email:contribState.email,
+    igHandle:contribState.igHandle,
+    igVerified:contribState.igVerified,
     exportedAt:Date.now(),
     count:contribState.answers.length,
     answers:contribState.answers
@@ -5787,7 +5965,40 @@ const BAKED_REPORTS=[
   {message:"[Story]",reply:"you're doing well",reason:"PARENTAL / TEACHER ENERGY. 'You're doing well' is what a manager says in a performance review, not what a peer texts on a story."},
   {message:"[Story]",reply:"you're killing the vibe",reason:"ACCIDENTALLY CRITICAL. 'Killing the vibe' literally means RUINING IT. This is a negative phrase being used as if it were positive — total semantic failure."},
   {message:"[Story]",reply:"cute as hell",reason:"THIRSTY BODY-COMPLIMENT. Pure compliment with no edge + intensity ('as hell') makes it read horny/desperate. Skip."},
-  {message:"[Story]",reply:"i fw this heavy",reason:"FORCED AAVE-BORROWING. Reads like a non-native user trying to sound cool. If it's not natural to him, don't reach for it."}
+  {message:"[Story]",reply:"i fw this heavy",reason:"FORCED AAVE-BORROWING. Reads like a non-native user trying to sound cool. If it's not natural to him, don't reach for it."},
+
+  // ── 👙 "JUST NAME THE THING" FAILURES — the AI took the lazy-naming rule and used it on body/swimwear ──
+  // These are the most common AI failure mode in 2026 — pretending a body comment is just an "observation"
+  {message:"[Story of a girl in a bikini on a boat]",reply:"that bikini",reason:"FAILED naming-rule application. The 'just name the thing' move applies to NEUTRAL details (boots, necklace, song) — NEVER to swimwear/body-coded items. Naming her bikini reads thirsty no matter how short. RULE: would her grandma see what you named and not feel weird? If not, pick a different detail (the song / the location / the boat / the shades)."},
+  {message:"[Story of a girl in a bikini on a boat]",reply:"the bikini",reason:"Same as above — adding 'the' doesn't disguise that it's a body comment. The AI saw a clothing item and named it, ignoring that some clothing items are sexual-by-context. Pick the song or location instead."},
+  {message:"[Story of a girl in a bikini]",reply:"the swimsuit",reason:"Body-coded item naming. Skip swimwear entirely as the named detail."},
+  {message:"[Story of a girl in shorts]",reply:"those shorts",reason:"Same failure mode when she's posing — naming shorts reads as commenting on her legs. Pick a non-body element."},
+  {message:"[Story]",reply:"those legs",reason:"OBVIOUS body comment. Banned at every level — never name body parts as the 'observation'."},
+  {message:"[Story]",reply:"that body",reason:"OBVIOUS body comment. Banned."},
+  {message:"[Story]",reply:"the cleavage",reason:"OBVIOUS body comment. Banned."},
+  {message:"[Story]",reply:"those abs",reason:"OBVIOUS body comment. Banned even when complimentary."},
+
+  // ── 🌫️ "[noun] vibes" — the AI's new lazy default after we banned "vibes" alone ──
+  {message:"[Story on a boat]",reply:"boat vibes",reason:"LAZY [NOUN] VIBES PATTERN. The AI gravitates to '[setting] vibes' as a 'safe' observation, but it's still using the banned word 'vibes' AND it's generic. Could be ANY boat. Name the specific song / location / what she's doing instead."},
+  {message:"[Story in a city]",reply:"city vibes",reason:"Same failure — '[noun] vibes' = AI's lazy fallback. Specific named detail required."},
+  {message:"[Story by a pool]",reply:"pool vibes",reason:"Same. ANY '[noun] vibes' construction triggers the banned-pattern detector."},
+  {message:"[Story outside]",reply:"summer vibes",reason:"Same. Generic abstract observation with banned 'vibes' word."},
+  {message:"[Story]",reply:"good vibes",reason:"Same — also 'good' = generic. Double-banned."},
+
+  // ── 💀 REPLY-DEAD FAILURES — replies that SOUND natural but give her nothing to say back ──
+  // The pure naming/reacting class. They land vibe-wise but stall the conversation immediately.
+  {message:"[Story with a song playing]",reply:"the song fr",reason:"REPLY-DEAD — sounds natural but her only response is 'yeah' or 🎶 → convo dies. Use 'okay drop the playlist' or 'what's the song called' instead — those PULL a reply with actual info."},
+  {message:"[Story of a place]",reply:"the location 😭",reason:"REPLY-DEAD — pure acknowledgment, gives her nothing to TELL you. 'where is this i need to go' pulls actual info from her."},
+  {message:"[Story]",reply:"the boots",reason:"REPLY-DEAD when used alone. Naming = acknowledgment = she has nothing to add. Pair with a question: 'where you get those boots' or 'okay boots where'."},
+  {message:"[Story]",reply:"the necklace",reason:"REPLY-DEAD as a standalone. She might say 'thanks'. Pair with a question or tease."},
+  {message:"[Story]",reply:"criminal.",reason:"REPLY-DEAD reaction. One-word reactions sound human but offer her zero to respond to. She has nothing to say back besides 😂."},
+  {message:"[Story]",reply:"unreal.",reason:"REPLY-DEAD reaction. Same problem — pure ack with nothing for her to TELL you."},
+  {message:"[Story]",reply:"obsessed.",reason:"REPLY-DEAD reaction. Sounds natural, dies on her end. Replace with a question that asks for context."},
+  {message:"[Story in trinidad]",reply:"you in trinidad?",reason:"CLOSED Y/N QUESTION — she says 'yeah' and convo dies. Open it: 'where is this' or 'wait you outside in trinidad?' (less binary)."},
+  {message:"[Story]",reply:"this song is unreal",reason:"REPLY-DEAD STATEMENT — she just says 'ikr' and you're stuck. Make it a question: 'what's the song called'."},
+  {message:"[Story]",reply:"this looks fire",reason:"REPLY-DEAD STATEMENT (also banned vocab 'fire'). Pure compliment gets 'thanks' — needs to be a question or tease that pulls info."},
+  {message:"[Story with a friend]",reply:"okay influencer",reason:"MOCK-JUDGMENT ALONE = reply-dead. She might laugh but has nothing to TELL you. ONLY use this paired with a question: 'okay influencer where is this' / 'okay influencer drop the location'."},
+  {message:"[Story]",reply:"the shades doing work",reason:"REPLY-DEAD naming-with-praise. She says 'thanks lol' and dies. Make it a question: 'where you get those shades'."}
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -5995,7 +6206,36 @@ const BAKED_GUIDE=[
   {message:"i literally cannot stop thinking about you",reply:"is that a dare",tone:"spicy",validated:'female',provenReaction:"absolutely"},
   {message:"i feel like i can talk to you about anything",reply:"i'm here for it",tone:"wholesome",validated:'female'},
   {message:"i'm actually really proud of myself today",reply:"i'm here for it",tone:"wholesome",validated:'female'},
-  {message:"i passed!!",reply:"LET'S GO, knew you would",tone:"wholesome",validated:'female',provenReaction:"should've believed you 😧"}
+  {message:"i passed!!",reply:"LET'S GO, knew you would",tone:"wholesome",validated:'female',provenReaction:"should've believed you 😧"},
+
+  // ── 🎣 STORY-REPLY OPENERS THAT PULL ACTUAL SENTENCES (not just emoji-acks) ──
+  // The bar: short + casual BUT she has SOMETHING SPECIFIC TO TELL HIM. These are the gold standard.
+  {message:"[Story of a specific place]",reply:"where is this i need to go",tone:"flirty",pullsReply:'asks for info she has — she names the place + maybe gives backstory'},
+  {message:"[Story of a specific place]",reply:"okay drop the location",tone:"playful",pullsReply:'playful demand → she shares the place + recommendation'},
+  {message:"[Story with a song]",reply:"okay drop the playlist",tone:"flirty",pullsReply:'asks for info → she shares the song + maybe whole playlist'},
+  {message:"[Story with a song]",reply:"what's the song called",tone:"chill",pullsReply:'simple direct Q — she answers + can spin into music talk'},
+  {message:"[Story with a friend]",reply:"who took this i need to hire them",tone:"playful",pullsReply:'playful Q → she explains who shot it + the context'},
+  {message:"[Story of a destination]",reply:"wait is this trinidad?",tone:"playful",pullsReply:'wrong-guess → she corrects + tells you the real place'},
+  {message:"[Story while she\'s out]",reply:"you actually outside or staged this",tone:"teasing",pullsReply:'tease-Q → she defends + explains the moment'},
+  {message:"[Story]",reply:"this is u rn or from earlier",tone:"chill",pullsReply:'open Q → she has to clarify the time + context'},
+  {message:"[Story callback]",reply:"wait this the same spot from last time?",tone:"chill",pullsReply:'memory callback → she confirms + maybe explains she\'s back'},
+  {message:"[Story with friends]",reply:"okay context i need the full story",tone:"playful",pullsReply:'playful demand → she gives backstory'},
+  {message:"[Story of an outfit choice]",reply:"where you get that",tone:"chill",pullsReply:'simple Q about a non-body item (shoes/jacket/accessory) → she shares brand/store'},
+  {message:"[Story]",reply:"okay influencer where is this",tone:"playful",pullsReply:'mock-judgment PAIRED with a question → she laughs + answers'},
+  {message:"[Story of an event]",reply:"wait what is this for",tone:"chill",pullsReply:'open Q about the occasion → she explains'},
+  {message:"[Story with a caption/sticker]",reply:"okay explain the caption",tone:"playful",pullsReply:'asks for context → she expands on her own words'},
+
+  // ── 💕 FLIRTY STORY OPENERS — light tease + pulls a reply + telegraphs interest WITHOUT thirst ──
+  {message:"[Story of her out enjoying herself]",reply:"this is dangerous behaviour for a wednesday",tone:"flirty",pullsReply:'playful accusation → she defends or plays along + admits + flirts back'},
+  {message:"[Story showing confidence/style]",reply:"okay confident behaviour",tone:"flirty",pullsReply:'notices her energy → she plays into it'},
+  {message:"[Story of an event/outing]",reply:"tell me you didn\'t go without me",tone:"flirty",pullsReply:'mock-betrayal → she explains + opens space for an actual plan'},
+  {message:"[Story of plans/event]",reply:"what time you done because i need plans",tone:"flirty",pullsReply:'asks for her schedule + signals he wants to see her'},
+  {message:"[Story of a fun outing]",reply:"what\'s a guy gotta do to get an invite",tone:"flirty",pullsReply:'playful invite-fishing → she responds with terms or invites him'},
+  {message:"[Story]",reply:"are you trying to ruin my day or",tone:"flirty",pullsReply:'mock-accusation → she denies + flirts back'},
+  {message:"[Story of her out alone]",reply:"you out solo? i don\'t believe it",tone:"flirty",pullsReply:'playful disbelief → she explains who she\'s with'},
+  {message:"[Story of repeated cool moments]",reply:"okay you can\'t keep doing this to me",tone:"flirty",pullsReply:'mock-overwhelmed → she laughs + pushes back, tension builds'},
+  {message:"[Story of a trip]",reply:"you taking applications for the next trip",tone:"flirty",pullsReply:'bold + playful → she has to engage with the idea of taking him'},
+  {message:"[Story of her doing something impressive]",reply:"this should be illegal honestly",tone:"flirty",pullsReply:'light flirt → she deflects + you keep going'}
 ];
 
 // 👩 FEMALE REACTION PROOF POOL — separate, READ-ONLY metadata that proves which male openers actually pulled female replies.
@@ -6638,12 +6878,33 @@ KILLERS to avoid: closed yes/no questions, pure compliments ("you look good"), c
 - "the cross necklace is a bold choice with that top"
 - "and you didn't invite me, crazy"
 
-🎯 BUT MOST landing texts are EVEN SHORTER + LAZIER. Lean into these:
-- Just naming the thing: "the boots" / "the necklace 👀" / "the song fr"
-- Mock-judgment in 2 words: "okay influencer" / "okay supermodel"
-- One-word reactions: "criminal." / "obsessed." / "unreal."
-- Thought-fragments: "wait you outside?" / "this is u rn?" / "who took this"
-- Modern slang: "this fr?" / "nah this song" / "ngl that fit"
+🎯 BUT THE REAL BAR — short + casual, BUT the opener MUST PULL A REPLY. If she can only say "yeah" / "ikr" back → DEAD.
+
+✅ REPLY-PULLING SHAPES:
+1. OPEN-ENDED Q she has info on: "where is this" / "okay drop the playlist" / "who took this"
+2. WRONG-GUESS she corrects: "wait is this trinidad?" / "you in mexico?"
+3. CALLBACK to memory: "wait this is where you went last time?"
+4. TEASE-QUESTION begging context: "you actually on a boat or staged" / "this is u rn or from the trip"
+5. PLAYFUL DEMAND: "okay influencer drop the location"
+
+❌ REPLY-DEAD (avoid):
+- Just naming: "the boots" / "the song fr" / "the location 😭" → DEAD
+- One-word reactions: "criminal." / "unreal." → DEAD
+- Closed Y/N: "you in trinidad?" → DEAD (open it: "where is this")
+- Statements needing agreement: "this song is unreal" → "ikr" → DEAD
+
+RULE: every opener must ASK FOR INFO or make a CLAIM she has to engage with. If her likely reply is yeah/lol/emoji → REWRITE.
+
+💕 FLIRTY MANDATE — if there's space for it, add a FLIRTY EDGE: a tease/playful claim that telegraphs interest. NOT a compliment, NOT thirsty.
+✅ EXAMPLES: "this is dangerous behaviour for a wednesday" / "okay confident behaviour" / "tell me you didn't go without me" / "what time you done" / "what's a guy gotta do to get an invite" / "you taking applications for the next trip"
+The flirty version still PULLS A REPLY and shows interest without thirst.
+
+⚠️ "JUST NAME THE THING" ≠ NAME ANYTHING — DO NOT name body-adjacent items:
+- ❌ "that bikini" / "the bikini" / "those legs" / "that body" / "the swimsuit" / "those shorts" — body comments disguised as observations
+- ✅ When she's in revealing clothing, name a NON-BODY detail instead: the song, the location, what she's doing, an accessory, the energy of the moment
+- TEST: would her grandma see this and not feel weird about what you named? If not, pick a different detail.
+
+⚠️ "[noun] vibes" PATTERN — BANNED. "boat vibes" / "city vibes" / "summer vibes" all read as lazy AI default. Find a SPECIFIC named detail instead.
 
 🚫 AI-TELL PATTERNS to break out of:
 - "okay but..." / "wait..." / "okay so..." as manufactured interjection openers (overused AI signature)
