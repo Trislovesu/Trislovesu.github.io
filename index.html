@@ -3589,29 +3589,24 @@ async function qrSubmitName(){
     return;
   }
   if(errEl)errEl.textContent='';
-  // Step 2: soft-verify by probing Unavatar
+  // Step 2: SOFT verification via Unavatar — never blocks the contributor (service has false positives)
   if(verifyEl)verifyEl.textContent='🔍 checking @'+res.bare+' on instagram...';
   if(btn){btn.disabled=true;btn.style.opacity='.5';btn.style.cursor='wait';btn.textContent='checking...';}
   const probe=await probeInstagramHandle(res.bare);
-  // Reset button state
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';btn.textContent='next →';}
-  if(probe.exists===false){
-    // Hard-block: handle doesn't exist on instagram
-    if(verifyEl)verifyEl.textContent='';
-    if(errEl)errEl.textContent='couldn\'t find @'+res.bare+' on instagram — check the spelling';
-    if(inp){inp.style.borderColor='#e05555';inp.focus();setTimeout(()=>{inp.style.borderColor='';},3500);}
-    return;
-  }
+  // Verification is SOFT — display the result but always let them through.
+  // (The probe service has false negatives — private accounts, new accounts, rate limits, regional CDN, etc.)
   if(probe.exists===true){
     if(verifyEl){verifyEl.innerHTML='✅ verified @'+res.bare;verifyEl.style.color='#4db37a';}
+  }else if(probe.exists===false){
+    if(verifyEl){verifyEl.innerHTML='ℹ️ couldn\'t auto-verify @'+res.bare+' — saved anyway';verifyEl.style.color='rgba(255,255,255,0.5)';}
   }else{
-    // Couldn't reach the verification service — let them through with a soft note
-    if(verifyEl){verifyEl.textContent='⚠️ couldn\'t verify — saving anyway';verifyEl.style.color='rgba(255,205,70,0.7)';}
+    if(verifyEl){verifyEl.textContent='ℹ️ check timed out — saved anyway';verifyEl.style.color='rgba(255,255,255,0.5)';}
   }
   contribState.name=res.handle;      // stored as "@handle"
   contribState.igHandle=res.bare;    // bare form for any future lookup
-  contribState.igVerified=probe.exists===true;
-  setTimeout(qrAdvance,500); // tiny pause so they see the verified ✅
+  contribState.igVerified=probe.exists===true; // true ONLY on a positive probe; false otherwise (so you can filter later)
+  setTimeout(qrAdvance,500); // tiny pause so they see the verification result
 }
 
 // 🛑 keep the old function name as a wrapper so any stale references don't break (legacy guard)
