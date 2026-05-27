@@ -1926,23 +1926,49 @@ function mergeLiveMemory(handle,update){
   if(!handle)return;
   const key=handle.toLowerCase();
   const all=getAllLiveMemory();
-  const existing=all[key]||{handle,facts:[],herStyle:'',topics:[],myRecentSends:[],herRecentSends:[],scanCount:0,lastUpdated:0};
-  // Merge facts (dedupe, cap at 25 — keep most recent)
+  const existing=all[key]||{handle,facts:[],herStyle:'',topics:[],myRecentSends:[],herRecentSends:[],scanCount:0,lastUpdated:0,
+    // 🆕 THEME B — per-girl profile structure
+    likes:[],dislikes:[],hobbies:[],
+    currentStrategy:{tone:null,confidence:0.5,note:''},
+    replyHistory:[],     // [{ ourReply, herReaction, rating:'good'|'mid'|'bad', ts }]
+    successCount:0,deadCount:0};
+  // ── Existing fields ──
   const newFacts=Array.isArray(update.new_facts)?update.new_facts:[];
   existing.facts=uniqStrings([...newFacts,...existing.facts],25);
-  // Updated style overrides if provided
   if(update.her_style&&update.her_style.length<200)existing.herStyle=update.her_style;
-  // Merge topics (newest first, cap 12)
   const newTopics=Array.isArray(update.topics_now)?update.topics_now:[];
   existing.topics=uniqStrings([...newTopics,...existing.topics],12);
-  // Track last sends so we never repeat
   const myNew=Array.isArray(update.my_recent_sends)?update.my_recent_sends:[];
   const herNew=Array.isArray(update.her_recent_sends)?update.her_recent_sends:[];
   existing.myRecentSends=uniqStrings([...myNew,...existing.myRecentSends],10);
   existing.herRecentSends=uniqStrings([...herNew,...existing.herRecentSends],10);
+  // ── 🆕 Profile-building fields ──
+  if(Array.isArray(update.new_likes))existing.likes=uniqStrings([...update.new_likes,...(existing.likes||[])],15);
+  if(Array.isArray(update.new_dislikes))existing.dislikes=uniqStrings([...update.new_dislikes,...(existing.dislikes||[])],15);
+  if(Array.isArray(update.new_hobbies))existing.hobbies=uniqStrings([...update.new_hobbies,...(existing.hobbies||[])],10);
+  // 🆕 Auto-rating: did the last reply land or die?
+  if(update.last_reply_rating&&['good','mid','bad'].includes(update.last_reply_rating)){
+    const histEntry={
+      ourReply:update.last_our_reply||'',
+      herReaction:update.last_her_reaction||'',
+      rating:update.last_reply_rating,
+      ts:Date.now()
+    };
+    existing.replyHistory=[histEntry,...(existing.replyHistory||[])].slice(0,8);
+    if(update.last_reply_rating==='good')existing.successCount=(existing.successCount||0)+1;
+    if(update.last_reply_rating==='bad')existing.deadCount=(existing.deadCount||0)+1;
+  }
+  // 🆕 Strategy update: based on recent rating trend
+  if(update.recommended_strategy){
+    existing.currentStrategy={
+      tone:update.recommended_strategy.tone||existing.currentStrategy?.tone||null,
+      confidence:Number(update.recommended_strategy.confidence)||0.5,
+      note:String(update.recommended_strategy.note||'').slice(0,140)
+    };
+  }
   existing.scanCount=(existing.scanCount||0)+1;
   existing.lastUpdated=Date.now();
-  existing.handle=handle; // preserve original casing
+  existing.handle=handle;
   all[key]=existing;
   saveAllLiveMemory(all);
   return existing;
@@ -1955,6 +1981,23 @@ function buildLiveMemoryBlock(handle){
   parts.push(`\n\n═══ WHAT YOU ALREADY KNOW ABOUT THIS CONVERSATION (background context — NOT your reply target) ═══`);
   parts.push(`Chatting with: ${mem.handle}  (scan #${(mem.scanCount||0)+1} with her)`);
   if(mem.herStyle)parts.push(`HER texting style: ${mem.herStyle}`);
+  // 🆕 PROFILE rendering
+  if(mem.likes&&mem.likes.length)parts.push(`✅ SHE LIKES (things she engages with — lean into these):\n- ${mem.likes.slice(0,10).join('\n- ')}`);
+  if(mem.dislikes&&mem.dislikes.length)parts.push(`❌ SHE BOUNCES OFF (things that died — AVOID):\n- ${mem.dislikes.slice(0,10).join('\n- ')}`);
+  if(mem.hobbies&&mem.hobbies.length)parts.push(`🎨 HER HOBBIES / INTERESTS (callback fuel):\n- ${mem.hobbies.slice(0,8).join('\n- ')}`);
+  // 🆕 STRATEGY signal
+  if(mem.currentStrategy&&(mem.currentStrategy.tone||mem.currentStrategy.note)){
+    const s=mem.currentStrategy;
+    const trend=mem.successCount>mem.deadCount?'WORKING':mem.deadCount>mem.successCount?'STRUGGLING':'NEUTRAL';
+    parts.push(`🎯 CURRENT STRATEGY: ${s.tone||'unknown'} (${trend} · ${mem.successCount||0} wins / ${mem.deadCount||0} duds). ${s.note?'Note: '+s.note:''}`);
+    if(trend==='STRUGGLING')parts.push(`⚠️ Last few attempts haven't landed — try a DIFFERENT angle this round. Don't double down on what's not working.`);
+    else if(trend==='WORKING')parts.push(`✅ Current angle is landing — keep this energy, lean slightly deeper into it.`);
+  }
+  // 🆕 Most recent reply outcome (helps AI calibrate)
+  if(mem.replyHistory&&mem.replyHistory.length){
+    const last=mem.replyHistory[0];
+    parts.push(`📊 LAST EXCHANGE: you sent "${(last.ourReply||'').slice(0,80)}" → she replied "${(last.herReaction||'').slice(0,80)}" (rated ${last.rating}). ${last.rating==='good'?'Build on this momentum.':last.rating==='bad'?'Pivot — that angle died.':'Mid — sharpen it.'}`);
+  }
   if(mem.facts&&mem.facts.length)parts.push(`THINGS YOU KNOW ABOUT HER (call back to these when relevant):\n- ${mem.facts.slice(0,15).join('\n- ')}`);
   if(mem.topics&&mem.topics.length)parts.push(`TOPICS ALREADY COVERED: ${mem.topics.slice(0,10).join(', ')}  →  don't rehash, build forward`);
   if(mem.myRecentSends&&mem.myRecentSends.length)parts.push(`MY HISTORICAL SENDS from past scans (DO NOT repeat or reword — switch lanes):\n- "${mem.myRecentSends.slice(0,6).join('"\n- "')}"`);
@@ -2427,6 +2470,16 @@ STEP 9 — LEARN FROM THIS CHAT (THIS IS WHAT MAKES YOU SMARTER OVER TIME):
 - "topics_now": 3-6 keywords/phrases for what THIS scan's conversation has been about (e.g. ["weekend plans","her job interview","that song"]).
 - "my_recent_sends": the exact text of MY last 2-4 blue/purple bubbles visible in the screenshot. This is so future scans know what I've already said and don't repeat me.
 - "her_recent_sends": the exact text of HER last 2-4 grey bubbles visible. Future scans use this for context flow.
+
+🆕 PROFILE-BUILDING extraction (NEW — these power the per-girl strategy engine):
+- "new_likes": 1-4 specific things she just SHOWED POSITIVE INTEREST in this scan. Watch for: long replies from her, asking him questions back, mentioning her own stories about a topic, using "lol" / "haha" / "😭" / emoji-rich engagement, opening up. Concrete things like "dry humour" / "gym talk" / "her travel plans" / "self-deprecating jokes". Empty array if no clear signal.
+- "new_dislikes": 1-4 specific things that DIDN'T land — angles HE tried that got dry / short / "k" / "lol" / left-on-read style responses. Concrete: "compliments about her looks" / "dad jokes" / "asking about her ex". Empty array if no clear signal.
+- "new_hobbies": 1-4 concrete interests/activities she revealed. "pilates" / "indie music" / "photography" / "cooking shows". Skip vague stuff.
+- "last_our_reply": the exact text of the MOST RECENT blue/purple message HE sent (the bottom-most blue bubble in the screenshot). Empty string if he hasn't sent anything recently.
+- "last_her_reaction": the exact text of HER reply to that last blue bubble (the grey bubble RIGHT AFTER his blue). Empty string if she hasn't replied yet.
+- "last_reply_rating": rate her reaction to his last message: "good" = she engaged/asked back/opened up/used 3+ words OR emoji-heavy positive; "mid" = she replied but neutrally (1-2 words like "yeah"/"sure"/"lol"); "bad" = she didn't reply OR sent a clearly dismissive "k"/"oh"/"lol"/"💀" alone. Empty string if no last reply to rate.
+- "recommended_strategy": a small object {"tone": "<flirty|chill|teasing|wholesome|bold|playful>", "confidence": 0.0-1.0, "note": "<one-line on what's working/not>"}. Based on what's landing — if his last few attempts were rated "good" with a certain tone, recommend doubling down. If they were "bad" with that tone, recommend pivoting.
+
 - Be honest — only extract what you actually see. Don't invent facts.
 
 QUALITY BAR — BAD vs GOOD (study these, this is the difference between a reply that lands and one that dies):
@@ -2470,7 +2523,7 @@ RULES:
 - SELF-CHECK before returning: read each reply back as if you're HER receiving it. Would you smile and want to text back? If any reply is flat, empty, generic, or template-y — REWRITE IT before returning.
 
 Return ONLY valid JSON with EXACTLY this shape:
-{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -2525,14 +2578,24 @@ Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
           her_style:parsed.her_style,
           topics_now:parsed.topics_now,
           my_recent_sends:parsed.my_recent_sends,
-          her_recent_sends:parsed.her_recent_sends
+          her_recent_sends:parsed.her_recent_sends,
+          // 🆕 Profile-building extraction
+          new_likes:parsed.new_likes,
+          new_dislikes:parsed.new_dislikes,
+          new_hobbies:parsed.new_hobbies,
+          last_our_reply:parsed.last_our_reply,
+          last_her_reaction:parsed.last_her_reaction,
+          last_reply_rating:parsed.last_reply_rating,
+          recommended_strategy:parsed.recommended_strategy
         });
         // tiny on-screen tag so the user knows learning fired
         const det=targetDoc.getElementById('live-detected');
         if(det&&mem){
           const badge=targetDoc.createElement('div');
           badge.style.cssText='margin-top:6px;font-size:11px;color:var(--text2);opacity:.8';
-          badge.textContent=`🧠 learning ${mem.handle} • ${mem.facts.length} facts • scan #${mem.scanCount}`;
+          const strat=mem.currentStrategy?.tone?` · 🎯${mem.currentStrategy.tone}`:'';
+          const profile=(mem.likes?.length||0)+(mem.dislikes?.length||0)+(mem.hobbies?.length||0);
+          badge.textContent=`🧠 ${mem.handle} • ${mem.facts.length}f ${profile}p • #${mem.scanCount}${strat}`;
           det.appendChild(badge);
         }
       }
