@@ -268,6 +268,9 @@ input[type="text"]::placeholder{color:var(--text3)}
 #feedback-copy-slider:before{content:"";position:absolute;height:22px;width:22px;left:2px;top:2px;background:var(--text2);border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 #feedback-copy-toggle:checked + #feedback-copy-slider{background:rgba(91,158,245,0.25);border-color:#5b9ef5}
 #feedback-copy-toggle:checked + #feedback-copy-slider:before{transform:translateX(20px);background:#5b9ef5}
+#learn-mode-slider:before{content:"";position:absolute;height:22px;width:22px;left:2px;top:2px;background:var(--text2);border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+#learn-mode-toggle:checked + #learn-mode-slider{background:rgba(77,179,122,0.25);border-color:var(--green)}
+#learn-mode-toggle:checked + #learn-mode-slider:before{transform:translateX(20px);background:var(--green)}
 /* report modal */
 .report-modal{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(6px)}
 .report-modal.open{opacity:1;pointer-events:all}
@@ -1241,6 +1244,27 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         </div>
       </div>
 
+      <!-- 🧠 THEME A — Live Learning toggle -->
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
+          <div style="flex:1">
+            <div class="card-label" style="margin-bottom:4px">🧠 Live Learning <span style="font-size:9px;color:var(--amber);border:1px solid var(--amber);padding:1px 6px;border-radius:100px;margin-left:6px;font-weight:700;letter-spacing:.04em">EXPERIMENTAL</span></div>
+            <p style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:0">AI learns how YOU text by scanning your existing chats. Uses Live Help screen-share to read YOUR messages and build a style profile. Your style is then injected into all reply prompts so the AI sounds like you.</p>
+            <div id="user-profile-status" style="font-size:11px;color:var(--text2);margin-top:6px"></div>
+          </div>
+          <label style="position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0;margin-top:4px">
+            <input type="checkbox" id="learn-mode-toggle" style="opacity:0;width:0;height:0" onchange="setLearnMode(this.checked)">
+            <span style="position:absolute;cursor:pointer;inset:0;background:var(--surface3);border:1px solid var(--border);border-radius:28px;transition:.2s" id="learn-mode-slider"></span>
+          </label>
+        </div>
+        <div id="learn-mode-controls" style="display:none;margin-top:14px">
+          <p style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:10px">Open Live Help, share your chat screen, then tap below. The AI reads YOUR (blue/purple) messages only and builds your texting profile.</p>
+          <button class="action-btn" style="width:100%;padding:12px;font-weight:600;background:var(--green-bg);border-color:var(--green);color:var(--green)" onclick="learnFromLiveFrame()">📸 Learn from current screen</button>
+          <button class="action-btn" style="width:100%;padding:10px;margin-top:6px" onclick="clearUserProfile()">🗑 Reset my style profile</button>
+          <div id="user-profile-summary" style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:none"></div>
+        </div>
+      </div>
+
       <div class="signout-row">
         <div class="acct">Signed in as <strong id="current-account">—</strong></div>
         <button class="action-btn" style="flex:none;padding:10px 18px;color:var(--red);border-color:var(--red)" onclick="signOut()">Sign out</button>
@@ -1353,7 +1377,10 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-stop-btn" style="flex:1" onclick="profileScanLive()">👤 Profile scan</button>
         <button class="live-stop-btn" style="flex:1" onclick="storyReplyLive()">📖 Story reply</button>
       </div>
-      <button class="live-stop-btn" style="width:100%;margin-top:6px;font-size:11px;opacity:.85" onclick="resetLiveChatPointer()" title="Use this when you switch to a different person mid-share">🔄 Switched chats — start fresh memory</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="live-stop-btn" style="flex:1" id="auto-scan-btn" onclick="toggleAutoScan()">⏱ Auto-scan OFF</button>
+        <button class="live-stop-btn" style="flex:1;font-size:11px;opacity:.85" onclick="resetLiveChatPointer()" title="Use this when you switch to a different person mid-share">🔄 Switched chats</button>
+      </div>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
@@ -1565,6 +1592,11 @@ function enterApp(){
   trainerCode=currentUser||'Tris👑';store.setItem('trainer_code',trainerCode);
   tonePref=store.getItem('tone_pref_'+currentUser)||'none';
   loadApiKey();loadGhSettings();loadHistory();loadTrainingData();loadReports();loadGoods();
+  // 🧠 Theme A — restore learn mode state
+  learnModeOn=store.getItem('rizz_learn_mode')==='1';
+  const lmToggle=document.getElementById('learn-mode-toggle');if(lmToggle)lmToggle.checked=learnModeOn;
+  const lmCtrl=document.getElementById('learn-mode-controls');if(lmCtrl)lmCtrl.style.display=learnModeOn?'block':'none';
+  renderUserProfileStatus();
   const input=document.getElementById('trainer-code-input');
   if(input)input.value=trainerCode;
   // show current account in settings
@@ -1607,6 +1639,10 @@ function openSettingsPanel(){
   if(t){t.checked=feedbackCopyEnabled();}
   const lbl=document.getElementById('feedback-copy-label');
   if(lbl)lbl.textContent=feedbackCopyEnabled()?'ON — clipboard includes a feedback ask':'OFF — clipboard gets just the reply';
+  // 🧠 Theme A — sync learn mode toggle
+  const lm=document.getElementById('learn-mode-toggle');if(lm)lm.checked=learnModeOn;
+  const lmCtrl=document.getElementById('learn-mode-controls');if(lmCtrl)lmCtrl.style.display=learnModeOn?'block':'none';
+  renderUserProfileStatus();
   document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
 
@@ -1721,7 +1757,7 @@ function openLive(){
   document.getElementById('live-active-area').style.display=liveStream?'block':'none';
   renderLiveToneChips();
 }
-function closeLive(){document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
+function closeLive(){if(autoScanActive)stopAutoScan();document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
 async function startLiveShare(){
   if(!liveSupported()){showToast('Not supported on this device');return}
   try{
@@ -1734,6 +1770,7 @@ async function startLiveShare(){
   }catch(e){showToast('Screen share cancelled');}
 }
 function stopLiveShare(){
+  if(autoScanActive)stopAutoScan();
   if(liveStream){liveStream.getTracks().forEach(t=>t.stop());liveStream=null;}
   const v=document.getElementById('live-video');if(v)v.srcObject=null;
   document.getElementById('live-start-area').style.display='block';
@@ -2008,6 +2045,93 @@ function buildLiveMemoryBlock(handle){
   return parts.join('\n');
 }
 
+// ── 🧠 THEME A — USER PROFILE / LIVE LEARNING ───────────────
+let learnModeOn=false;
+function getUserProfile(){try{return JSON.parse(store.getItem('rizz_user_profile')||'null')}catch(e){return null}}
+function saveUserProfile(p){store.setItem('rizz_user_profile',JSON.stringify(p))}
+function setLearnMode(on){
+  learnModeOn=on;store.setItem('rizz_learn_mode',on?'1':'0');
+  const ctrl=document.getElementById('learn-mode-controls');if(ctrl)ctrl.style.display=on?'block':'none';
+  renderUserProfileStatus();
+}
+function renderUserProfileStatus(){
+  const el=document.getElementById('user-profile-status');if(!el)return;
+  const p=getUserProfile();
+  if(!p){el.textContent=learnModeOn?'No style learned yet — scan a chat to start':'Off';return}
+  el.textContent=`✅ Style learned · ${p.sampleCount||0} messages scanned · updated ${new Date(p.lastUpdated).toLocaleDateString()}`;
+  const sum=document.getElementById('user-profile-summary');
+  if(sum&&p.styleSummary){sum.style.display='block';sum.innerHTML=`<strong style="color:var(--text)">Your texting style:</strong><br>${p.styleSummary.replace(/</g,'&lt;')}`;}
+}
+function clearUserProfile(){
+  if(!confirm('Reset your learned style profile?'))return;
+  store.removeItem('rizz_user_profile');
+  const sum=document.getElementById('user-profile-summary');if(sum)sum.style.display='none';
+  renderUserProfileStatus();showToast('Style profile cleared');
+}
+async function learnFromLiveFrame(){
+  if(!liveStream){showToast('Start Live Help screen share first');return}
+  if(!apiKey){showToast('Enter your API key first');return}
+  const b64=captureLiveFrame();if(!b64)return;
+  showToast('🧠 Learning your style...');
+  const existing=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.3,messages:[
+        {role:'system',content:`You are a texting style analyst. You're looking at a screenshot of an Instagram DM conversation. Your job is to extract the USER's texting style by reading ONLY the BLUE/PURPLE bubbles (right side). These are the USER's own messages. IGNORE grey bubbles (those are from someone else).
+
+Extract:
+1. "messages": array of 3-10 of the user's blue/purple message texts (exact quotes, most recent first)
+2. "style_traits": array of 4-8 specific style observations (e.g. "uses lowercase only", "short punchy messages", "uses 😭 frequently", "dry humor", "rarely uses periods", "asks questions to keep convo going")
+3. "avg_length": "short" | "medium" | "long" — typical message length
+4. "emoji_usage": "none" | "light" | "moderate" | "heavy"
+5. "tone_default": the dominant natural tone (e.g. "chill", "flirty", "funny", "dry")
+6. "vocabulary_quirks": 2-4 specific words/phrases they reuse (e.g. "ngl", "lowkey", "bet", "tbh")
+7. "style_summary": one 2-3 sentence paragraph describing how this person texts — as if briefing a ghostwriter
+
+Return ONLY valid JSON.`},
+        {role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Analyze the BLUE/PURPLE (right-side) messages only. These are MY messages. Build my style profile.'}]}
+      ]})
+    });
+    if(!res.ok)throw new Error(await apiErrorMessage(res));
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content?.trim()||'';
+    const parsed=parseJsonLoose(raw);
+    if(!parsed||!parsed.style_summary)throw new Error('Could not parse style');
+    // Merge with existing profile
+    const newSamples=(parsed.messages||[]).slice(0,10);
+    existing.samples=uniqStrings([...newSamples,...(existing.samples||[])],30);
+    existing.sampleCount=(existing.sampleCount||0)+newSamples.length;
+    existing.styleTraits=uniqStrings([...(parsed.style_traits||[]),...(existing.styleTraits||[])],12);
+    existing.avgLength=parsed.avg_length||existing.avgLength||'short';
+    existing.emojiUsage=parsed.emoji_usage||existing.emojiUsage||'light';
+    existing.toneDefault=parsed.tone_default||existing.toneDefault||'chill';
+    existing.vocabQuirks=uniqStrings([...(parsed.vocabulary_quirks||[]),...(existing.vocabQuirks||[])],8);
+    existing.styleSummary=parsed.style_summary;
+    existing.lastUpdated=Date.now();
+    saveUserProfile(existing);
+    renderUserProfileStatus();
+    showToast(`🧠 Learned from ${newSamples.length} messages`);
+  }catch(err){showToast('Learn failed: '+err.message);console.error(err)}
+}
+// Build the injection block for prompts — only active when learn mode is on + profile exists
+function buildUserStyleBlock(){
+  if(!learnModeOn)return '';
+  const p=getUserProfile();if(!p||!p.styleSummary)return '';
+  const parts=['\n\n═══ USER\'S OWN TEXTING STYLE (match this closely — replies should sound like HIM) ═══'];
+  parts.push(`Style: ${p.styleSummary}`);
+  if(p.styleTraits&&p.styleTraits.length)parts.push(`Traits: ${p.styleTraits.join(', ')}`);
+  if(p.avgLength)parts.push(`Typical length: ${p.avgLength}`);
+  if(p.emojiUsage)parts.push(`Emoji use: ${p.emojiUsage}`);
+  if(p.vocabQuirks&&p.vocabQuirks.length)parts.push(`His go-to words/phrases: ${p.vocabQuirks.join(', ')}`);
+  if(p.samples&&p.samples.length){
+    const ex=p.samples.slice(0,5).map(s=>`"${s}"`).join(', ');
+    parts.push(`Examples of how he actually texts: ${ex}`);
+  }
+  parts.push('═══ END USER STYLE — make the replies sound like the examples above ═══');
+  return parts.join('\n');
+}
+
 function captureLiveFrame(){
   if(!liveStream){showToast('Start screen share first');return null;}
   const v=document.getElementById('live-video');
@@ -2025,6 +2149,30 @@ async function scanLive(targetDoc){
   const b64=captureLiveFrame();if(!b64)return;
   lastLiveFrame=b64;
   doLiveGenerate(targetDoc,b64,'');
+}
+
+// ── 🔘 THEME F — AUTO-SCAN ──────────────────
+let autoScanInterval=null;
+let autoScanActive=false;
+function toggleAutoScan(){
+  if(autoScanActive){stopAutoScan();return}
+  if(!liveStream){showToast('Start screen share first');return}
+  autoScanActive=true;
+  const btn=document.getElementById('auto-scan-btn');
+  if(btn){btn.textContent='⏱ Auto-scan ON (15s)';btn.style.borderColor='var(--green)';btn.style.color='var(--green)';}
+  showToast('⏱ Auto-scan: scanning every 15s');
+  scanLive(); // immediate first scan
+  autoScanInterval=setInterval(()=>{
+    if(!liveStream){stopAutoScan();return}
+    scanLive();
+  },15000);
+}
+function stopAutoScan(){
+  autoScanActive=false;
+  if(autoScanInterval){clearInterval(autoScanInterval);autoScanInterval=null;}
+  const btn=document.getElementById('auto-scan-btn');
+  if(btn){btn.textContent='⏱ Auto-scan OFF';btn.style.borderColor='';btn.style.color='';}
+  showToast('Auto-scan stopped');
 }
 
 // 👤 PROFILE SCAN — is this account follow-worthy?
@@ -2379,7 +2527,8 @@ async function doLiveGenerate(targetDoc,b64,overrideMsg){
   // Per-conversation memory — injected from the previous scan of THIS specific chat
   const memoryBlock=buildLiveMemoryBlock(liveCurrentHandle);
 
-  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${getFemaleReactionsContext(3)}${toneLine}${overrideBlock}${memoryBlock}
+  const userStyleBlock=buildUserStyleBlock();
+  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${getFemaleReactionsContext(3)}${toneLine}${overrideBlock}${memoryBlock}${userStyleBlock}
 
 STEP 1 — ONLY look at the active conversation panel (the RIGHT side of the screen):
 - IGNORE EVERYTHING on the LEFT SIDEBAR — that's MY chat list, MY username, MY notes, MY story circles, MY profile picture, search bar, navigation icons. The username at the top of the left sidebar (e.g. "trislovesu.7") is MINE — NEVER use that as her name.
@@ -2432,10 +2581,11 @@ EXAMPLES:
 
 ABSOLUTE FAILURE MODES — these are the mistakes that ruin every scan:
 ❌ Picking the TOP grey bubble in a stack of greys (the top is the OLDEST — always anchor on the BOTTOM)
-❌ Replying to MY blue/purple bubble because it's the lowest message on screen
+❌ Replying to MY blue/purple bubble because it's the lowest message on screen — THIS IS THE #1 BUG. Blue/purple = MINE = NEVER reply to it, even if it's the very last message in the chat. If MY message is newest, reply to HER most recent grey bubble ABOVE it.
 ❌ Wandering past a blue bubble to grab an even older grey message
 ❌ Trying to reply to a message in the LEFT SIDEBAR (those are previews of other chats — not her)
 ❌ Treating "New messages" / timestamps as actual messages
+❌ EVER generating a reply that responds to something I (the user) said — you can READ my blue messages for context/flow, but your reply target is ALWAYS a GREY bubble. No exceptions.
 
 If you genuinely cannot identify her newest grey bubble: pick the grey bubble physically CLOSEST to the message input box at the very bottom. That's the rule. No exceptions.
 
@@ -2447,7 +2597,8 @@ STEP 6 — KEEP THE CONVERSATION ALIVE (THIS IS CRITICAL — the #1 reason this 
 - The job is not just to "reply nicely". The job is to give HER something to respond to so SHE keeps texting. A good reply hands her a hook; a bad reply hands the work back to her.
 - Every reply must do at least ONE of: (a) ask a specific question she'll want to answer, (b) propose a plan or suggest doing something together, (c) tease/challenge her in a way that begs a comeback, (d) introduce a fresh angle that builds on a topic she's mentioned, (e) share a quick thought of his own she can react to.
 - Of the 3 replies you return, AT LEAST 2 must clearly move the convo forward. At most 1 can be a pure mirror, and only if it's the obviously right read.
-- BUILD ON HER WORLD — if she's mentioned anything in the visible chat (her plans, her job, her cat, a show, a place), reference it back. People feel heard when you call back to details they shared.
+- BUILD ON HER WORLD — if she's mentioned anything in the visible chat (her plans, her job, her cat, a show, a place), reference it back. People feel heard when you call back to details they shared. If the MEMORY block above lists her hobbies/interests, weave at least ONE into a reply naturally (don't force it — work it into a question or tease).
+- KEEP THE THREAD ALIVE — if the convo feels like it's winding down (short replies from both sides, "lol", "yeah", topic exhaustion), PIVOT to something fresh: pull from her known hobbies/interests, propose a hypothetical ("okay but would you rather..."), or introduce something from HIS world she can react to. The goal is NEVER let the convo die on your watch.
 - NEVER repeat or near-repeat a line I've already sent in this chat. Read my blue/purple bubbles and avoid rewording them.
 - VARIETY — the 3 replies must use 3 different conversational moves (e.g. one question, one tease, one statement+pivot). Don't return 3 variations of the same idea.
 
@@ -2536,7 +2687,9 @@ Step 3: The FIRST GREY (left-side) bubble you hit going up = HER NEWEST MESSAGE.
 Step 4: Check directly above that grey bubble — if more greys are stacked with no blue between, group them as ONE message. Anchor on the BOTTOM grey of the group.
 Step 5: STOP scanning up as soon as you hit a blue bubble. Anything above blue is OLD — DO NOT reply to it.
 
-⚠️ COMMON FAILURE you keep making: anchoring on a grey bubble HIGHER up because it has a clearer topic or because the memory block mentioned a similar message. STOP. Always pick the LOWEST grey bubble in the active chat. The bottom grey bubble in the screenshot wins, ALWAYS, even if its content is short or vague ("ou", "lol", "k", "yeah").
+⚠️ COMMON FAILURE #1: anchoring on a grey bubble HIGHER up because it has a clearer topic or because the memory block mentioned a similar message. STOP. Always pick the LOWEST grey bubble in the active chat. The bottom grey bubble in the screenshot wins, ALWAYS, even if its content is short or vague ("ou", "lol", "k", "yeah").
+
+⚠️ COMMON FAILURE #2: replying to a BLUE/PURPLE bubble (MY message). If the very bottom message on screen is BLUE/PURPLE, that is MY message — skip it entirely and go up to find the nearest GREY bubble. You NEVER reply to blue/purple bubbles. You may READ them for context, but they are NEVER your reply target.
 
 ⚠️ THE MEMORY BLOCK ABOVE shows HISTORICAL messages from PAST scans — those have already been replied to. You are NOT reading the memory for your reply target. You read the SCREENSHOT for that. Memory is background only.
 
@@ -5085,7 +5238,27 @@ const SCENARIO_BANK=[
   {tone:'dry',context:'She replied with the bare minimum to a long message',message:"k",hint:'Match the energy — one word'},
   {tone:'dry',context:'She\'s being noncommittal on purpose',message:"sure",hint:'Don\'t chase — let it sit'},
   {tone:'dry',context:'She\'s deadpan-reacting to your story',message:"that\'s wild",hint:'Drop the punchline — don\'t over-explain'},
-  {tone:'dry',context:'She left you on read for 2 days then came back with nothing',message:"hey",hint:'Acknowledge the gap subtly — no guilt-trip'}
+  {tone:'dry',context:'She left you on read for 2 days then came back with nothing',message:"hey",hint:'Acknowledge the gap subtly — no guilt-trip'},
+  // ── 📝 THEME D — realistic mid-conversation scenarios ──
+  // These simulate real back-and-forth moments, not just openers
+  {tone:'flirty',context:'You\'ve been texting all day. She just sent you a selfie and said nothing else',message:"[selfie with no caption]",hint:'Comment on something specific — not generic "you look good"'},
+  {tone:'flirty',context:'Mid-convo, she\'s steering toward something deeper but keeping it light',message:"okay but like hypothetically if we hung out what would we even do",hint:'Give a real answer — not "whatever you want"'},
+  {tone:'funny',context:'You\'ve been going back and forth for 20 minutes. She just told you something embarrassing from her childhood',message:"i used to eat sand at the park and my mom gave up trying to stop me",hint:'Match with something equally unhinged from your own past'},
+  {tone:'funny',context:'She accidentally sent a voice note meant for her friend',message:"omg that was NOT for you delete it",hint:'Too late — react to what you heard without being mean'},
+  {tone:'chill',context:'You\'ve been texting on and off all week. It\'s 11pm and she\'s winding down',message:"okay i\'m gonna try to sleep soon but this was nice",hint:'End the night warmly without clinging'},
+  {tone:'chill',context:'She just told you about her entire day in detail and is done venting',message:"anyway sorry for the essay lol",hint:'Don\'t apologize for her — show you actually read it'},
+  {tone:'savage',context:'Mid-argument, she said something cutting and you need to respond without escalating',message:"at least i don\'t pretend to be something i\'m not",hint:'Address it calmly — don\'t match the venom'},
+  {tone:'savage',context:'She screenshotted something you posted and is using it against you',message:"this you?? 😭",hint:'Own whatever it is — don\'t panic'},
+  {tone:'mysterious',context:'You\'ve been talking for weeks. She\'s asking why you haven\'t opened up more',message:"i feel like i know nothing about you still",hint:'Give her one real thing — but leave room for more convos'},
+  {tone:'bold',context:'She just confessed she has feelings and is waiting for your response',message:"okay i just said a lot. your turn.",hint:'Meet her honesty with yours — this is not the time to dodge'},
+  {tone:'wholesome',context:'She\'s having an anxiety episode and texted you about it',message:"i\'m spiralling a bit can you just talk to me about something normal",hint:'Be the calm — talk about something mundane and grounding'},
+  {tone:'spicy',context:'You were making out earlier and she texted you after you left',message:"you should not have left when you did",hint:'Acknowledge the tension — leave the door open'},
+  {tone:'plans',context:'You both said you\'d hang out "soon" three times now and she\'s calling it',message:"okay we keep saying soon but when is soon actually",hint:'Pick a specific day and time right now'},
+  {tone:'dry',context:'She sent three long messages in a row and you haven\'t replied to any of them yet',message:"hello?? did you die",hint:'Acknowledge you saw them — pick one thread to respond to'},
+  {tone:'flirty',context:'She\'s replying to your story with a screenshot of something you said weeks ago',message:"you said this and i saved it btw",hint:'Be intrigued she saved it — don\'t deflect'},
+  {tone:'funny',context:'She\'s showing you a terrible photo someone took of her at a party',message:"this is actually the worst photo of me to ever exist please validate me",hint:'Roast it lovingly then compliment something real'},
+  {tone:'chill',context:'She texted you out of nowhere after a 2-week gap',message:"so... hi",hint:'Warm but don\'t make the gap a thing — just continue'},
+  {tone:'wholesome',context:'She\'s sharing that she had a hard conversation with her best friend',message:"me and [friend] got into it today and i feel like shit",hint:'Listen first — ask what happened before offering anything'}
 ];
 
 let trainingData=[];
@@ -6588,8 +6761,9 @@ async function generateDmReplies(){
   lbl.innerHTML='<span class="spinner"></span> Generating...';
 
   const trainingCtx=getTrainingExamples(rtype);
+  const dmUserStyle=buildUserStyleBlock();
   const baseRules=`PERSPECTIVE — you are ALWAYS the GUY replying to HER. Every reply is what HE sends back. Never write from her point of view, never echo her words back as if you're in her position. If she says something sexual, HE responds as a confident man reacting to her — not speaking as her.
-
+${dmUserStyle}
 FIT THE MESSAGE — every reply must directly answer what she actually said. If she compliments you, acknowledge it and flip it back with confidence (never ignore it or go off on a tangent). Never use vague pronouns ("they", "it") that don't clearly refer to something. A reply that doesn't obviously fit her message is wrong.
 
 FORWARD MOMENTUM (THIS IS THE #1 RULE — it's what separates a real conversation from one that dies):
@@ -6743,7 +6917,8 @@ async function quickGenerate(forcedTone){
   const reportsCtx=getReportsContext(textMsg||'',4);
   const goodsCtx=getGoodsContext(textMsg||'',4);
   const reactionsCtx=getFemaleReactionsContext(3);
-  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}${reactionsCtx}
+  const userStyleBlock=buildUserStyleBlock();
+  const system=`You are a fast texting assistant. You write replies for a CONFIDENT GUY responding to a girl's message. You are ALWAYS the man replying to her.${trainingCtx}${refinedCtx}${goodsCtx}${reportsCtx}${reactionsCtx}${userStyleBlock}
 
 ${ctx?`Extra context from the user: ${ctx}`:''}
 ${toneHint?`The user wants a ${toneHint} tone — use it.`:''}${prefLine}
@@ -6764,6 +6939,7 @@ RULES:
 - MULTI-BUBBLE MESSAGES — if she sent several grey bubbles in a row, treat them as ONE message and reply to the WHOLE thing anchored on her BOTTOM bubble. Never reply to just the top bubble in a run.
 - DON'T REPEAT PAST REPLIES — if his previous messages in this chat were sweet/reactive/short, switch lanes. Two passive replies in a row kill the conversation.
 - BUILD ON HER WORLD — if she's mentioned anything earlier (her job, her cat, her weekend, a show), call back to it. People feel heard when you remember details.
+- KEEP THE THREAD ALIVE — if her message is short or low-energy ("lol", "yeah", "idk"), don't match her flatness. Pivot: ask something specific, propose something, or introduce a fresh angle. The convo dies when BOTH sides go flat — you break the cycle.
 - Sound like a real guy texting — never AI or robotic
 - Zero exclamation marks
 - EMOJI USE: light flavour is good — MAX 1 emoji per reply, at LEAST 2 of the 3 must have NO emoji. Good ones: 😭 👀 😏 💀 🤷‍♂️ 🫡. Avoid: 😂 ❤️ 🔥 😍 (overused/cringe). Emoji is a topper, never a crutch — never substitute for wit.
