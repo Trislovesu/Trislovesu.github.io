@@ -2773,10 +2773,19 @@ EXAMPLES:
 ABSOLUTE FAILURE MODES — these are the mistakes that ruin every scan:
 ❌ Picking the TOP grey bubble in a stack of greys (the top is the OLDEST — always anchor on the BOTTOM)
 ❌ Replying to MY blue/purple bubble because it's the lowest message on screen — THIS IS THE #1 BUG. Blue/purple = MINE = NEVER reply to it, even if it's the very last message in the chat. If MY message is newest, reply to HER most recent grey bubble ABOVE it.
-❌ Wandering past a blue bubble to grab an even older grey message
+❌ Wandering past a blue bubble to grab an even older grey message — once you hit a blue bubble going up, STOP. Everything above it is a previous turn. Do NOT keep scanning for "better" grey messages higher up.
 ❌ Trying to reply to a message in the LEFT SIDEBAR (those are previews of other chats — not her)
 ❌ Treating "New messages" / timestamps as actual messages
 ❌ EVER generating a reply that responds to something I (the user) said — you can READ my blue messages for context/flow, but your reply target is ALWAYS a GREY bubble. No exceptions.
+❌ READING AN OLD BLUE MESSAGE AND ACCIDENTALLY REPLYING TO THE TOPIC IT RAISED — if my blue says "what are you up to tonight" and her grey says "not much wbu", you reply to "not much wbu", NOT to my question. Your reply should ANSWER her "wbu", not re-answer my question.
+❌ ANCHORING ON A GREY BUBBLE THAT IS SEPARATED FROM THE INPUT BOX BY 5+ MESSAGES — if there are many blue messages below her grey and above the input box, that grey is OLD. The conversation has moved on. Look closer to the bottom.
+
+🔒 FINAL TARGET VERIFICATION (do this BEFORE writing any reply):
+After you pick your grey bubble target, VERIFY all 3 of these:
+✅ 1. Is it GREY (left-side)? If blue/purple → WRONG, keep scanning up.
+✅ 2. Is it the CLOSEST grey to the input box? Count how many bubbles are between your target and the input box. If there are 3+ blue/purple bubbles between your target and the input, you probably skipped a closer grey — re-scan.
+✅ 3. Did you cross a blue bubble to get to it? If yes → you went too far up. Go back down to the grey that was BELOW that blue.
+If ANY check fails, restart the scan from the input box.
 
 If you genuinely cannot identify her newest grey bubble: pick the grey bubble physically CLOSEST to the message input box at the very bottom. That's the rule. No exceptions.
 
@@ -2864,6 +2873,16 @@ RULES:
 - If the "WHAT YOU ALREADY KNOW" memory block is provided above, USE IT — reference facts she's shared, avoid topics already covered, never repeat lines I've already sent.
 - SELF-CHECK before returning: read each reply back as if you're HER receiving it. Would you smile and want to text back? If any reply is flat, empty, generic, or template-y — REWRITE IT before returning.
 
+🚨 MANDATORY CRINGE GATE (run this on EVERY reply before returning — if ANY reply triggers, REWRITE it):
+A reply is CRINGE if it does ANY of these:
+1. SOUNDS LIKE A WOMAN TEXTING — if the reply could plausibly be sent BY a girl TO a guy, it's wrong. Things like "aww", "that's so sweet", "you're adorable", "thinking of you", "miss your face" = woman energy. He is CONFIDENT and DIRECT, not soft and gushing.
+2. SOUNDS LIKE AN AI WROTE IT — overly structured, uses semicolons, has a setup→punchline cadence, uses vocab nobody texts with ("genuinely", "absolutely", "honestly though", "lowkey obsessed"), or reads like it was workshopped.
+3. SOUNDS LIKE A THERAPIST — "i hear you", "that makes sense", "i appreciate you sharing", "how does that make you feel" = instant cringe.
+4. HAS NO HOOK — if she can reply with just "lol", "yeah", "thanks", or an emoji and the convo is dead, the reply has no hook. EVERY reply needs to give her something to respond to.
+5. IS A COMPLIMENT WITH NO EDGE — "you're beautiful", "you're amazing", "you look incredible" = simp energy. If you compliment, it needs a tease or a twist attached.
+6. REPEATS WHAT I ALREADY SAID — check my blue/purple messages. If I already said something similar, DO NOT rephrase it.
+7. IS GENERIC ENOUGH TO SEND TO ANYONE — if you could copy-paste this reply into any conversation and it would work, it's too generic. It should reference something SPECIFIC from THIS chat.
+
 Return ONLY valid JSON with EXACTLY this shape:
 {"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"}${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
 
@@ -2872,23 +2891,33 @@ ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:850,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends. Return EXACTLY 3 distinct replies + learning fields in the JSON.`:`🚨 BEFORE ANYTHING ELSE — IDENTIFY HER NEWEST MESSAGE CORRECTLY:
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:1000,temperature:0.85,top_p:0.92,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends. Return EXACTLY 3 distinct replies + learning fields in the JSON.`:`🚨 BEFORE ANYTHING ELSE — IDENTIFY HER NEWEST MESSAGE CORRECTLY:
 
-Step 1: Find the message INPUT BOX at the very bottom of the active chat (it says "Message..." with mic/image/sticker icons).
-Step 2: Starting from that input box, scan UPWARDS one bubble at a time.
-Step 3: The FIRST GREY (left-side) bubble you hit going up = HER NEWEST MESSAGE. THIS IS YOUR REPLY TARGET. (If you hit a blue/purple bubble first, KEEP going up — blue is mine.)
+Step 1: Find the message INPUT BOX at the very bottom of the active chat (it says "Message..." with mic/image/sticker icons). This is your ANCHOR POINT.
+Step 2: Starting from that input box, scan UPWARDS one bubble at a time. Count each bubble.
+Step 3: The FIRST GREY (left-side) bubble you hit going up = HER NEWEST MESSAGE. THIS IS YOUR REPLY TARGET. (If you hit a blue/purple bubble first, KEEP going up past it — blue is mine, skip it.)
 Step 4: Check directly above that grey bubble — if more greys are stacked with no blue between, group them as ONE message. Anchor on the BOTTOM grey of the group.
-Step 5: STOP scanning up as soon as you hit a blue bubble. Anything above blue is OLD — DO NOT reply to it.
+Step 5: STOP scanning up as soon as you hit a blue bubble. Anything above blue is OLD — DO NOT reply to it. DO NOT keep going for a "better" message.
 
-⚠️ COMMON FAILURE #1: anchoring on a grey bubble HIGHER up because it has a clearer topic or because the memory block mentioned a similar message. STOP. Always pick the LOWEST grey bubble in the active chat. The bottom grey bubble in the screenshot wins, ALWAYS, even if its content is short or vague ("ou", "lol", "k", "yeah").
+⚠️ COMMON FAILURE #1: anchoring on a grey bubble HIGHER up because it has a clearer topic or because the memory block mentioned a similar message. STOP. Always pick the LOWEST grey bubble in the active chat. The bottom grey bubble in the screenshot wins, ALWAYS, even if its content is short or vague ("ou", "lol", "k", "yeah"). Short messages still deserve real replies.
 
 ⚠️ COMMON FAILURE #2: replying to a BLUE/PURPLE bubble (MY message). If the very bottom message on screen is BLUE/PURPLE, that is MY message — skip it entirely and go up to find the nearest GREY bubble. You NEVER reply to blue/purple bubbles. You may READ them for context, but they are NEVER your reply target.
 
-⚠️ THE MEMORY BLOCK ABOVE shows HISTORICAL messages from PAST scans — those have already been replied to. You are NOT reading the memory for your reply target. You read the SCREENSHOT for that. Memory is background only.
+⚠️ COMMON FAILURE #3: reading MY blue/purple message high up in the chat and accidentally making your reply about the TOPIC I raised. Example: my blue says "what's your type" and her grey says "idk hbu" — your reply must answer HER "idk hbu", NOT discuss "types" because I brought it up. Reply to HER words, not mine.
+
+⚠️ COMMON FAILURE #4: the MEMORY BLOCK above is from PAST scans — those messages were already replied to. Do NOT let memory pull you toward an old topic. The SCREENSHOT is your only source for the current reply target.
+
+⚠️ DISTANCE CHECK: count bubbles between your grey target and the input box. If 4+ blue/purple bubbles sit between them, your target is probably TOO OLD — re-scan from the bottom.
 
 Ignore the left sidebar (other chats). Ignore all timestamps and "New messages" dividers. MY messages = blue/purple right. HER messages = grey left.
 
 After locking onto her newest grey: ANSWER any question she asked. Look at my recent blue/purple bubbles in the screenshot — if they were passive/mirror-style ("you too", "thinking of you", "yeah", "bet"), DON'T send another in that lane. Switch: ask her something, propose a plan, tease, pivot. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE (a real sentence or two with content — not all one-liners). Bring his world to the table too. Call back to details she's shared.
+
+🚨 REPLY QUALITY GATE — check EACH reply before returning:
+- Does it sound like a CONFIDENT GUY or like a girl/AI/therapist? If girl/AI/therapist → REWRITE.
+- Could she reply with just "lol" or "yeah"? → Add a hook (question, tease, plan).
+- Is it generic enough to work in any chat? → Make it specific to THIS conversation.
+- Did I already say something similar in my blue messages? → Don't rephrase what I said.
 
 ALSO extract: her_handle (from chat header), new_facts (concrete things you just learned), her_style (how she texts), topics_now (what this scan is about), my_recent_sends (my last 2-4 blue/purple bubbles verbatim), her_recent_sends (her last 2-4 grey bubbles verbatim).
 
