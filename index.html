@@ -1210,12 +1210,13 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <div class="card-label" style="margin-bottom:0">⭐ Saved good replies</div>
           <span class="history-count" id="good-count-badge">0</span>
         </div>
-        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">Replies you star are fed in as "do more of this" examples. <span id="good-count-label">0 saved</span>.</p>
-        <div id="goods-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
-        <div style="display:flex;gap:8px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">Replies you star are fed in as "do more of this" examples. <span id="good-count-label">0 saved</span>.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
           <button class="action-btn" style="flex:1" onclick="exportGoods()">📤 Export saved</button>
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearGoods()">Clear all</button>
         </div>
+        <button id="goods-toggle-btn" class="action-btn" style="width:100%;margin-bottom:8px;font-size:12px;padding:8px;opacity:.7" onclick="toggleGoodsList()">▶ Show all saved replies</button>
+        <div id="goods-list" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       </div>
 
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
@@ -1223,12 +1224,13 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <div class="card-label" style="margin-bottom:0">🚩 Reported replies</div>
           <span class="history-count" id="report-count-badge">0</span>
         </div>
-        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">Replies you flag are fed back as "never do this" examples to sharpen future replies. <span id="report-count-label">0 flagged</span>.</p>
-        <div id="reports-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
-        <div style="display:flex;gap:8px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">Replies you flag are fed back as "never do this" examples to sharpen future replies. <span id="report-count-label">0 flagged</span>.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
           <button class="action-btn" style="flex:1" onclick="exportReports()">📤 Export reports</button>
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearReports()">Clear all</button>
         </div>
+        <button id="reports-toggle-btn" class="action-btn" style="width:100%;margin-bottom:8px;font-size:12px;padding:8px;opacity:.7" onclick="toggleReportsList()">▶ Show all reported replies</button>
+        <div id="reports-list" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       </div>
 
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
@@ -1236,12 +1238,13 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <div class="card-label" style="margin-bottom:0">🧠 Live Help memory</div>
           <span class="history-count" id="memory-count-badge">0</span>
         </div>
-        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">What Live Help has learned about each person across scans. Used to write sharper, more personal replies. Stays on this device only.</p>
-        <div id="memory-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
-        <div style="display:flex;gap:8px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">What Live Help has learned about each person across scans. Used to write sharper, more personal replies. Stays on this device only.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
           <button class="action-btn" style="flex:1" onclick="exportLiveMemory()">📤 Export memory</button>
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearAllLiveMemory()">Clear all</button>
         </div>
+        <button id="memory-toggle-btn" class="action-btn" style="width:100%;margin-bottom:8px;font-size:12px;padding:8px;opacity:.7" onclick="toggleMemoryList()">▶ Show memory entries</button>
+        <div id="memory-list" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       </div>
 
       <!-- 🧠 THEME A — Live Learning toggle -->
@@ -1648,12 +1651,27 @@ function openSettingsPanel(){
 }
 
 // 🧠 LIVE MEMORY UI ─────────────────────────
+function toggleMemoryList(){
+  const list=document.getElementById('memory-list');
+  const btn=document.getElementById('memory-toggle-btn');
+  if(!list||!btn)return;
+  const isHidden=list.style.display==='none';
+  list.style.display=isHidden?'flex':'none';
+  const all=getAllLiveMemory();const n=Object.keys(all).length;
+  btn.textContent=isHidden?`▼ Hide memory entries (${n})`:`▶ Show memory entries (${n})`;
+}
 function renderLiveMemoryList(){
   const list=document.getElementById('memory-list');if(!list)return;
   const all=getAllLiveMemory();
   const entries=Object.values(all).sort((a,b)=>(b.lastUpdated||0)-(a.lastUpdated||0));
   const badge=document.getElementById('memory-count-badge');if(badge)badge.textContent=entries.length;
-  if(!entries.length){list.innerHTML='<div class="reports-empty">No chats learned yet — start a Live Help scan to begin building memory.</div>';return}
+  const btn=document.getElementById('memory-toggle-btn');
+  if(btn){
+    const isOpen=list.style.display==='flex';
+    btn.textContent=isOpen?`▼ Hide memory entries (${entries.length})`:`▶ Show memory entries (${entries.length})`;
+    btn.style.display=entries.length?'':'none';
+  }
+  if(!entries.length){list.innerHTML='';return}
   list.innerHTML=entries.map(m=>{
     const facts=(m.facts||[]).slice(0,8).map(f=>`• ${(f||'').replace(/</g,'&lt;')}`).join('<br>');
     const topics=(m.topics||[]).slice(0,8).join(', ');
@@ -2313,10 +2331,14 @@ function stopDeepScan(targetDoc){
   exportDeepScan();
   const det=(targetDoc).getElementById('live-detected');
   if(det){
-    det.innerHTML=`<div style="font-size:12px;color:var(--green)">✅ Deep scan complete — ${n} unique frame${n!==1?'s':''} captured & exported<br><span style="opacity:.8">Give the downloaded JSON file to Claude to build your profiles.<br>Zero API calls used. ${deepScanSkipped} duplicate frames were skipped.</span></div>`;
+    det.innerHTML=`<div style="font-size:12px;color:var(--green)">✅ Deep scan complete — ${n} unique frame${n!==1?'s':''} captured<br><span style="opacity:.8">Give the downloaded JSON file to Claude to build your profiles.<br>Zero API calls used. ${deepScanSkipped} duplicate frames were skipped.</span><br><button onclick="(window.opener||window).retryDeepScanDownload()" style="margin-top:6px;padding:6px 16px;border:1px solid var(--green);background:transparent;color:var(--green);border-radius:8px;cursor:pointer;font-size:13px">📥 Download scan file</button></div>`;
     det.classList.add('show');
   }
 }
+
+// Persistent blob URL so the manual download button can retry
+let _deepScanBlobUrl=null;
+let _deepScanFilename='';
 
 function exportDeepScan(){
   if(!deepScanFrames.length){showToast('Nothing to export');return}
@@ -2341,16 +2363,32 @@ function exportDeepScan(){
     frames:deepScanFrames.map((f,i)=>({index:i,ts:f.ts,image:'data:image/jpeg;base64,'+f.b64}))
   };
   const json=JSON.stringify(payload);
+  // Clean up any previous blob
+  if(_deepScanBlobUrl){try{URL.revokeObjectURL(_deepScanBlobUrl)}catch(e){}}
   const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
+  _deepScanBlobUrl=URL.createObjectURL(blob);
   const dateStr=new Date().toISOString().slice(0,10);
   const handleSlug=(liveCurrentHandle||'chat').replace(/[^a-zA-Z0-9_]/g,'').slice(0,20);
-  a.download=`deep-scan-${handleSlug}-${dateStr}.json`;
+  _deepScanFilename=`deep-scan-${handleSlug}-${dateStr}.json`;
+
+  // Attempt auto-download — may silently fail if not triggered by a user gesture
+  try{
+    const a=document.createElement('a');
+    a.href=_deepScanBlobUrl;
+    a.download=_deepScanFilename;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }catch(e){console.warn('Auto-download failed, manual button available',e)}
+
+  showToast(`📤 ${deepScanFrames.length} frames ready — if download didn't start, tap the download button`);
+}
+
+function retryDeepScanDownload(){
+  if(!_deepScanBlobUrl){showToast('No scan data — run a deep scan first');return}
+  const a=document.createElement('a');
+  a.href=_deepScanBlobUrl;
+  a.download=_deepScanFilename;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  showToast(`📤 Exported ${deepScanFrames.length} frames — give this file to Claude`);
+  showToast('📥 Downloading...');
 }
 
 function updateDeepScanBtn(active){
@@ -6293,9 +6331,25 @@ function updateReportCount(){
   const el=document.getElementById('report-count-label');if(el)el.textContent=`${reportedReplies.length} flagged`;
   const badge=document.getElementById('report-count-badge');if(badge)badge.textContent=reportedReplies.length;
 }
+function toggleReportsList(){
+  const list=document.getElementById('reports-list');
+  const btn=document.getElementById('reports-toggle-btn');
+  if(!list||!btn)return;
+  const isHidden=list.style.display==='none';
+  list.style.display=isHidden?'flex':'none';
+  const n=reportedReplies.length;
+  btn.textContent=isHidden?`▼ Hide reported replies (${n})`:`▶ Show all reported replies (${n})`;
+}
 function renderReports(){
   const list=document.getElementById('reports-list');if(!list)return;
-  if(!reportedReplies.length){list.innerHTML='<div class="reports-empty">No reports yet — tap 🚩 on any reply to flag it.</div>';return}
+  const btn=document.getElementById('reports-toggle-btn');
+  const n=reportedReplies.length;
+  if(btn){
+    const isOpen=list.style.display==='flex';
+    btn.textContent=isOpen?`▼ Hide reported replies (${n})`:`▶ Show all reported replies (${n})`;
+    btn.style.display=n?'':'none';
+  }
+  if(!n){list.innerHTML='';return}
   // newest first
   list.innerHTML=reportedReplies.slice().reverse().map((r,revIdx)=>{
     const realIdx=reportedReplies.length-1-revIdx;
@@ -6565,7 +6619,15 @@ const BAKED_REPORTS=[
   {message:"how about you show me what you want me to see",reply:"you're really putting the trust in me huh",reason:"doesn't fit — deflects her invitation with a meta-commentary about trust"},
   {message:"how about you show me what you want me to see",reply:"you want a sneak peek",reason:"weaker version — 'sounds like someone wants a sneak peek' would land better with playful framing"},
   {message:"A sneak peek of what",reply:"something you'll regret seeing",reason:"just bad — negative framing ('regret') kills the flirty momentum completely"},
-  {message:"A sneak peak of what?",reply:"something you'd regret seeing",reason:"same bad reply — 'regret' is a mood killer in a flirty exchange, also wrong tone"}
+  {message:"A sneak peak of what?",reply:"something you'd regret seeing",reason:"same bad reply — 'regret' is a mood killer in a flirty exchange, also wrong tone"},
+
+  // ── Added from Katiee deep scan 2026-05-27 ──
+  {message:"[Replied to a photo she sent]",reply:"You just looked perfect that's why you deserved this, and also, you could take the pants anytime just gotta take it off me",reason:"WAY too sexual/thirsty for the conversation stage — escalates to pants-removal out of nowhere. Reads desperate and creepy. Keep it playful, not graphic."},
+  {message:"[She sent a gym selfie / photo]",reply:"gym doing u justice then",reason:"body comment disguised as a compliment — commenting on how her body looks from the gym is thirsty. Find a non-body detail instead."},
+  {message:"[She sent a photo/video]",reply:"I'm mesmerized need that rn 🤤🤤",reason:"full simp — 'mesmerized' + drool emoji = thirsty and desperate. A confident guy would never say 'I'm mesmerized'. Tease or acknowledge casually instead."},
+  {message:"[She said something playful]",reply:"Loll yesss it is thankfully",reason:"flat mirror reply — 'lol yesss' adds nothing. No hook, no tease, she has nothing to respond to. Dead-end energy."},
+  {message:"[Live DM scan — my blue message asks a question like 'what are you up to tonight', her grey says 'not much wbu']",reply:"(any reply that answers MY question instead of hers)",reason:"🚨 LIVE DM FAILURE: replied to the TOPIC of MY blue message instead of HER grey. My blue says 'what are you up to tonight' and her grey says 'not much wbu' — the reply should answer HER 'wbu', not re-answer my own question. Always reply to what SHE said, not what I asked."},
+  {message:"[Live DM scan — her grey message is 5+ bubbles above the input box with many blue messages between]",reply:"(any reply to that old grey message)",reason:"🚨 LIVE DM FAILURE: anchored on a grey message that's FAR from the input box — there are many blue messages between it and the bottom. That grey is OLD. Re-scan from the input box upward and find the closest grey."}
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -6604,9 +6666,25 @@ function markGood(i){
   if(btn){btn.classList.add('marked');btn.textContent='⭐ Saved'}
   showToast('⭐ Saved — the AI will lean into replies like this');
 }
+function toggleGoodsList(){
+  const list=document.getElementById('goods-list');
+  const btn=document.getElementById('goods-toggle-btn');
+  if(!list||!btn)return;
+  const isHidden=list.style.display==='none';
+  list.style.display=isHidden?'flex':'none';
+  const n=savedGoodReplies.length;
+  btn.textContent=isHidden?`▼ Hide saved replies (${n})`:`▶ Show all saved replies (${n})`;
+}
 function renderGoods(){
   const list=document.getElementById('goods-list');if(!list)return;
-  if(!savedGoodReplies.length){list.innerHTML='<div class="reports-empty">No saved replies yet — tap ⭐ on a reply you love.</div>';return}
+  const btn=document.getElementById('goods-toggle-btn');
+  const n=savedGoodReplies.length;
+  if(btn){
+    const isOpen=list.style.display==='flex';
+    btn.textContent=isOpen?`▼ Hide saved replies (${n})`:`▶ Show all saved replies (${n})`;
+    btn.style.display=n?'':'none';
+  }
+  if(!n){list.innerHTML='';return}
   list.innerHTML=savedGoodReplies.slice().reverse().map((r,revIdx)=>{
     const realIdx=savedGoodReplies.length-1-revIdx;
     const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -6704,7 +6782,21 @@ const BAKED_GOODS=[
   {message:"well you didn't have my mind racing",reply:"guess i'll have to try harder",tone:"spicy"},
   {message:"and what happens when you're the one whose heart starts racing the most?",reply:"that's when you know you've won",tone:"flirty"},
   {message:"real fun? come on you have to give me a little more than that",reply:"you're pushing me to show you",tone:"confident"},
-  {message:"moving quite fast aren't we",reply:"only if you're struggling to keep up",tone:"confident"}
+  {message:"moving quite fast aren't we",reply:"only if you're struggling to keep up",tone:"confident"},
+
+  // ── Added from Katiee deep scan 2026-05-27 ──
+  {message:"I'm stealing ts",reply:"again you'll have to fight me for it 🫠",tone:"teasing"},
+  {message:"I'm stealing ts",reply:"i wouldn't give it up so easily",tone:"confident"},
+  {message:"Okayyy I'll lend you my one don't worry",reply:"lend? i'm stealing ts",tone:"playful"},
+  {message:"How'd you know I was gonna do that 😒",reply:"it was supposed to be a surprise",tone:"playful"},
+  {message:"What's your snap?",reply:"that's like the best thing you've asked since we started talking",tone:"bold"},
+  {message:"I could imagine I do that all the time too",reply:"wow so what you're tryna say is that i'm lame asf then",tone:"mock-offense"},
+  {message:"Right right [after she admitted to falling asleep on FaceTime]",reply:"listen i could back it up but you keep falling asleep 🫠",tone:"teasing"},
+  {message:"Now what shit are u up to",reply:"same shit different day / the usual",tone:"nonchalant"},
+  {message:"Was peeping everything else",reply:"u right u right surprise it is then",tone:"confident"},
+  {message:"Was peeping everything else",reply:"lowkey wanna change that now",tone:"flirty"},
+  {message:"U sureee about that",reply:"u sureee about that",tone:"playful-echo"},
+  {message:"Literally poor sleepy head",reply:"come getttt",tone:"inviting"}
 ];
 
 // Reference set — strong target responses for tricky message types that tend to flop
