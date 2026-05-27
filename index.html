@@ -2232,34 +2232,42 @@ function toggleDeepScan(targetDoc){
   deepScanSkipped=0;
   updateDeepScanBtn(true);
   // Copy auto-scroll script to clipboard — finds the chat scroll container by computed overflow style + scroll range
-  const scrollScript=`(function(){var all=document.querySelectorAll('div'),candidates=[];for(var i=0;i<all.length;i++){var el=all[i],s=window.getComputedStyle(el),ov=s.overflowY;if((ov==='auto'||ov==='scroll')&&el.scrollHeight>el.clientHeight+100&&el.clientHeight>200){candidates.push({el:el,range:el.scrollHeight-el.clientHeight})}}candidates.sort(function(a,b){return b.range-a.range});if(!candidates.length){alert('No scrollable chat found — open a DM conversation first');return}var c=candidates[0].el;console.log('Found chat container:',c,'scrollable:',candidates[0].range+'px');window._dsT=setInterval(function(){if(c.scrollTop<=0){clearInterval(window._dsT);console.log('Reached the top — done!');return}c.scrollTop-=300},3500);window._dsStop=function(){clearInterval(window._dsT);console.log('Stopped')};console.log('Auto-scrolling up... run _dsStop() to stop, or it auto-stops at the top')})()`;
+  const scrollScript=`(function(){var all=document.querySelectorAll('div'),candidates=[];for(var i=0;i<all.length;i++){var el=all[i],s=window.getComputedStyle(el),ov=s.overflowY;if((ov==='auto'||ov==='scroll')&&el.scrollHeight>el.clientHeight+100&&el.clientHeight>200){candidates.push({el:el,range:el.scrollHeight-el.clientHeight})}}candidates.sort(function(a,b){return b.range-a.range});if(!candidates.length){alert('No scrollable chat found — open a DM conversation first');return}var c=candidates[0].el;var fd=window.getComputedStyle(c).flexDirection;var isReversed=(fd==='column-reverse');var startPos=c.scrollTop;console.log('Found chat container:',c,'scrollable:',candidates[0].range+'px','scrollTop:',startPos,'flex:',fd);if(isReversed){console.log('Detected reverse-scroll layout — scrolling into negative territory');var lastTop=c.scrollTop;window._dsT=setInterval(function(){c.scrollTop-=300;if(c.scrollTop===lastTop){clearInterval(window._dsT);console.log('Reached the top — done!');return}lastTop=c.scrollTop},3500)}else{var maxScroll=c.scrollHeight-c.clientHeight;if(startPos<=0){console.log('scrollTop is 0 — trying scroll UP via negative values (reverse container)');var lastTop2=c.scrollTop;window._dsT=setInterval(function(){c.scrollTop-=300;if(c.scrollTop===lastTop2){clearInterval(window._dsT);console.log('Reached the top — done!');return}lastTop2=c.scrollTop},3500)}else{console.log('Normal scroll layout — scrolling up from',startPos);window._dsT=setInterval(function(){if(c.scrollTop<=0){clearInterval(window._dsT);console.log('Reached the top — done!');return}c.scrollTop-=300},3500)}}window._dsStop=function(){clearInterval(window._dsT);console.log('Stopped')};console.log('Auto-scrolling up... run _dsStop() to stop')})()`;
   // Try clipboard first, fall back to a copyable prompt
   navigator.clipboard.writeText(scrollScript).then(()=>{
     showToast('📋 Auto-scroll script copied! Paste in Instagram console (F12 → Console → paste → Enter)');
   }).catch(()=>{
-    // Clipboard failed (page not focused, permissions, etc.) — show a copyable prompt
-    const overlay=document.createElement('div');
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
-    overlay.innerHTML=`<div style="background:#1a1a1a;border-radius:14px;padding:20px;max-width:420px;width:100%">
-      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px">📋 Copy this scroll script</div>
-      <div style="font-size:11px;color:#aaa;margin-bottom:10px">Paste it in Instagram's console (F12 → Console → paste → Enter)</div>
-      <textarea id="ds-script-box" readonly style="width:100%;height:80px;background:#0a0a0a;color:#0f0;border:1px solid #333;border-radius:8px;padding:10px;font-family:monospace;font-size:10px;resize:none">${scrollScript}</textarea>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button id="ds-copy-btn" style="flex:1;padding:10px;background:var(--green-bg,#1a3a1a);border:1px solid var(--green,#4ade80);color:var(--green,#4ade80);border-radius:8px;font-weight:600;cursor:pointer">📋 Copy</button>
-        <button id="ds-close-btn" style="flex:1;padding:10px;background:#222;border:1px solid #444;color:#fff;border-radius:8px;cursor:pointer">Close</button>
-      </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    const box=document.getElementById('ds-script-box');
-    document.getElementById('ds-copy-btn').addEventListener('click',()=>{
-      box.select();document.execCommand('copy');
-      showToast('📋 Copied!');overlay.remove();
-    });
-    document.getElementById('ds-close-btn').addEventListener('click',()=>overlay.remove());
-    overlay.addEventListener('click',(e)=>{if(e.target===overlay)overlay.remove()});
-    // Auto-select text for easy copy
-    box.focus();box.select();
+    showDeepScanCopyDialog(scrollScript,targetDoc);
   });
+  // Start capturing regardless of clipboard result
+  startDeepScanCapture(targetDoc);
+}
+// Fallback copy dialog — works in both main window and pop-out
+function showDeepScanCopyDialog(scriptText,targetDoc){
+  const doc=(targetDoc&&targetDoc!==document&&pipWindow&&!pipWindow.closed)?pipWindow.document:document;
+  const overlay=doc.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML=`<div style="background:#1a1a1a;border-radius:14px;padding:20px;max-width:420px;width:100%">
+    <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px">📋 Copy this scroll script</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:10px">Paste it in Instagram's console (F12 → Console → paste → Enter)</div>
+    <textarea id="ds-script-box" readonly style="width:100%;height:80px;background:#0a0a0a;color:#0f0;border:1px solid #333;border-radius:8px;padding:10px;font-family:monospace;font-size:10px;resize:none">${scriptText}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="ds-copy-btn" style="flex:1;padding:10px;background:#1a3a1a;border:1px solid #4ade80;color:#4ade80;border-radius:8px;font-weight:600;cursor:pointer">📋 Copy</button>
+      <button id="ds-close-btn" style="flex:1;padding:10px;background:#222;border:1px solid #444;color:#fff;border-radius:8px;cursor:pointer">Close</button>
+    </div>
+  </div>`;
+  doc.body.appendChild(overlay);
+  const box=doc.getElementById('ds-script-box');
+  doc.getElementById('ds-copy-btn').addEventListener('click',()=>{
+    box.select();doc.execCommand('copy');
+    showToast('📋 Copied!');overlay.remove();
+  });
+  doc.getElementById('ds-close-btn').addEventListener('click',()=>overlay.remove());
+  overlay.addEventListener('click',(e)=>{if(e.target===overlay)overlay.remove()});
+  box.focus();box.select();
+}
+
+function startDeepScanCapture(targetDoc){
   updateDeepScanProgress(targetDoc);
   // Capture first frame immediately then every 4s
   captureDeepFrameTick(targetDoc);
