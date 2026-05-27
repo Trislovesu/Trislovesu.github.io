@@ -1381,6 +1381,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-stop-btn" style="flex:1" id="auto-scan-btn" onclick="toggleAutoScan()">⏱ Auto-scan OFF</button>
         <button class="live-stop-btn" style="flex:1;font-size:11px;opacity:.85" onclick="resetLiveChatPointer()" title="Use this when you switch to a different person mid-share">🔄 Switched chats</button>
       </div>
+      <button class="live-stop-btn" id="deep-scan-btn" style="width:100%;margin-top:8px" onclick="toggleDeepScan()">📖 Deep scan chat</button>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
@@ -1757,7 +1758,7 @@ function openLive(){
   document.getElementById('live-active-area').style.display=liveStream?'block':'none';
   renderLiveToneChips();
 }
-function closeLive(){if(autoScanActive)stopAutoScan();document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
+function closeLive(){if(autoScanActive)stopAutoScan();if(deepScanActive)stopDeepScan();document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
 async function startLiveShare(){
   if(!liveSupported()){showToast('Not supported on this device');return}
   try{
@@ -1771,6 +1772,7 @@ async function startLiveShare(){
 }
 function stopLiveShare(){
   if(autoScanActive)stopAutoScan();
+  if(deepScanActive)stopDeepScan();
   if(liveStream){liveStream.getTracks().forEach(t=>t.stop());liveStream=null;}
   const v=document.getElementById('live-video');if(v)v.srcObject=null;
   document.getElementById('live-start-area').style.display='block';
@@ -1780,7 +1782,21 @@ function stopLiveShare(){
   liveCurrentHandle=''; // reset memory pointer so next session doesn't leak the prev chat's facts
 }
 // Manually reset current chat (e.g. you switched conversations mid-share and don't want stale memory)
-function resetLiveChatPointer(){liveCurrentHandle='';showToast('Chat pointer reset — next scan starts fresh');}
+function resetLiveChatPointer(){
+  const prev=liveCurrentHandle;
+  liveCurrentHandle='';
+  currentReplies=[];
+  // Clear UI: detected bar, reply cards, learning badge
+  const det=document.getElementById('live-detected');if(det){det.innerHTML='';det.classList.remove('show')}
+  const cards=document.getElementById('live-reply-cards');if(cards)cards.innerHTML='';
+  // Also clear pip window if open
+  if(pipWindow&&!pipWindow.closed){
+    const pd=pipWindow.document;
+    const pDet=pd.getElementById('live-detected');if(pDet){pDet.innerHTML='';pDet.classList.remove('show')}
+    const pCards=pd.getElementById('live-reply-cards');if(pCards)pCards.innerHTML='';
+  }
+  showToast(prev?`🔄 Switched from ${prev} — scan the new chat`:'🔄 Chat pointer reset — scan the new chat');
+}
 
 // Live reply cards — self-contained actions that work in the overlay AND the pop-out window
 const REGEN_VIBES=['spicier','flirtier','funnier','more chill','more confident','bolder','shorter','longer','more savage','wholesome'];
@@ -2173,6 +2189,151 @@ function stopAutoScan(){
   const btn=document.getElementById('auto-scan-btn');
   if(btn){btn.textContent='⏱ Auto-scan OFF';btn.style.borderColor='';btn.style.color='';}
   showToast('Auto-scan stopped');
+}
+
+// ── 📖 DEEP SCAN — offline screenshot capture, zero API calls ──────────────────
+// Captures frames locally while user scrolls. Exports a JSON file with all screenshots.
+// User gives the file to Claude who does the heavy lifting (reading messages, building profiles).
+let deepScanActive=false;
+let deepScanInterval=null;
+let deepScanHashSet=new Set(); // ALL hashes ever seen — catches scroll-back dupes
+let deepScanFrames=[]; // {ts, b64} — the actual captured frames
+let deepScanSkipped=0; // counter of duplicate frames skipped
+
+// Higher quality capture for deep scan — we need max text readability for offline processing
+function captureDeepScanFrame(){
+  if(!liveStream)return null;
+  const v=document.getElementById('live-video');
+  const vw=v.videoWidth||1280,vh=v.videoHeight||720;
+  if(!vw)return null;
+  const scale=Math.min(1,1400/Math.max(vw,vh)); // larger capture than regular scan (1400 vs 1100)
+  const c=document.createElement('canvas');
+  c.width=Math.round(vw*scale);c.height=Math.round(vh*scale);
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.85).split(',')[1]; // higher quality (0.85 vs 0.72)
+}
+
+function deepFrameHash(b64){
+  // Sample from 5 positions across the image for robust change detection
+  const len=b64.length;
+  const positions=[100,Math.floor(len*0.2),Math.floor(len*0.4),Math.floor(len*0.6),Math.floor(len*0.8)];
+  let sample='';
+  for(const p of positions)sample+=b64.substring(p,p+150);
+  let h=0;for(let i=0;i<sample.length;i++){h=((h<<5)-h)+sample.charCodeAt(i);h|=0}return h;
+}
+
+function toggleDeepScan(targetDoc){
+  targetDoc=targetDoc||document;
+  if(deepScanActive){stopDeepScan(targetDoc);return}
+  if(!liveStream){showToast('Start screen share first');return}
+  deepScanActive=true;
+  deepScanHashSet=new Set();
+  deepScanFrames=[];
+  deepScanSkipped=0;
+  updateDeepScanBtn(true);
+  // Copy auto-scroll script to clipboard for the user
+  const scrollScript=`(function(){var c=document.querySelector('[role="grid"]');if(!c){var all=document.querySelectorAll('div'),best=null;for(var d of all){if(d.scrollHeight>d.clientHeight+100&&d.clientHeight>200){if(!best||d.clientHeight>best.clientHeight)best=d}}c=best}if(!c){alert('Could not find chat — open a DM first');return}window._dsT=setInterval(function(){c.scrollTop-=250},3500);window._dsStop=function(){clearInterval(window._dsT);console.log('Stopped')};console.log('Auto-scrolling up... run _dsStop() to stop')})()`;
+  navigator.clipboard.writeText(scrollScript).then(()=>{
+    showToast('📋 Auto-scroll script copied! Paste in Instagram console (F12 → Console → paste → Enter)');
+  }).catch(()=>{
+    showToast('📖 Deep scan started — scroll slowly through the chat');
+  });
+  updateDeepScanProgress(targetDoc);
+  // Capture first frame immediately then every 4s
+  captureDeepFrameTick(targetDoc);
+  deepScanInterval=setInterval(()=>{
+    if(!liveStream||!deepScanActive){stopDeepScan(targetDoc);return}
+    captureDeepFrameTick(targetDoc);
+  },4000);
+}
+
+function captureDeepFrameTick(targetDoc){
+  if(!deepScanActive)return;
+  const b64=captureDeepScanFrame();if(!b64)return;
+  // Frame dedup — check against ALL previous hashes (catches scroll-back dupes)
+  const hash=deepFrameHash(b64);
+  if(deepScanHashSet.has(hash)){deepScanSkipped++;return}
+  deepScanHashSet.add(hash);
+  deepScanFrames.push({ts:Date.now(),b64:b64});
+  // Auto-stop after 75 unique frames
+  if(deepScanFrames.length>=75){stopDeepScan(targetDoc);return}
+  updateDeepScanProgress(targetDoc);
+}
+
+function updateDeepScanProgress(targetDoc){
+  const det=(targetDoc||document).getElementById('live-detected');
+  if(!det)return;
+  const n=deepScanFrames.length;
+  const skipNote=deepScanSkipped?` · ${deepScanSkipped} dupes skipped`:'';
+  det.innerHTML=`<div style="font-size:12px;color:var(--text2)">📖 Deep scanning... ${n} unique frame${n!==1?'s':''} captured${skipNote}<br><span style="opacity:.7">Scroll through the chat — recording screenshots (no API calls).<br>Tap the button again when done, or auto-stops at 75.</span></div>`;
+  det.classList.add('show');
+}
+
+function stopDeepScan(targetDoc){
+  targetDoc=targetDoc||document;
+  deepScanActive=false;
+  if(deepScanInterval){clearInterval(deepScanInterval);deepScanInterval=null}
+  updateDeepScanBtn(false);
+  const n=deepScanFrames.length;
+  if(!n){
+    showToast('No frames captured');
+    return;
+  }
+  // Auto-export the file
+  exportDeepScan();
+  const det=(targetDoc).getElementById('live-detected');
+  if(det){
+    det.innerHTML=`<div style="font-size:12px;color:var(--green)">✅ Deep scan complete — ${n} unique frame${n!==1?'s':''} captured & exported<br><span style="opacity:.8">Give the downloaded JSON file to Claude to build your profiles.<br>Zero API calls used. ${deepScanSkipped} duplicate frames were skipped.</span></div>`;
+    det.classList.add('show');
+  }
+}
+
+function exportDeepScan(){
+  if(!deepScanFrames.length){showToast('Nothing to export');return}
+  // Get screen resolution for context
+  const v=document.getElementById('live-video');
+  const payload={
+    type:'deep_scan',
+    version:2,
+    exportedAt:Date.now(),
+    handle:liveCurrentHandle||'',
+    user:currentUser||'',
+    captureSettings:{
+      intervalMs:4000,
+      jpegQuality:0.85,
+      maxDimension:1400,
+      videoWidth:v?.videoWidth||0,
+      videoHeight:v?.videoHeight||0
+    },
+    frameCount:deepScanFrames.length,
+    duplicatesSkipped:deepScanSkipped,
+    instructions:'Claude: Read each frame as an Instagram DM screenshot. BLUE/PURPLE bubbles (right side) = the user\'s messages. GREY bubbles (left side) = her messages. Her name/handle is at the TOP CENTRE of the conversation panel (NOT the left sidebar — that\'s the user\'s own handle). Extract all messages from both sides across all frames, deduplicate, and build profiles for both the user (style, tone, habits) and her (facts, likes, dislikes, hobbies, style).',
+    frames:deepScanFrames.map((f,i)=>({index:i,ts:f.ts,image:'data:image/jpeg;base64,'+f.b64}))
+  };
+  const json=JSON.stringify(payload);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const dateStr=new Date().toISOString().slice(0,10);
+  const handleSlug=(liveCurrentHandle||'chat').replace(/[^a-zA-Z0-9_]/g,'').slice(0,20);
+  a.download=`deep-scan-${handleSlug}-${dateStr}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast(`📤 Exported ${deepScanFrames.length} frames — give this file to Claude`);
+}
+
+function updateDeepScanBtn(active){
+  const btn=document.getElementById('deep-scan-btn');
+  if(btn){
+    btn.textContent=active?'📖 Deep scanning... (tap to stop)':'📖 Deep scan chat';
+    btn.style.borderColor=active?'var(--green)':'';btn.style.color=active?'var(--green)':'';
+  }
+  if(pipWindow&&!pipWindow.closed){
+    const pb=pipWindow.document.getElementById('pip-deep');
+    if(pb){pb.textContent=active?'📖 Deep scanning... (tap to stop)':'📖 Deep scan chat';
+      pb.style.borderColor=active?'var(--green)':'';pb.style.color=active?'var(--green)':'';}
+  }
 }
 
 // 👤 PROFILE SCAN — is this account follow-worthy?
@@ -2674,7 +2835,9 @@ RULES:
 - SELF-CHECK before returning: read each reply back as if you're HER receiving it. Would you smile and want to text back? If any reply is flat, empty, generic, or template-y — REWRITE IT before returning.
 
 Return ONLY valid JSON with EXACTLY this shape:
-{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}`;
+{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"}${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
+
+ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of the USER (the guy). Extract "my_style_traits" (4-8 specific observations like "uses lowercase only", "short punchy messages", "dry humor", "uses 😭 often") and "my_style_summary" (2-3 sentences describing how he texts, as if briefing a ghostwriter). This is based ONLY on the blue/purple bubbles.`:''}`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -2753,6 +2916,36 @@ Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
         }
       }
     }catch(e){console.warn('memory merge failed',e)}
+    // 🧠 Fix B+C: Auto-learn user style during scan when learn mode is on
+    if(learnModeOn){
+      try{
+        const profile=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
+        // Fix C: always accumulate raw samples from my_recent_sends
+        const newSamples=(parsed.my_recent_sends||[]).filter(s=>s&&typeof s==='string'&&s.length>1);
+        if(newSamples.length){
+          profile.samples=uniqStrings([...newSamples,...(profile.samples||[])],30);
+          profile.sampleCount=(profile.sampleCount||0)+newSamples.length;
+        }
+        // Fix B: if AI returned style analysis, merge it
+        if(parsed.my_style_summary){
+          profile.styleSummary=parsed.my_style_summary;
+          profile.lastUpdated=Date.now();
+        }
+        if(parsed.my_style_traits&&parsed.my_style_traits.length){
+          profile.styleTraits=uniqStrings([...(parsed.my_style_traits||[]),...(profile.styleTraits||[])],12);
+        }
+        // Infer basic stats from accumulated samples
+        if(newSamples.length){
+          const avgLen=profile.samples.reduce((a,s)=>a+s.length,0)/profile.samples.length;
+          profile.avgLength=avgLen<25?'short':avgLen<60?'medium':'long';
+          const emojiCount=profile.samples.filter(s=>/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(s)).length;
+          const emojiRatio=emojiCount/profile.samples.length;
+          profile.emojiUsage=emojiRatio<0.1?'none':emojiRatio<0.3?'light':emojiRatio<0.6?'moderate':'heavy';
+        }
+        saveUserProfile(profile);
+        renderUserProfileStatus();
+      }catch(e){console.warn('auto-learn style failed',e)}
+    }
   }catch(err){
     showToast(err.message&&err.message.length<90?err.message:'Scan failed');console.error(err);
   }finally{
@@ -2788,15 +2981,17 @@ async function popOutLive(){
       <button class="live-stop-btn" id="pip-profile" style="flex:1;padding:10px">👤 Profile scan</button>
       <button class="live-stop-btn" id="pip-story" style="flex:1;padding:10px">📖 Story reply</button>
     </div>
-    <button class="live-stop-btn" id="pip-reset" style="width:100%;padding:8px;margin-bottom:12px;font-size:11px;opacity:.85">🔄 Switched chats — start fresh memory</button>
+    <button class="live-stop-btn" id="pip-reset" style="width:100%;padding:8px;margin-bottom:8px;font-size:11px;opacity:.85">🔄 Switched chats — start fresh memory</button>
+    <button class="live-stop-btn" id="pip-deep" style="width:100%;padding:10px;margin-bottom:12px">📖 Deep scan chat</button>
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker','toggleDeepScan'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-profile').addEventListener('click',()=>profileScanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-story').addEventListener('click',()=>storyReplyLive(pipWindow.document));
   pipWindow.document.getElementById('pip-reset').addEventListener('click',()=>resetLiveChatPointer());
+  pipWindow.document.getElementById('pip-deep').addEventListener('click',()=>toggleDeepScan(pipWindow.document));
   pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
   showToast('Popped out — keep it over your chat and scan from there');
 }
@@ -6271,7 +6466,47 @@ const BAKED_REPORTS=[
   {message:"[Live DM scan — her latest grey is short like 'ou' or 'k' at the bottom]",reply:"(any reply that addresses an older/richer grey message instead of the bottom grey 'ou')",reason:"🚨 LIVE DM FAILURE: anchored on an OLDER grey bubble because its content was richer. NEVER. The bottom-most grey bubble is ALWAYS the reply target, even if it's just 'ou' / 'k' / 'lol' / 'yeah'. Use the scan-from-bottom-up algorithm. The TOP grey of a stack is the OLDEST."},
   {message:"[Live DM scan — grey 'hi' at top, blue 'hey' below, grey 'how was your day' at bottom]",reply:"hi back",reason:"🚨 LIVE DM FAILURE: replied to the TOP grey ('hi') when the actual newest is the BOTTOM grey ('how was your day'). The scan went TOP-DOWN instead of BOTTOM-UP. Always reverse: start at the input box, scan upward."},
   {message:"[Live DM scan — multi-bubble stack: grey 'wait' → grey 'actually' → grey 'are you free saturday?']",reply:"about what",reason:"🚨 LIVE DM FAILURE: replied to the TOP of the multi-bubble stack ('wait') instead of the BOTTOM ('are you free saturday?'). When she sends multiple greys in a row, the BOTTOM is the actual point — anchor there."},
-  {message:"[Live DM scan — memory block lists past 'how was your day' message]",reply:"(reply that addresses the historical 'how was your day' from memory, ignoring the new screenshot)",reason:"🚨 LIVE DM FAILURE: AI replied to a HISTORICAL message from the memory block instead of the actual new message in the screenshot. The memory shows OLD messages already replied to. The reply target comes ONLY from the screenshot, never from the memory list."}
+  {message:"[Live DM scan — memory block lists past 'how was your day' message]",reply:"(reply that addresses the historical 'how was your day' from memory, ignoring the new screenshot)",reason:"🚨 LIVE DM FAILURE: AI replied to a HISTORICAL message from the memory block instead of the actual new message in the screenshot. The memory shows OLD messages already replied to. The reply target comes ONLY from the screenshot, never from the memory list."},
+
+  // ── Added from 2026-05-27 export ──
+  {message:"I don't like football but if you want we can get messi",reply:"i already have one",reason:"off-topic, makes no sense — she's offering a date idea, this acts like Messi is a possession"},
+  {message:"[Story] girl posing at night with Brent Faiyaz - ROLE MODEL",reply:"where's bayside from",reason:"boring — asking a dull geography question instead of engaging her energy"},
+  {message:"[Story] woman in elevator, black shorts and long-sleeve shirt, headphones, selfie",reply:"where is this i need to go",reason:"creepy / woman-sounding — reads desperate, not confident"},
+  {message:"[Story] woman in elevator, black shorts and long-sleeve shirt, headphones, selfie",reply:"what's the song",reason:"boring — lazy opener that gives her nothing to work with"},
+  {message:"[Story] woman in elevator, black shorts and long-sleeve shirt, headphones, selfie",reply:"caught in the act",reason:"off-topic — doesn't connect to what she's doing in the story"},
+  {message:"and how do you suggest I do that",reply:"what makes you think you can't trust me",reason:"doesn't fit — she's asking a direct question, this deflects with a random trust tangent"},
+  {message:"[Story] woman in black crop top and brown pants posing in bayside at night",reply:"tell me you didn't sneak out",reason:"lame — forced mystery that doesn't land"},
+  {message:"[Story] woman in black crop top and brown pants posing in bayside at night",reply:"bayside at night? nice",reason:"boring opener — generic observation with no hook"},
+  {message:"[Story] woman in black crop top and brown pants posing in bayside at night",reply:"what's with the brent faiyaz",reason:"boring — stop mentioning songs as your entire opener"},
+  {message:"[Story] woman posing in a black top and brown pants at night near Bayside, Brent Faiyaz - ROLE MODEL",reply:"brent faiyaz or bayside",reason:"doesn't make sense — what kind of question is this"},
+  {message:"[Story] woman on balcony overlooking city at night, Brent Faiyaz - Role Model",reply:"where is this i need to go",reason:"creepy — sounds like you're asking for her location"},
+  {message:"[Story] woman on balcony overlooking city at night, Brent Faiyaz - Role Model",reply:"role model for who",reason:"weird — doesn't fit, just sounds off"},
+  {message:"[Story] woman in black top and brown pants posing in bayside, brent faiyaz - role model",reply:"you actually take me here or just post it",reason:"doesn't make sense, cringe — grammar is broken and it's awkward"},
+  {message:"[Story] woman in black top and brown pants posing in bayside, brent faiyaz - role model",reply:"role model at night",reason:"boring — just naming two things she posted, zero engagement"},
+  {message:"[Story] woman in black top and brown pants posing in bayside, brent faiyaz - role model",reply:"bayside on a friday",reason:"boring — generic observation, no twist or hook"},
+  {message:"[Story] girl posing in black top and brown pants at night with Brent Faiyaz - ROLE MODEL",reply:"this is dangerous behaviour for a wednesday",reason:"cringe — doesn't fit, forced 'dangerous' framing on a normal photo"},
+  {message:"[Story] girl posing in black top and brown pants at night with Brent Faiyaz - ROLE MODEL",reply:"bayside at night? drop the location",reason:"boring — asking a question while already knowing the answer"},
+  {message:"[Story] girl posing in black top and brown pants at night with Brent Faiyaz - ROLE MODEL",reply:"what's with the song choice",reason:"boring — stop leading with songs, she doesn't want to discuss her playlist"},
+  {message:"[Story] woman in white top and beige pants, palm tree ocean background, 'Everything But The Girl - Missi'",reply:"where is this i need to go",reason:"creepy, woman-sounding — same lazy 'where is this' opener that always flops"},
+  {message:"[Story] woman in white top and beige pants, palm tree ocean background",reply:"the song is a bold choice",reason:"boring — commenting on the song instead of engaging with her"},
+  {message:"[Story] woman in white top and beige pants, palm tree ocean background",reply:"this is dangerous behaviour for a wednesday",reason:"creepy — forced 'dangerous' framing on a vacation photo, doesn't fit at all"},
+  {message:"[Story] woman in pink bikini standing in pool at night, Drake - Cece's Interlude",reply:"you actually live here or just visiting",reason:"creepy, boring — sounds like you're stalking her location"},
+  {message:"[Story] woman in pink bikini in pool at night, Drake - Cece's Interlude",reply:"who took this i need to know",reason:"woman-sounding — reads like jealous girlfriend energy, not masculine confidence"},
+  {message:"[Story] woman in purple bikini by pool with drake song",reply:"is this your usual wednesday night",reason:"wrong date — AI guessed the day of the week incorrectly"},
+  {message:"[Story] woman in purple bikini by pool with drake song",reply:"where's the pool at",reason:"boring — lazy location question, zero personality"},
+  {message:"[Story] woman posing in tropical setting with song caption",reply:"tropical settings are her thing",reason:"3RD PERSON — 'her thing' talks ABOUT her instead of TO her. Never use 3rd person."},
+  {message:"[Story] woman posing in tropical setting with song caption",reply:"vacation mode activated",reason:"cringe — sounds like a caption bot, not a real person texting"},
+  {message:"[Story] girl in car wearing black shirt, listening to summer walker",reply:"summer walker at night is a choice",reason:"stop mentioning songs — boring song commentary is a dead opener"},
+  {message:"[Story] woman in black satin top in car, Summer Walker - White Tee",reply:"robe or a warning label",reason:"misidentified clothing — AI called it a robe when it isn't. Don't guess wrong."},
+  {message:"[Story] woman in black satin top in car, Summer Walker - White Tee",reply:"lowkey plotting a late night",reason:"lame — vague projection that doesn't connect to what she posted"},
+  {message:"[Story] woman in black satin top in car, Summer Walker - White Tee",reply:"is that a private show",reason:"creepy — reads predatory, not confident. Never imply you're watching her."},
+  {message:"[Story] girl in white top posing with finger to lips, 'under your spell' by LunarKoy32",reply:"spells are clearly working",reason:"boring — low-effort pun that she's heard a hundred times"},
+  {message:"how about you show me what you want me to see",reply:"depends on how much you want to know",reason:"doesn't fit — she's already showing willingness, this deflects instead of escalating"},
+  {message:"how about you show me what you want me to see",reply:"i was thinking more like a surprise",reason:"doesn't fit — she's asking to be shown something, not asking about surprises"},
+  {message:"how about you show me what you want me to see",reply:"you're really putting the trust in me huh",reason:"doesn't fit — deflects her invitation with a meta-commentary about trust"},
+  {message:"how about you show me what you want me to see",reply:"you want a sneak peek",reason:"weaker version — 'sounds like someone wants a sneak peek' would land better with playful framing"},
+  {message:"A sneak peek of what",reply:"something you'll regret seeing",reason:"just bad — negative framing ('regret') kills the flirty momentum completely"},
+  {message:"A sneak peak of what?",reply:"something you'd regret seeing",reason:"same bad reply — 'regret' is a mood killer in a flirty exchange, also wrong tone"}
 ];
 
 function getReportsContext(userMsg,limit=4){
@@ -6397,7 +6632,20 @@ const BAKED_GOODS=[
   // ⭐ Story-reply winners — these are the proven good format: specific callout + sharp twist
   {message:"[Story: close-up selfie video with a song]",reply:"your hair looks like it's having a better day than me",tone:"flirty"},
   {message:"[Story: two women in black dresses, light flare]",reply:"is that a reflex or are you always this photogenic",tone:"playful"},
-  {message:"[Story: outfit with a cross necklace]",reply:"the cross necklace is a bold choice with that top",tone:"flirty"}
+  {message:"[Story: outfit with a cross necklace]",reply:"the cross necklace is a bold choice with that top",tone:"flirty"},
+  // ── Added from 2026-05-27 export ──
+  {message:"respectfully I'd climb you like a tree",reply:"keep it in mind for next time",tone:"dominant"},
+  {message:"you look like bad decisions and good stories",reply:"guess that's the idea",tone:"teasing"},
+  {message:"[Story: woman on balcony overlooking city at night, Brent Faiyaz - Role Model]",reply:"you taking applications for the next trip",tone:"flirty"},
+  {message:"and what exactly are you gonna show me?",reply:"depends on what you want to see",tone:"intriguing"},
+  {message:"and what exactly are you gonna show me?",reply:"something that'll make you trust me",tone:"confident"},
+  {message:"and what exactly are you gonna show me?",reply:"patience",tone:"teasing"},
+  {message:"[Story: woman posing in a tropical setting with a song caption]",reply:"is this a test run for our next getaway",tone:"spicy"},
+  {message:"[Story: selfie of a girl with dark hair and glasses in woods]",reply:"adventure with me sounds better",tone:"spicy"},
+  {message:"well you didn't have my mind racing",reply:"guess i'll have to try harder",tone:"spicy"},
+  {message:"and what happens when you're the one whose heart starts racing the most?",reply:"that's when you know you've won",tone:"flirty"},
+  {message:"real fun? come on you have to give me a little more than that",reply:"you're pushing me to show you",tone:"confident"},
+  {message:"moving quite fast aren't we",reply:"only if you're struggling to keep up",tone:"confident"}
 ];
 
 // Reference set — strong target responses for tricky message types that tend to flop
