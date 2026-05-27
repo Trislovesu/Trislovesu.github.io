@@ -2231,8 +2231,8 @@ function toggleDeepScan(targetDoc){
   deepScanFrames=[];
   deepScanSkipped=0;
   updateDeepScanBtn(true);
-  // Copy auto-scroll script to clipboard for the user
-  const scrollScript=`(function(){var c=document.querySelector('[role="grid"]');if(!c){var all=document.querySelectorAll('div'),best=null;for(var d of all){if(d.scrollHeight>d.clientHeight+100&&d.clientHeight>200){if(!best||d.clientHeight>best.clientHeight)best=d}}c=best}if(!c){alert('Could not find chat — open a DM first');return}window._dsT=setInterval(function(){c.scrollTop-=250},3500);window._dsStop=function(){clearInterval(window._dsT);console.log('Stopped')};console.log('Auto-scrolling up... run _dsStop() to stop')})()`;
+  // Copy auto-scroll script to clipboard — finds the chat scroll container by computed overflow style + scroll range
+  const scrollScript=`(function(){var all=document.querySelectorAll('div'),candidates=[];for(var i=0;i<all.length;i++){var el=all[i],s=window.getComputedStyle(el),ov=s.overflowY;if((ov==='auto'||ov==='scroll')&&el.scrollHeight>el.clientHeight+100&&el.clientHeight>200){candidates.push({el:el,range:el.scrollHeight-el.clientHeight})}}candidates.sort(function(a,b){return b.range-a.range});if(!candidates.length){alert('No scrollable chat found — open a DM conversation first');return}var c=candidates[0].el;console.log('Found chat container:',c,'scrollable:',candidates[0].range+'px');window._dsT=setInterval(function(){if(c.scrollTop<=0){clearInterval(window._dsT);console.log('Reached the top — done!');return}c.scrollTop-=300},3500);window._dsStop=function(){clearInterval(window._dsT);console.log('Stopped')};console.log('Auto-scrolling up... run _dsStop() to stop, or it auto-stops at the top')})()`;
   navigator.clipboard.writeText(scrollScript).then(()=>{
     showToast('📋 Auto-scroll script copied! Paste in Instagram console (F12 → Console → paste → Enter)');
   }).catch(()=>{
