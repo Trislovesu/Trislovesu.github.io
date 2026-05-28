@@ -2227,13 +2227,12 @@ function diffMessagesAgainstLedger(visibleMsgs, ledger){
 // Add new messages to the ledger for a handle (capped at 60 to prevent localStorage bloat)
 function addToMessageLedger(handle, newMsgs){
   if(!handle||!newMsgs||!newMsgs.length)return;
-  if(typeof liveMemory==='undefined')return;
   const key=handle.toLowerCase();
   if(!liveMemory[key])liveMemory[key]={handle:handle};
   const existing=liveMemory[key].message_ledger||[];
   // Append, then cap to last 60 messages
   liveMemory[key].message_ledger=[...existing,...newMsgs].slice(-60);
-  if(typeof saveLiveMemory==='function'){try{saveLiveMemory()}catch(e){}}
+  saveLiveMemory();
 }
 
 // 🚨 Manual help UI — fires when AI is unsure. Pauses auto mode, shows a red-flashing
@@ -2298,7 +2297,7 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
         _autoSentHistory=[text,..._autoSentHistory].slice(0,5);
         _autoLastHerMessage=herMsg||'';
         // 🛂 Record per-convo state for manual sends too + add to ledger
-        if(liveCurrentHandle && typeof liveMemory!=='undefined'){
+        if(liveCurrentHandle && liveMemory){
           try{
             const key=liveCurrentHandle.toLowerCase();
             if(!liveMemory[key])liveMemory[key]={handle:liveCurrentHandle};
@@ -2313,7 +2312,7 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
               fingerprint:_msgFingerprint({sender:'self',text:text}),
               scannedAt:Date.now()
             }]);
-            if(typeof saveLiveMemory==='function')saveLiveMemory();
+            saveLiveMemory();
           }catch(e){console.warn('save convo state failed',e)}
         }
         _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
@@ -2403,6 +2402,13 @@ async function sendLiveReply(i,btn){
 }
 
 // Auto mode: watch for screen changes → detect new message → generate → send
+// 📜 liveMemory — in-memory ledger + per-conversation state for auto-reply
+// This is NOT the same as rizz_live_memory (the profile store). This is the SESSION-level
+// message ledger used to track which messages have been seen and replied to.
+// Initialized from localStorage so it persists across page reloads.
+let liveMemory=(()=>{try{return JSON.parse(store.getItem('rizz_live_memory_ledger')||'{}')}catch(e){return{}}})();
+function saveLiveMemory(){try{store.setItem('rizz_live_memory_ledger',JSON.stringify(liveMemory))}catch(e){console.warn('saveLiveMemory failed',e)}}
+
 let _autoLastHash='';
 let _autoSending=false;
 let _autoSendingStartedAt=0;
@@ -2618,17 +2624,20 @@ async function runAutoReplyLoop(){
 
     // 📜 LEDGER-BASED DECISION — diff visible messages against what we've already seen
     const visibleMsgs=Array.isArray(parsed.visible_messages)?parsed.visible_messages:[];
-    const convoKey=(liveCurrentHandle||'').toLowerCase();
-    const convoState=(convoKey && typeof liveMemory!=='undefined' && liveMemory[convoKey])||{};
+    // Use AI-parsed handle as fallback if liveCurrentHandle isn't set yet
+    const aiHandle=(parsed.her_handle||'').trim();
+    const effectiveHandle=liveCurrentHandle||aiHandle||'';
+    const convoKey=effectiveHandle.toLowerCase();
+    const convoState=(convoKey && liveMemory && liveMemory[convoKey])||{};
     const ledger=convoState.message_ledger||[];
 
     // Find what's actually new in this scan
     const newMsgs=diffMessagesAgainstLedger(visibleMsgs,ledger);
 
     // ALWAYS save new messages to the ledger (even if we won't reply)
-    if(newMsgs.length && liveCurrentHandle){
-      addToMessageLedger(liveCurrentHandle,newMsgs);
-      console.log('[Don\'t Miss] LEDGER added',newMsgs.length,'new message(s):',newMsgs.map(m=>`${m.sender}:${m.text.slice(0,30)}`));
+    if(newMsgs.length && effectiveHandle){
+      addToMessageLedger(effectiveHandle,newMsgs);
+      console.log('[Don\'t Miss] LEDGER added',newMsgs.length,'new message(s) for',effectiveHandle,':',newMsgs.map(m=>`${m.sender}:${m.text.slice(0,30)}`));
     }
 
     // AI state fields
@@ -2770,21 +2779,22 @@ async function runAutoReplyLoop(){
         _autoSentHistory=[best.text,..._autoSentHistory].slice(0,5);
         _autoLastHerMessage=replyTargetText;
         // 🛂 RECORD per-conversation state + add OUR sent message to the ledger
-        if(liveCurrentHandle && typeof liveMemory!=='undefined'){
+        const sendHandle=liveCurrentHandle||effectiveHandle;
+        if(sendHandle && liveMemory){
           try{
-            const key=liveCurrentHandle.toLowerCase();
-            if(!liveMemory[key])liveMemory[key]={handle:liveCurrentHandle};
+            const key=sendHandle.toLowerCase();
+            if(!liveMemory[key])liveMemory[key]={handle:sendHandle};
             liveMemory[key].last_replied_to_message_id=replyTargetId;
             liveMemory[key].last_replied_to_text=replyTargetText;
             liveMemory[key].last_replied_at=Date.now();
             liveMemory[key].waiting_for_other_reply=true;
             // Add our sent reply to the ledger so next scan recognizes it as already-seen
-            addToMessageLedger(liveCurrentHandle,[{
+            addToMessageLedger(sendHandle,[{
               sender:'self',text:best.text,
               fingerprint:_msgFingerprint({sender:'self',text:best.text}),
               scannedAt:Date.now()
             }]);
-            if(typeof saveLiveMemory==='function')saveLiveMemory();
+            saveLiveMemory();
           }catch(e){console.warn('save convo state failed',e)}
         }
         // 🕒 COOLDOWN — give Instagram time to update before next scan
@@ -3177,7 +3187,16 @@ function buildUserStyleBlock(){
   }
   if(p.commonPhrases&&p.commonPhrases.length)parts.push(`Common phrases: ${p.commonPhrases.join(', ')}`);
   if(p.boundaries)parts.push(`Boundaries: ${p.boundaries}`);
-  parts.push('═══ END USER STYLE — make the replies sound like the examples above. Do NOT over-smooth. Keep natural imperfections. ═══');
+  parts.push(`STYLE-MATCHING RULES:
+- First generate a good reply idea for the situation
+- Then REWRITE it to sound like the examples above
+- Match his slang, his abbreviations, his punctuation, his emoji habits, his message length
+- If he types "u" not "you", use "u". If he types "rn" not "right now", use "rn"
+- If he uses "lmao" or "😭" a lot, use those. If he rarely uses emoji, don't add them
+- Do NOT over-polish. Keep his natural imperfections — they ARE his style
+- The final reply should look like something he would actually type in an Instagram DM
+- If it sounds like ChatGPT wrote it, REWRITE IT`);
+  parts.push('═══ END USER STYLE ═══');
   return parts.join('\n');
 }
 
@@ -3502,10 +3521,11 @@ function captureChatAreaFrame(){
   const v=document.getElementById('live-video');
   const vw=v.videoWidth||0, vh=v.videoHeight||0;
   if(!vw)return null;
-  // Crop: skip left 28% (chat list sidebar) and top 6% (browser sharing bar)
-  // Keep bottom 100% to capture the input box and recent messages
+  // Crop: skip left 28% (chat list sidebar) and top 3% (minimal browser chrome only)
+  // KEEP the conversation header (girl's name/handle) — it's at ~4-8% from top
+  // This is critical for profile building — AI needs to see the handle
   const cropX=Math.round(vw*0.28);
-  const cropY=Math.round(vh*0.06);
+  const cropY=Math.round(vh*0.03);
   const cropW=vw-cropX;
   const cropH=vh-cropY;
   const scale=Math.min(1,1100/Math.max(cropW,cropH));
