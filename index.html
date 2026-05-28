@@ -2195,6 +2195,42 @@ function pickBestReply(replies, parsed){
   return scored[0];
 }
 
+// 📜 MESSAGE LEDGER helpers — per-conversation list of seen messages, diff to find new ones
+function _msgFingerprint(m){
+  if(!m||!m.text)return '';
+  const norm=(m.text||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  return `${(m.sender||'?').toLowerCase()}:${norm.slice(0,80)}`;
+}
+
+// Compare visible messages against ledger — returns the NEW ones (in order)
+function diffMessagesAgainstLedger(visibleMsgs, ledger){
+  if(!Array.isArray(visibleMsgs))return [];
+  const seen=new Set((ledger||[]).map(_msgFingerprint).filter(Boolean));
+  const newOnes=[];
+  for(const m of visibleMsgs){
+    if(!m||!m.text)continue;
+    const fp=_msgFingerprint(m);
+    if(!fp)continue;
+    if(!seen.has(fp)){
+      newOnes.push({sender:(m.sender||'unknown').toLowerCase(),text:m.text,fingerprint:fp,scannedAt:Date.now()});
+      seen.add(fp); // prevent dupes within the same scan
+    }
+  }
+  return newOnes;
+}
+
+// Add new messages to the ledger for a handle (capped at 60 to prevent localStorage bloat)
+function addToMessageLedger(handle, newMsgs){
+  if(!handle||!newMsgs||!newMsgs.length)return;
+  if(typeof liveMemory==='undefined')return;
+  const key=handle.toLowerCase();
+  if(!liveMemory[key])liveMemory[key]={handle:handle};
+  const existing=liveMemory[key].message_ledger||[];
+  // Append, then cap to last 60 messages
+  liveMemory[key].message_ledger=[...existing,...newMsgs].slice(-60);
+  if(typeof saveLiveMemory==='function'){try{saveLiveMemory()}catch(e){}}
+}
+
 // 🚨 Manual help UI — fires when AI is unsure. Pauses auto mode, shows a red-flashing
 // input box. User types a manual reply, it gets sent + saved as training data.
 // Returns Promise<{action:'sent'|'cancelled', text?}>
@@ -2256,7 +2292,7 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
         _autoLastSentText=text;
         _autoSentHistory=[text,..._autoSentHistory].slice(0,5);
         _autoLastHerMessage=herMsg||'';
-        // 🛂 Record per-convo state for manual sends too
+        // 🛂 Record per-convo state for manual sends too + add to ledger
         if(liveCurrentHandle && typeof liveMemory!=='undefined'){
           try{
             const key=liveCurrentHandle.toLowerCase();
@@ -2266,6 +2302,12 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
             liveMemory[key].last_replied_to_text=herMsg||'';
             liveMemory[key].last_replied_at=Date.now();
             liveMemory[key].waiting_for_other_reply=true;
+            // Mark our manual reply as seen in the ledger
+            addToMessageLedger(liveCurrentHandle,[{
+              sender:'self',text:text,
+              fingerprint:_msgFingerprint({sender:'self',text:text}),
+              scannedAt:Date.now()
+            }]);
             if(typeof saveLiveMemory==='function')saveLiveMemory();
           }catch(e){console.warn('save convo state failed',e)}
         }
@@ -2365,9 +2407,9 @@ let _autoLastHerMessage='';    // last actual her_message we replied to
 let _autoCooldownUntil=0;      // skip any work until this timestamp
 let _autoUnstableCount=0;      // how many times in a row screen wasn't stable
 let _autoLastApiCallAt=0;      // timestamp of last API call (rate limiting)
-const AUTO_MIN_API_INTERVAL=15000;  // HARD CAP: minimum 15s between vision API calls
-const AUTO_SKIP_COOLDOWN=18000;     // After skipping (typing/waiting/own msg): wait 18s
-const AUTO_SEND_COOLDOWN=10000;     // After successful send: wait 10s before next scan
+const AUTO_MIN_API_INTERVAL=10000;  // HARD CAP: minimum 10s between vision API calls
+const AUTO_SKIP_COOLDOWN=8000;      // After skipping (typing/own msg): wait 8s
+const AUTO_SEND_COOLDOWN=7000;      // After successful send: wait 7s before next scan
 
 function toggleAutoReplyMode(){
   autoReplyMode=!autoReplyMode;
@@ -2389,23 +2431,23 @@ function toggleAutoReplyMode(){
   }
 }
 
-// Fuzzy match — is `a` essentially the same as `b`? Aggressive — catches paraphrases too.
+// Fuzzy match — only fires on clear duplicates. Avoids false positives on short messages.
 function _fuzzyMatch(a,b){
   if(!a||!b)return false;
   const na=(a||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
   const nb=(b||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
   if(!na||!nb)return false;
   if(na===nb)return true;
-  if(na.length>=4&&nb.length>=4&&(na.includes(nb)||nb.includes(na)))return true;
-  // token overlap > 45% (was 70% — too strict)
-  const ta=new Set(na.split(' ').filter(w=>w.length>2));
-  const tb=new Set(nb.split(' ').filter(w=>w.length>2));
-  if(!ta.size||!tb.size){
-    // Short messages — compare directly
-    return na.length<=12 && nb.length<=12 && (na.includes(nb)||nb.includes(na));
-  }
+  // For short messages, ONLY exact match counts (otherwise "yeah" matches "yeah right")
+  if(na.length<10 || nb.length<10) return false;
+  // Substring match only for longer messages
+  if(na.includes(nb)||nb.includes(na))return true;
+  // Token overlap — back to strict 75% to avoid false positives on common short words
+  const ta=new Set(na.split(' ').filter(w=>w.length>3));
+  const tb=new Set(nb.split(' ').filter(w=>w.length>3));
+  if(ta.size<2||tb.size<2)return false;
   let c=0;ta.forEach(t=>tb.has(t)&&c++);
-  return c/Math.min(ta.size,tb.size)>=0.45;
+  return c/Math.min(ta.size,tb.size)>=0.75;
 }
 
 // Detect any "AI couldn't read this" / placeholder / unhelpful her_message
@@ -2435,15 +2477,15 @@ async function _isScreenStable(){
   return h1===h3;
 }
 
-// Fast pixel hash — only hash the BOTTOM-RIGHT chat area to ignore mouse, sidebar, time updates
+// Fast pixel hash — focus on the active chat panel + bottom (where new messages appear)
 function _autoQuickHash(){
   if(!liveStream)return null;
   const v=document.getElementById('live-video');
   const vw=v.videoWidth||0,vh=v.videoHeight||0;
   if(!vw)return null;
-  // Crop: skip left sidebar (left 30%) and top bar (top 15%) — focus on where messages appear
+  // Crop: skip left 30% (sidebar), top 10% (browser bar), top 50% (only care about RECENT messages at bottom)
   const cropX=Math.round(vw*0.30);
-  const cropY=Math.round(vh*0.15);
+  const cropY=Math.round(vh*0.50); // only bottom half — that's where new messages appear
   const cropW=vw-cropX;
   const cropH=vh-cropY;
   const scale=180/Math.max(cropW,cropH);
@@ -2526,8 +2568,8 @@ async function runAutoReplyLoop(){
   _autoScanCount++;
   const targetDoc=(pipWindow&&!pipWindow.closed)?pipWindow.document:document;
 
-  // Capture the actual frame for the AI
-  const b64=captureLiveFrame();
+  // 🎯 Capture ONLY the active chat panel (no sidebar, no top bar) — AI focuses better
+  const b64=captureChatAreaFrame()||captureLiveFrame();
   if(!b64){
     _autoSending=false;
     autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
@@ -2556,49 +2598,62 @@ async function runAutoReplyLoop(){
     const parsed=window._lastLiveParsed||{};
     const myRecent=(parsed.my_recent_sends||[]).map(s=>(s||'').trim()).filter(Boolean);
 
-    // 🛂 PRIMARY STATE GATE — use the AI's explicit sender classification (structural fix)
+    // 📜 LEDGER-BASED DECISION — diff visible messages against what we've already seen
+    const visibleMsgs=Array.isArray(parsed.visible_messages)?parsed.visible_messages:[];
+    const convoKey=(liveCurrentHandle||'').toLowerCase();
+    const convoState=(convoKey && typeof liveMemory!=='undefined' && liveMemory[convoKey])||{};
+    const ledger=convoState.message_ledger||[];
+
+    // Find what's actually new in this scan
+    const newMsgs=diffMessagesAgainstLedger(visibleMsgs,ledger);
+
+    // ALWAYS save new messages to the ledger (even if we won't reply)
+    if(newMsgs.length && liveCurrentHandle){
+      addToMessageLedger(liveCurrentHandle,newMsgs);
+      console.log('[Don\'t Miss] LEDGER added',newMsgs.length,'new message(s):',newMsgs.map(m=>`${m.sender}:${m.text.slice(0,30)}`));
+    }
+
+    // AI state fields (still used as supporting signals)
     const latestSender=(parsed.latest_actual_sender||'').toLowerCase();
-    const latestMsgId=parsed.latest_message_id||`${latestSender}:${newMsg.toLowerCase().slice(0,40)}`;
     const typingIndicatorVisible=!!parsed.typing_indicator_visible;
-    const aiSaysShouldReply=parsed.should_reply!==false; // default true if missing (back-compat)
+    const aiSaysShouldReply=parsed.should_reply!==false;
     const aiReason=parsed.should_reply_reason||'';
 
-    // Per-conversation state — pulled from liveMemory for this handle
-    const convoState=(liveCurrentHandle && typeof liveMemory!=='undefined' && liveMemory[liveCurrentHandle.toLowerCase()])||{};
-    const lastRepliedToMsgId=convoState.last_replied_to_message_id||'';
+    // Find the newest "other" message in the NEW batch
+    const newOtherMsgs=newMsgs.filter(m=>m.sender==='other');
+    const newestOther=newOtherMsgs.length?newOtherMsgs[newOtherMsgs.length-1]:null;
+    const newestNewMsg=newMsgs.length?newMsgs[newMsgs.length-1]:null;
 
-    // Decision logic — match the spec from the brief
+    // Decision logic — ledger-driven
     let decision='REPLY';
     let decisionReason='';
-    if(latestSender==='self'){decision='WAIT_SELF_LATEST';decisionReason='Latest message is MINE — waiting for her';}
-    else if(typingIndicatorVisible){decision='WAIT_TYPING';decisionReason='She\'s typing — waiting';}
+    if(typingIndicatorVisible){decision='WAIT_TYPING';decisionReason='She\'s typing — waiting';}
+    else if(!newMsgs.length){decision='WAIT_NO_NEW';decisionReason='No new messages since last scan';}
+    else if(newestNewMsg && newestNewMsg.sender==='self'){decision='WAIT_SELF_LATEST';decisionReason='Newest is MINE — saved, waiting for her';}
+    else if(!newestOther){decision='WAIT_NO_NEW_OTHER';decisionReason='New messages saved but none from her — waiting';}
     else if(!aiSaysShouldReply){decision='WAIT_AI_SAID_NO';decisionReason='AI said don\'t reply: '+aiReason;}
-    else if(latestMsgId && latestMsgId===lastRepliedToMsgId){decision='WAIT_ALREADY_REPLIED';decisionReason='Already replied to this message';}
-    else if(_isUnreadableMessage(newMsg)){decision='WAIT_UNREADABLE';decisionReason='Could not read — waiting';}
-    else if(latestSender==='unknown' || latestSender===''){decision='WAIT_UNKNOWN_SENDER';decisionReason='Can\'t tell whose message is newest — waiting to be safe';}
+    else if(latestSender==='unknown' || latestSender===''){decision='WAIT_UNKNOWN_SENDER';decisionReason='Sender unclear — waiting to be safe';}
 
-    // 🔁 LEGACY fuzzy guards as defense-in-depth (in case AI's sender field is wrong)
-    if(decision==='REPLY'){
-      const matchesOurLastSend=_fuzzyMatch(_autoLastSentText,newMsg);
-      const matchesOurHistory=_autoSentHistory.some(s=>_fuzzyMatch(s,newMsg));
-      const matchesAiMyRecent=myRecent.some(m=>_fuzzyMatch(m,newMsg));
-      const repliesMatchOurSends=currentReplies.some(r=>_autoSentHistory.some(s=>_fuzzyMatch(s,r.text)));
-      if(matchesOurLastSend||matchesOurHistory||matchesAiMyRecent){
-        decision='WAIT_FUZZY_OWN_MSG';decisionReason='Fuzzy match: looks like MY message';
-      }else if(repliesMatchOurSends){
-        decision='WAIT_AI_HALLUCINATING';decisionReason='AI re-suggesting my own message';
+    // 🔁 Defense-in-depth — exact duplicate of what we just sent
+    if(decision==='REPLY' && newestOther){
+      if(_autoLastSentText && _fuzzyMatch(_autoLastSentText,newestOther.text)){
+        decision='WAIT_FUZZY_OWN_MSG';decisionReason='Newest other message looks exactly like MY last sent';
       }
     }
 
-    // 📊 DEBUG LOG per brief §23
+    // Use the newest "other" message as the reply target (instead of AI's her_message which may be stale)
+    const replyTargetText=newestOther?newestOther.text:newMsg;
+    const replyTargetId=newestOther?newestOther.fingerprint:(parsed.latest_message_id||`other:${newMsg.toLowerCase().slice(0,40)}`);
+
+    // 📊 DEBUG LOG
     console.log('[Don\'t Miss] DECISION:',{
       conversation:liveCurrentHandle||'?',
-      latest_actual_text:newMsg,
+      visible_count:visibleMsgs.length,
+      new_count:newMsgs.length,
+      new_other_count:newOtherMsgs.length,
+      reply_target:replyTargetText,
       latest_actual_sender:latestSender,
-      latest_message_id:latestMsgId,
       typing_indicator:typingIndicatorVisible,
-      seen_indicator:!!parsed.seen_receipt_visible,
-      last_replied_to_message_id:lastRepliedToMsgId,
       ai_should_reply:aiSaysShouldReply,
       decision,
       decision_reason:decisionReason
@@ -2611,6 +2666,10 @@ async function runAutoReplyLoop(){
       autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_SKIP_COOLDOWN);
       return;
     }
+
+    // 🎯 OVERRIDE her_message with the actual ledger-confirmed new message (more reliable than AI's her_message)
+    // This ensures we reply to the RIGHT message
+    lastGenMessage=replyTargetText;
 
     // New message detected! Pick the BEST reply using local scoring vs training data
     if(currentReplies.length&&extensionReady){
@@ -2666,16 +2725,22 @@ async function runAutoReplyLoop(){
         // 🧠 TRACK STATE — remember what we sent + what we replied to
         _autoLastSentText=best.text;
         _autoSentHistory=[best.text,..._autoSentHistory].slice(0,5);
-        _autoLastHerMessage=newMsg;
-        // 🛂 RECORD per-conversation state — so we never reply to the same message twice
+        _autoLastHerMessage=replyTargetText;
+        // 🛂 RECORD per-conversation state + add OUR sent message to the ledger
         if(liveCurrentHandle && typeof liveMemory!=='undefined'){
           try{
             const key=liveCurrentHandle.toLowerCase();
             if(!liveMemory[key])liveMemory[key]={handle:liveCurrentHandle};
-            liveMemory[key].last_replied_to_message_id=latestMsgId;
-            liveMemory[key].last_replied_to_text=newMsg;
+            liveMemory[key].last_replied_to_message_id=replyTargetId;
+            liveMemory[key].last_replied_to_text=replyTargetText;
             liveMemory[key].last_replied_at=Date.now();
             liveMemory[key].waiting_for_other_reply=true;
+            // Add our sent reply to the ledger so next scan recognizes it as already-seen
+            addToMessageLedger(liveCurrentHandle,[{
+              sender:'self',text:best.text,
+              fingerprint:_msgFingerprint({sender:'self',text:best.text}),
+              scannedAt:Date.now()
+            }]);
             if(typeof saveLiveMemory==='function')saveLiveMemory();
           }catch(e){console.warn('save convo state failed',e)}
         }
@@ -3071,6 +3136,27 @@ function captureLiveFrame(){
   c.width=Math.round(vw*scale);c.height=Math.round(vh*scale);
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   return c.toDataURL('image/jpeg',0.72).split(',')[1];
+}
+
+// 🎯 Crop to the ACTIVE CHAT PANEL only — skip left sidebar (conversation list)
+// and the top sharing/browser bar. This is the "red box" the user cares about.
+// Used by auto mode so the AI literally cannot see the sidebar to get confused.
+function captureChatAreaFrame(){
+  if(!liveStream)return null;
+  const v=document.getElementById('live-video');
+  const vw=v.videoWidth||0, vh=v.videoHeight||0;
+  if(!vw)return null;
+  // Crop: skip left 28% (chat list sidebar) and top 6% (browser sharing bar)
+  // Keep bottom 100% to capture the input box and recent messages
+  const cropX=Math.round(vw*0.28);
+  const cropY=Math.round(vh*0.06);
+  const cropW=vw-cropX;
+  const cropH=vh-cropY;
+  const scale=Math.min(1,1100/Math.max(cropW,cropH));
+  const c=document.createElement('canvas');
+  c.width=Math.round(cropW*scale);c.height=Math.round(cropH*scale);
+  c.getContext('2d').drawImage(v,cropX,cropY,cropW,cropH,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.78).split(',')[1];
 }
 
 async function scanLive(targetDoc){
@@ -3827,16 +3913,20 @@ A reply is CRINGE if it does ANY of these:
 6. REPEATS WHAT I ALREADY SAID — check my blue/purple messages. If I already said something similar, DO NOT rephrase it.
 7. IS GENERIC ENOUGH TO SEND TO ANYONE — if you could copy-paste this reply into any conversation and it would work, it's too generic. It should reference something SPECIFIC from THIS chat.
 
-🛂 CRITICAL STATE EXTRACTION — these decide whether we even send a reply:
-- "latest_actual_sender": "self" | "other" | "unknown" — WHO sent the absolute LAST real message bubble in the active chat (NOT counting typing dots, "Seen", timestamps, or input box). If the very last bubble is BLUE/PURPLE → "self". If GREY → "other". If you genuinely can't tell → "unknown". This is the most important field — get it right.
-- "latest_message_id": a short stable fingerprint of the latest actual message — format: "{sender}:{first 40 chars of text lowercased}" (e.g. "other:hey what are you up to tonight" or "self:nothing crazy youhh"). This lets us dedup so we don't reply twice.
-- "typing_indicator_visible": true | false — is there an animated typing dots bubble visible at the bottom of the chat?
-- "seen_receipt_visible": true | false — is there a "Seen" / "Seen 1h ago" / read indicator under MY last blue message?
-- "should_reply": true | false — your honest call: should we generate and send a reply right now? Return false if latest_actual_sender is "self", or if typing_indicator_visible is true, or if you're unsure.
-- "should_reply_reason": one short phrase explaining your decision (e.g. "her last grey is new, no typing — replying" / "my blue is newest, waiting" / "she's typing, waiting")
+🎯 IMPORTANT IMAGE NOTE: the screenshot has been PRE-CROPPED to show ONLY the active chat panel (the right portion of Instagram). The left sidebar (conversation list) and browser bars have been cut out. You're looking at: chat header (avatar + name at top), the message bubbles, and the input box at the bottom. NOTHING ELSE EXISTS in this image. Don't waste effort looking for "the sidebar" — it's not there.
+
+Also include these STATE FIELDS at the end (used to decide whether to send):
+- "latest_actual_sender": "self" if the absolute bottom-most bubble is BLUE/PURPLE, "other" if GREY, "unknown" if unclear
+- "latest_message_id": "{sender}:{first 60 chars of that bottom-most bubble text, lowercased}" — used for dedup
+- "typing_indicator_visible": true if you see animated dots at the bottom, else false
+- "seen_receipt_visible": true if you see "Seen"/read indicator under MY last blue, else false
+- "should_reply": false if latest_actual_sender is "self" OR typing_indicator_visible is true, else true
+- "should_reply_reason": one short phrase explaining
+
+🆕 "visible_messages": an ORDERED array of EVERY message bubble currently visible in the chat panel, from oldest (top) to newest (bottom). Format: [{"sender":"self|other","text":"exact bubble text"}, ...]. This is THE source of truth — used to diff against memory and find what's actually new. Include EVERY bubble (even short ones like "yeah", "lol"). Exclude: timestamps, "Seen" labels, typing indicator dots, date dividers, the input box. ONLY actual message bubbles. Get the SENDER right — bottom-right-aligned blue/purple = self, left-aligned grey = other.
 
 Return ONLY valid JSON with EXACTLY this shape:
-{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","latest_actual_sender":"self|other|unknown","latest_message_id":"sender:text","typing_indicator_visible":false,"seen_receipt_visible":false,"should_reply":true,"should_reply_reason":"why","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"}${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
+{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"},"latest_actual_sender":"self|other|unknown","latest_message_id":"sender:text","typing_indicator_visible":false,"seen_receipt_visible":false,"should_reply":true,"should_reply_reason":"why","visible_messages":[{"sender":"other","text":"hey"},{"sender":"self","text":"yo"},{"sender":"other","text":"wyd"}]${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
 
 ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of the USER (the guy). Extract "my_style_traits" (4-8 specific observations like "uses lowercase only", "short punchy messages", "dry humor", "uses 😭 often") and "my_style_summary" (2-3 sentences describing how he texts, as if briefing a ghostwriter). This is based ONLY on the blue/purple bubbles.`:''}`;
 
