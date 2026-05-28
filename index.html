@@ -2206,9 +2206,17 @@ async function runAutoReplyLoop(){
   _autoScanCount++;
   const targetDoc=(pipWindow&&!pipWindow.closed)?pipWindow.document:document;
 
+  // Capture the actual frame for the AI
+  const b64=captureLiveFrame();
+  if(!b64){
+    _autoSending=false;
+    autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+    return;
+  }
+
   try{
     const prevMessage=lastGenMessage;
-    await doLiveGenerate(targetDoc);
+    await doLiveGenerate(targetDoc,b64);
     await new Promise(r=>setTimeout(r,500));
 
     // Check if the AI detected a DIFFERENT message than last time
@@ -2222,10 +2230,13 @@ async function runAutoReplyLoop(){
       return;
     }
 
-    // New message detected! Send the best reply
+    // New message detected! Wait a bit so she doesn't think it's instant
     if(currentReplies.length&&extensionReady){
       const best=currentReplies[0];
-      showToast('🤖 New message detected — sending reply...');
+      const delay=Math.floor(Math.random()*25000)+20000; // 20-45 seconds
+      showToast(`🤖 New message detected — replying in ${Math.round(delay/1000)}s`);
+      await new Promise(r=>setTimeout(r,delay));
+      if(!autoReplyMode){_autoSending=false;return} // user turned it off during wait
       window.addEventListener('dm-auto-reply-result',function handler(e){
         window.removeEventListener('dm-auto-reply-result',handler);
         const res=e.detail||{};
