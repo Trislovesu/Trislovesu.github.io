@@ -2256,6 +2256,19 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
         _autoLastSentText=text;
         _autoSentHistory=[text,..._autoSentHistory].slice(0,5);
         _autoLastHerMessage=herMsg||'';
+        // 🛂 Record per-convo state for manual sends too
+        if(liveCurrentHandle && typeof liveMemory!=='undefined'){
+          try{
+            const key=liveCurrentHandle.toLowerCase();
+            if(!liveMemory[key])liveMemory[key]={handle:liveCurrentHandle};
+            const lp=window._lastLiveParsed||{};
+            liveMemory[key].last_replied_to_message_id=lp.latest_message_id||`other:${(herMsg||'').toLowerCase().slice(0,40)}`;
+            liveMemory[key].last_replied_to_text=herMsg||'';
+            liveMemory[key].last_replied_at=Date.now();
+            liveMemory[key].waiting_for_other_reply=true;
+            if(typeof saveLiveMemory==='function')saveLiveMemory();
+          }catch(e){console.warn('save convo state failed',e)}
+        }
         _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
         showToast('✅ Manual reply sent & saved as training data');
         cleanup();
@@ -2376,7 +2389,7 @@ function toggleAutoReplyMode(){
   }
 }
 
-// Fuzzy match — is `a` essentially the same as `b`? (case/punctuation-insensitive substring)
+// Fuzzy match — is `a` essentially the same as `b`? Aggressive — catches paraphrases too.
 function _fuzzyMatch(a,b){
   if(!a||!b)return false;
   const na=(a||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
@@ -2384,12 +2397,29 @@ function _fuzzyMatch(a,b){
   if(!na||!nb)return false;
   if(na===nb)return true;
   if(na.length>=4&&nb.length>=4&&(na.includes(nb)||nb.includes(na)))return true;
-  // token overlap > 70%
+  // token overlap > 45% (was 70% — too strict)
   const ta=new Set(na.split(' ').filter(w=>w.length>2));
   const tb=new Set(nb.split(' ').filter(w=>w.length>2));
-  if(!ta.size||!tb.size)return false;
+  if(!ta.size||!tb.size){
+    // Short messages — compare directly
+    return na.length<=12 && nb.length<=12 && (na.includes(nb)||nb.includes(na));
+  }
   let c=0;ta.forEach(t=>tb.has(t)&&c++);
-  return c/Math.min(ta.size,tb.size)>=0.7;
+  return c/Math.min(ta.size,tb.size)>=0.45;
+}
+
+// Detect any "AI couldn't read this" / placeholder / unhelpful her_message
+function _isUnreadableMessage(msg){
+  if(!msg)return true;
+  const m=msg.toLowerCase().trim();
+  if(m.length<3)return true;
+  // Bracketed markers
+  if(/^\[(unreadable|sticker|waiting|typing|empty|blank|none|n\/a|no message|skip|error)\]?/i.test(m))return true;
+  // Literal "couldn't read" / error phrases
+  if(/could ?not ?read|cannot ?read|can'?t ?read|unable to (read|determine|see)|no (visible |new )?(message|reply|text)|nothing visible|blank screen|empty (chat|conversation)/i.test(m))return true;
+  // Just dots/dashes/whitespace
+  if(/^[\.…\-\_\s·•]+$/.test(m))return true;
+  return false;
 }
 
 // Check screen stability — sample hash 3 times over ~1.4s. If all match, screen is steady.
@@ -2506,41 +2536,77 @@ async function runAutoReplyLoop(){
 
   try{
     const prevMessage=lastGenMessage;
+    // Stash previous replies so we can detect if doLiveGenerate failed to refresh them
+    const prevReplyTexts=(currentReplies||[]).map(r=>r.text);
     await doLiveGenerate(targetDoc,b64);
     await new Promise(r=>setTimeout(r,400));
+    // If currentReplies didn't change at all, the scan effectively failed — skip
+    const newReplyTexts=(currentReplies||[]).map(r=>r.text);
+    if(prevReplyTexts.length && newReplyTexts.length && prevReplyTexts.every((t,i)=>t===newReplyTexts[i])){
+      console.log('[Don\'t Miss] Replies unchanged from last scan — skipping send (likely scan failed)');
+      showToast('🤖 Scan returned old replies — waiting');
+      _autoSending=false;
+      _autoCooldownUntil=Date.now()+AUTO_SKIP_COOLDOWN;
+      autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_SKIP_COOLDOWN);
+      return;
+    }
 
     // Check if the AI detected a DIFFERENT message than last time
     const newMsg=lastGenMessage||'';
     const parsed=window._lastLiveParsed||{};
     const myRecent=(parsed.my_recent_sends||[]).map(s=>(s||'').trim()).filter(Boolean);
 
-    // 🚫 LAYERED GUARDS — refuse to reply if ANY of these match:
-    // 1. The "her message" matches what WE just sent (AI confused our message for hers)
-    // 2. Matches anything in AI-reported my_recent_sends
-    // 3. Matches anything in our local sent history
-    // 4. Matches the last her_message we already replied to
-    // 5. Marked as typing/waiting/sticker/unreadable
-    // 6. Suspiciously short (<2 chars usually = typing dots)
-    const matchesOurLastSend=_fuzzyMatch(_autoLastSentText,newMsg);
-    const matchesOurHistory=_autoSentHistory.some(s=>_fuzzyMatch(s,newMsg));
-    const matchesAiMyRecent=myRecent.some(m=>_fuzzyMatch(m,newMsg));
-    const alreadyRepliedToThis=_fuzzyMatch(_autoLastHerMessage,newMsg);
-    const isWaiting=/^\[waiting\]$/i.test(newMsg);
-    const isTypingIndicator=/^\[typing\]$/i.test(newMsg) || /^(\.\.\.|typing|…|\.\.|·\.·)$/i.test(newMsg.trim()) || newMsg.trim().length<3;
-    const isSameAsLastScan=(newMsg===prevMessage && prevMessage!=='[Live chat]' && _autoScanCount>1);
+    // 🛂 PRIMARY STATE GATE — use the AI's explicit sender classification (structural fix)
+    const latestSender=(parsed.latest_actual_sender||'').toLowerCase();
+    const latestMsgId=parsed.latest_message_id||`${latestSender}:${newMsg.toLowerCase().slice(0,40)}`;
+    const typingIndicatorVisible=!!parsed.typing_indicator_visible;
+    const aiSaysShouldReply=parsed.should_reply!==false; // default true if missing (back-compat)
+    const aiReason=parsed.should_reply_reason||'';
 
-    const skip=matchesOurLastSend||matchesOurHistory||matchesAiMyRecent||alreadyRepliedToThis||isWaiting||isTypingIndicator||isSameAsLastScan;
-    if(skip){
-      let reason='watching';
-      if(matchesOurLastSend||matchesAiMyRecent||matchesOurHistory) reason='🚫 That\'s my message — not replying to it';
-      else if(alreadyRepliedToThis) reason='✓ Already replied to this — waiting for new';
-      else if(isTypingIndicator) reason='⌨️ She\'s typing... waiting';
-      else if(isWaiting) reason='⏳ No new reply yet — watching';
-      else if(isSameAsLastScan) reason='✓ Same as last scan — watching';
-      showToast('🤖 '+reason);
-      console.log('[Don\'t Miss] SKIP send:',{newMsg,matchesOurLastSend,matchesOurHistory,matchesAiMyRecent,alreadyRepliedToThis,isWaiting,isTypingIndicator,isSameAsLastScan});
+    // Per-conversation state — pulled from liveMemory for this handle
+    const convoState=(liveCurrentHandle && typeof liveMemory!=='undefined' && liveMemory[liveCurrentHandle.toLowerCase()])||{};
+    const lastRepliedToMsgId=convoState.last_replied_to_message_id||'';
+
+    // Decision logic — match the spec from the brief
+    let decision='REPLY';
+    let decisionReason='';
+    if(latestSender==='self'){decision='WAIT_SELF_LATEST';decisionReason='Latest message is MINE — waiting for her';}
+    else if(typingIndicatorVisible){decision='WAIT_TYPING';decisionReason='She\'s typing — waiting';}
+    else if(!aiSaysShouldReply){decision='WAIT_AI_SAID_NO';decisionReason='AI said don\'t reply: '+aiReason;}
+    else if(latestMsgId && latestMsgId===lastRepliedToMsgId){decision='WAIT_ALREADY_REPLIED';decisionReason='Already replied to this message';}
+    else if(_isUnreadableMessage(newMsg)){decision='WAIT_UNREADABLE';decisionReason='Could not read — waiting';}
+    else if(latestSender==='unknown' || latestSender===''){decision='WAIT_UNKNOWN_SENDER';decisionReason='Can\'t tell whose message is newest — waiting to be safe';}
+
+    // 🔁 LEGACY fuzzy guards as defense-in-depth (in case AI's sender field is wrong)
+    if(decision==='REPLY'){
+      const matchesOurLastSend=_fuzzyMatch(_autoLastSentText,newMsg);
+      const matchesOurHistory=_autoSentHistory.some(s=>_fuzzyMatch(s,newMsg));
+      const matchesAiMyRecent=myRecent.some(m=>_fuzzyMatch(m,newMsg));
+      const repliesMatchOurSends=currentReplies.some(r=>_autoSentHistory.some(s=>_fuzzyMatch(s,r.text)));
+      if(matchesOurLastSend||matchesOurHistory||matchesAiMyRecent){
+        decision='WAIT_FUZZY_OWN_MSG';decisionReason='Fuzzy match: looks like MY message';
+      }else if(repliesMatchOurSends){
+        decision='WAIT_AI_HALLUCINATING';decisionReason='AI re-suggesting my own message';
+      }
+    }
+
+    // 📊 DEBUG LOG per brief §23
+    console.log('[Don\'t Miss] DECISION:',{
+      conversation:liveCurrentHandle||'?',
+      latest_actual_text:newMsg,
+      latest_actual_sender:latestSender,
+      latest_message_id:latestMsgId,
+      typing_indicator:typingIndicatorVisible,
+      seen_indicator:!!parsed.seen_receipt_visible,
+      last_replied_to_message_id:lastRepliedToMsgId,
+      ai_should_reply:aiSaysShouldReply,
+      decision,
+      decision_reason:decisionReason
+    });
+
+    if(decision!=='REPLY'){
+      showToast('🤖 '+decisionReason);
       _autoSending=false;
-      // 🕒 LONG cooldown when skipping — avoid burning API calls during typing/idle sessions
       _autoCooldownUntil=Date.now()+AUTO_SKIP_COOLDOWN;
       autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_SKIP_COOLDOWN);
       return;
@@ -2575,8 +2641,22 @@ async function runAutoReplyLoop(){
 
       const delay=Math.floor(Math.random()*3000)+2000; // 2-5s (TESTING — bump to 20-45s for production)
       showToast(`🤖 New message detected — replying in ${Math.round(delay/1000)}s`);
+      const hashBeforeDelay=_autoLastHash;
       await new Promise(r=>setTimeout(r,delay));
       if(!autoReplyMode){_autoSending=false;return} // user turned it off during wait
+
+      // 🛂 FINAL PRE-SEND CHECK (brief §21) — if the screen changed during the delay,
+      // the user might have manually replied OR she sent something new. Abort and rescan.
+      const hashNow=_autoQuickHash();
+      if(hashNow && hashBeforeDelay && hashNow!==hashBeforeDelay){
+        console.log('[Don\'t Miss] Screen changed during reply delay — aborting send, re-evaluating');
+        showToast('🤖 Chat updated mid-delay — re-checking');
+        _autoSending=false;
+        _autoLastHash=hashNow;
+        autoReplyInterval=setTimeout(runAutoReplyLoop,2000);
+        return;
+      }
+
       // Use the unified send helper (handles popout/main window automatically)
       const res=await sendViaExtension(best.text);
       if(res.ok){
@@ -2587,6 +2667,18 @@ async function runAutoReplyLoop(){
         _autoLastSentText=best.text;
         _autoSentHistory=[best.text,..._autoSentHistory].slice(0,5);
         _autoLastHerMessage=newMsg;
+        // 🛂 RECORD per-conversation state — so we never reply to the same message twice
+        if(liveCurrentHandle && typeof liveMemory!=='undefined'){
+          try{
+            const key=liveCurrentHandle.toLowerCase();
+            if(!liveMemory[key])liveMemory[key]={handle:liveCurrentHandle};
+            liveMemory[key].last_replied_to_message_id=latestMsgId;
+            liveMemory[key].last_replied_to_text=newMsg;
+            liveMemory[key].last_replied_at=Date.now();
+            liveMemory[key].waiting_for_other_reply=true;
+            if(typeof saveLiveMemory==='function')saveLiveMemory();
+          }catch(e){console.warn('save convo state failed',e)}
+        }
         // 🕒 COOLDOWN — give Instagram time to update before next scan
         _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
       }else{
@@ -2603,12 +2695,17 @@ async function runAutoReplyLoop(){
     }
   }catch(e){
     console.warn('Auto-reply scan failed',e);
+    showToast('🤖 Scan failed: '+(e.message||'unknown'));
+    // Clear stale state so we never send replies from a failed scan
+    currentReplies=[];
     _autoSending=false;
+    // Long cooldown on failure to avoid hammering
+    _autoCooldownUntil=Date.now()+AUTO_SKIP_COOLDOWN;
   }
 
   // Continue watching
   if(autoReplyMode){
-    autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+    autoReplyInterval=setTimeout(runAutoReplyLoop,4000);
   }
 }
 
@@ -3730,8 +3827,16 @@ A reply is CRINGE if it does ANY of these:
 6. REPEATS WHAT I ALREADY SAID — check my blue/purple messages. If I already said something similar, DO NOT rephrase it.
 7. IS GENERIC ENOUGH TO SEND TO ANYONE — if you could copy-paste this reply into any conversation and it would work, it's too generic. It should reference something SPECIFIC from THIS chat.
 
+🛂 CRITICAL STATE EXTRACTION — these decide whether we even send a reply:
+- "latest_actual_sender": "self" | "other" | "unknown" — WHO sent the absolute LAST real message bubble in the active chat (NOT counting typing dots, "Seen", timestamps, or input box). If the very last bubble is BLUE/PURPLE → "self". If GREY → "other". If you genuinely can't tell → "unknown". This is the most important field — get it right.
+- "latest_message_id": a short stable fingerprint of the latest actual message — format: "{sender}:{first 40 chars of text lowercased}" (e.g. "other:hey what are you up to tonight" or "self:nothing crazy youhh"). This lets us dedup so we don't reply twice.
+- "typing_indicator_visible": true | false — is there an animated typing dots bubble visible at the bottom of the chat?
+- "seen_receipt_visible": true | false — is there a "Seen" / "Seen 1h ago" / read indicator under MY last blue message?
+- "should_reply": true | false — your honest call: should we generate and send a reply right now? Return false if latest_actual_sender is "self", or if typing_indicator_visible is true, or if you're unsure.
+- "should_reply_reason": one short phrase explaining your decision (e.g. "her last grey is new, no typing — replying" / "my blue is newest, waiting" / "she's typing, waiting")
+
 Return ONLY valid JSON with EXACTLY this shape:
-{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"}${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
+{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","latest_actual_sender":"self|other|unknown","latest_message_id":"sender:text","typing_indicator_visible":false,"seen_receipt_visible":false,"should_reply":true,"should_reply_reason":"why","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"}${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
 
 ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of the USER (the guy). Extract "my_style_traits" (4-8 specific observations like "uses lowercase only", "short punchy messages", "dry humor", "uses 😭 often") and "my_style_summary" (2-3 sentences describing how he texts, as if briefing a ghostwriter). This is based ONLY on the blue/purple bubbles.`:''}`;
 
