@@ -2306,8 +2306,18 @@ async function runAutoReplyLoop(){
   }
 }
 
-// Run extension check on page load
-setTimeout(checkExtension,1000);
+// Run extension check on page load — retry a few times since bridge.js might load late
+setTimeout(checkExtension,500);
+setTimeout(()=>{if(!extensionReady)checkExtension()},2000);
+setTimeout(()=>{if(!extensionReady)checkExtension()},4000);
+// Also watch for the attribute being set later
+const _extObserver=new MutationObserver(()=>{
+  if(!extensionReady && document.documentElement.getAttribute('data-dm-extension')==='ready'){
+    extensionReady=true;showSendButtons(true);
+    console.log('[Don\'t Miss] Extension detected via mutation observer');
+  }
+});
+_extObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-dm-extension']});
 
 // 🔄 REGENERATE A SINGLE LIVE REPLY with a chosen vibe (spicier, flirtier, etc.)
 async function regenSingleLive(i,vibe,doc){
