@@ -255,6 +255,10 @@ input[type="text"]::placeholder{color:var(--text3)}
 .rw-btn.good-rw{color:var(--text3);border-color:var(--border)}
 .rw-btn.good-rw:hover{color:var(--green);border-color:var(--green);background:var(--green-bg)}
 .rw-btn.good-rw.marked{color:var(--green);border-color:var(--green);background:var(--green-bg);pointer-events:none}
+.rw-btn.send-rw{color:var(--text2);border-color:var(--border2);background:linear-gradient(135deg,rgba(91,158,245,0.08),rgba(155,110,224,0.08))}
+.rw-btn.send-rw:hover{color:#5b9ef5;border-color:#5b9ef5;background:linear-gradient(135deg,rgba(91,158,245,0.15),rgba(155,110,224,0.15));box-shadow:0 0 12px rgba(91,158,245,0.15)}
+.rw-btn.send-rw.sent{color:var(--green);border-color:var(--green);background:var(--green-bg);pointer-events:none}
+.rw-btn.send-rw.sending{opacity:.6;pointer-events:none}
 .rw-btn.loading{opacity:.5;pointer-events:none}
 .reply-card.rewriting{opacity:.6}
 /* regen-vibe inline picker on Live cards */
@@ -293,6 +297,14 @@ input[type="text"]::placeholder{color:var(--text3)}
 .report-item .ri-del{position:absolute;top:9px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:2px}
 .report-item .ri-del:hover{color:var(--red)}
 .reports-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0}
+
+/* ── PROFILE CARDS ── */
+.profile-section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.profile-section-val{font-size:12px;color:var(--text2);line-height:1.55}
+.profile-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:100px;margin:2px 3px 2px 0}
+.profile-tag.good{background:rgba(77,179,122,.15);color:var(--green);border:1px solid rgba(77,179,122,.25)}
+.profile-tag.bad{background:rgba(244,67,54,.12);color:#f44;border:1px solid rgba(244,67,54,.2)}
+.profile-tag.neutral{background:var(--surface3);color:var(--text2);border:1px solid var(--border)}
 
 /* ── USER SELECT SCREEN ── */
 #user-select-screen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:998;transition:opacity .35s,transform .35s;padding:20px}
@@ -1235,16 +1247,16 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
 
       <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <div class="card-label" style="margin-bottom:0">🧠 Live Help memory</div>
+          <div class="card-label" style="margin-bottom:0">👥 Learned users</div>
           <span class="history-count" id="memory-count-badge">0</span>
         </div>
-        <p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">What Live Help has learned about each person across scans. Used to write sharper, more personal replies. Stays on this device only.</p>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6">Profiles built from Live Help scans. The AI uses these to write sharper, more personal replies. You can view, edit, or merge profiles. Stays on this device only.</p>
         <div style="display:flex;gap:8px;margin-bottom:8px">
-          <button class="action-btn" style="flex:1" onclick="exportLiveMemory()">📤 Export memory</button>
+          <button class="action-btn" style="flex:1" onclick="exportLiveMemory()">📤 Export</button>
+          <button class="action-btn" style="flex:none;padding:10px 16px" onclick="openMergeProfilesUI()">🔗 Merge</button>
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearAllLiveMemory()">Clear all</button>
         </div>
-        <button id="memory-toggle-btn" class="action-btn" style="width:100%;margin-bottom:8px;font-size:12px;padding:8px;opacity:.7" onclick="toggleMemoryList()">▶ Show memory entries</button>
-        <div id="memory-list" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div id="memory-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:0"></div>
       </div>
 
       <!-- 🧠 THEME A — Live Learning toggle -->
@@ -1351,6 +1363,35 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
   </div>
 </div>
 
+<!-- Merge profiles modal -->
+<div id="merge-profiles-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:380px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-label" style="margin-bottom:0">🔗 Merge duplicate profiles</div>
+      <button onclick="closeMergeUI()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.5">Select two profiles that are the same person. All facts, likes, dislikes, hobbies, and history will be combined into one.</p>
+    <div id="merge-profile-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+    <div id="merge-preview" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text2)"></div>
+    <button id="merge-confirm-btn" class="action-btn" style="width:100%;padding:12px;font-weight:600;background:var(--green-bg);border-color:var(--green);color:var(--green);opacity:.4;pointer-events:none" onclick="confirmMergeProfiles()">Select 2 profiles to merge</button>
+  </div>
+</div>
+
+<!-- Edit profile modal -->
+<div id="edit-profile-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-label" style="margin-bottom:0">✏️ Edit profile: <span id="edit-profile-name" style="color:var(--green)"></span></div>
+      <button onclick="closeEditProfileUI()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div id="edit-profile-fields" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="action-btn" style="flex:1;padding:12px;font-weight:600;background:var(--green-bg);border-color:var(--green);color:var(--green)" onclick="saveEditedProfile()">💾 Save changes</button>
+      <button class="action-btn" style="flex:none;padding:12px 16px" onclick="closeEditProfileUI()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- LIVE HELP OVERLAY -->
 <div class="live-overlay" id="live-overlay">
   <div class="live-header">
@@ -1385,6 +1426,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-stop-btn" style="flex:1;font-size:11px;opacity:.85" onclick="resetLiveChatPointer()" title="Use this when you switch to a different person mid-share">🔄 Switched chats</button>
       </div>
       <button class="live-stop-btn" id="deep-scan-btn" style="width:100%;margin-top:8px" onclick="toggleDeepScan()">📖 Deep scan chat</button>
+      <button class="live-stop-btn" id="auto-reply-toggle-btn" style="display:none;width:100%;margin-top:8px" onclick="toggleAutoReplyMode()">🤖 Auto mode</button>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
@@ -1650,43 +1692,71 @@ function openSettingsPanel(){
   document.getElementById('settings-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
 
-// 🧠 LIVE MEMORY UI ─────────────────────────
-function toggleMemoryList(){
-  const list=document.getElementById('memory-list');
-  const btn=document.getElementById('memory-toggle-btn');
-  if(!list||!btn)return;
-  const isHidden=list.style.display==='none';
-  list.style.display=isHidden?'flex':'none';
-  const all=getAllLiveMemory();const n=Object.keys(all).length;
-  btn.textContent=isHidden?`▼ Hide memory entries (${n})`:`▶ Show memory entries (${n})`;
-}
+// 🧠 LEARNED USERS / PROFILES UI ─────────────────────────
 function renderLiveMemoryList(){
   const list=document.getElementById('memory-list');if(!list)return;
   const all=getAllLiveMemory();
   const entries=Object.values(all).sort((a,b)=>(b.lastUpdated||0)-(a.lastUpdated||0));
   const badge=document.getElementById('memory-count-badge');if(badge)badge.textContent=entries.length;
-  const btn=document.getElementById('memory-toggle-btn');
-  if(btn){
-    const isOpen=list.style.display==='flex';
-    btn.textContent=isOpen?`▼ Hide memory entries (${entries.length})`:`▶ Show memory entries (${entries.length})`;
-    btn.style.display=entries.length?'':'none';
-  }
-  if(!entries.length){list.innerHTML='';return}
+  if(!entries.length){list.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0">No profiles yet — start a Live Help scan to begin learning.</div>';return}
+  const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   list.innerHTML=entries.map(m=>{
-    const facts=(m.facts||[]).slice(0,8).map(f=>`• ${(f||'').replace(/</g,'&lt;')}`).join('<br>');
-    const topics=(m.topics||[]).slice(0,8).join(', ');
-    const when=m.lastUpdated?new Date(m.lastUpdated).toLocaleString():'';
-    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
-        <div style="font-weight:600;font-size:13px;color:var(--text)">${(m.handle||'?').replace(/</g,'&lt;')}</div>
-        <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="clearOneMemory('${(m.handle||'').replace(/'/g,"\\'")}')">remove</button>
+    const hk=esc(m.handle||'?');
+    const hkSafe=(m.handle||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const when=m.lastUpdated?timeAgo(m.lastUpdated):'never';
+    const facts=(m.facts||[]).slice(0,6);
+    const likes=(m.likes||[]).slice(0,6);
+    const dislikes=(m.dislikes||[]).slice(0,6);
+    const hobbies=(m.hobbies||[]).slice(0,6);
+    const topics=(m.topics||[]).slice(0,8);
+    const goodRate=((m.successCount||0)+' landed');
+    const badRate=((m.deadCount||0)+' died');
+    const stratTone=m.currentStrategy?.tone||'—';
+    const stratNote=m.currentStrategy?.note||'';
+    // Collapsed summary line
+    const summaryBits=[];
+    if(facts.length)summaryBits.push(facts.length+' facts');
+    if(likes.length)summaryBits.push(likes.length+' likes');
+    if(hobbies.length)summaryBits.push(hobbies.length+' hobbies');
+    const summaryText=summaryBits.join(' · ')||'no data yet';
+
+    return `<div class="profile-card" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="toggleProfileCard(this)">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;color:var(--text)">${hk}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${m.scanCount||0} scans · ${when} · ${summaryText}</div>
+        </div>
+        <span class="profile-arrow" style="color:var(--text3);font-size:11px;transition:transform .2s">▶</span>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${m.scanCount||0} scans · last ${when}</div>
-      ${m.herStyle?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px"><strong>style:</strong> ${m.herStyle.replace(/</g,'&lt;')}</div>`:''}
-      ${facts?`<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px"><strong>facts:</strong><br>${facts}</div>`:''}
-      ${topics?`<div style="font-size:11px;color:var(--text3)"><strong>topics:</strong> ${topics.replace(/</g,'&lt;')}</div>`:''}
+      <div class="profile-details" style="display:none;padding:0 14px 14px;border-top:1px solid var(--border)">
+        ${m.herStyle?`<div style="margin-top:10px"><div class="profile-section-label">Texting style</div><div class="profile-section-val">${esc(m.herStyle)}</div></div>`:''}
+        ${facts.length?`<div style="margin-top:8px"><div class="profile-section-label">Facts learned</div><div class="profile-section-val">${facts.map(f=>'• '+esc(f)).join('<br>')}</div></div>`:''}
+        ${likes.length?`<div style="margin-top:8px"><div class="profile-section-label">What works (she responds to)</div><div class="profile-section-val">${likes.map(l=>'<span class="profile-tag good">'+esc(l)+'</span>').join(' ')}</div></div>`:''}
+        ${dislikes.length?`<div style="margin-top:8px"><div class="profile-section-label">What dies (don't repeat)</div><div class="profile-section-val">${dislikes.map(d=>'<span class="profile-tag bad">'+esc(d)+'</span>').join(' ')}</div></div>`:''}
+        ${hobbies.length?`<div style="margin-top:8px"><div class="profile-section-label">Hobbies / interests</div><div class="profile-section-val">${hobbies.map(h=>'<span class="profile-tag neutral">'+esc(h)+'</span>').join(' ')}</div></div>`:''}
+        ${topics.length?`<div style="margin-top:8px"><div class="profile-section-label">Recent topics</div><div class="profile-section-val" style="font-size:11px;color:var(--text3)">${esc(topics.join(', '))}</div></div>`:''}
+        <div style="margin-top:8px"><div class="profile-section-label">Reply track record</div><div class="profile-section-val" style="font-size:11px"><span style="color:var(--green)">${goodRate}</span> · <span style="color:var(--red,#f44)">${badRate}</span> · strategy: <strong>${esc(stratTone)}</strong>${stratNote?' — '+esc(stratNote):''}</div></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="action-btn" style="flex:1;font-size:12px;padding:8px" onclick="openEditProfileUI('${hkSafe}')">✏️ Edit</button>
+          <button class="action-btn" style="flex:none;font-size:12px;padding:8px 14px;color:var(--text3)" onclick="clearOneMemory('${hkSafe}')">Remove</button>
+        </div>
+      </div>
     </div>`;
   }).join('');
+}
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';
+}
+function toggleProfileCard(header){
+  const card=header.closest('.profile-card');if(!card)return;
+  const det=card.querySelector('.profile-details');
+  const arrow=card.querySelector('.profile-arrow');
+  if(!det)return;
+  const show=det.style.display==='none';
+  det.style.display=show?'block':'none';
+  if(arrow)arrow.textContent=show?'▼':'▶';
 }
 function clearOneMemory(handle){if(!confirm('Forget everything about '+handle+'?'))return;clearLiveMemory(handle);renderLiveMemoryList();if(liveCurrentHandle.toLowerCase()===handle.toLowerCase())liveCurrentHandle='';}
 function clearAllLiveMemory(){if(!confirm('Clear ALL chat memory? This wipes what the AI has learned across every conversation.'))return;clearLiveMemory(null);liveCurrentHandle='';renderLiveMemoryList();}
@@ -1698,6 +1768,173 @@ function exportLiveMemory(){
   const a=document.createElement('a');a.href=url;
   a.download=`rizz-live-memory-${(currentUser||'me').replace(/[@.]/g,'_')}-${new Date().toISOString().slice(0,10)}.json`;
   a.click();URL.revokeObjectURL(url);showToast('Memory exported');
+}
+
+// ── EDIT PROFILE ──
+let _editProfileHandle='';
+function openEditProfileUI(handle){
+  _editProfileHandle=handle;
+  const mem=loadLiveMemory(handle);if(!mem){showToast('Profile not found');return}
+  const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.getElementById('edit-profile-name').textContent=handle;
+  const fields=document.getElementById('edit-profile-fields');
+  fields.innerHTML=`
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">Handle / display name</label>
+      <input type="text" id="ep-handle" value="${esc(mem.handle||handle)}" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px" />
+    </div>
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">Texting style</label>
+      <input type="text" id="ep-style" value="${esc(mem.herStyle||'')}" placeholder="e.g. short bubbles, uses caps for emphasis, emoji-heavy" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px" />
+    </div>
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">Facts (one per line)</label>
+      <textarea id="ep-facts" rows="4" placeholder="e.g. works at a salon\nhas a cat named Luna\nloves pilates" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit">${(mem.facts||[]).join('\n')}</textarea>
+    </div>
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">What works (she responds to)</label>
+      <textarea id="ep-likes" rows="2" placeholder="e.g. dry humour, teasing, gym talk" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit">${(mem.likes||[]).join('\n')}</textarea>
+    </div>
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">What dies (topics/angles that flopped)</label>
+      <textarea id="ep-dislikes" rows="2" placeholder="e.g. compliments about looks, dad jokes" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit">${(mem.dislikes||[]).join('\n')}</textarea>
+    </div>
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">Hobbies / interests</label>
+      <textarea id="ep-hobbies" rows="2" placeholder="e.g. pilates, cooking, photography" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit">${(mem.hobbies||[]).join('\n')}</textarea>
+    </div>
+    <div>
+      <label class="profile-section-label" style="display:block;margin-bottom:4px">Topics covered</label>
+      <textarea id="ep-topics" rows="2" placeholder="e.g. weekend plans, her new job, that song" style="width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit">${(mem.topics||[]).join('\n')}</textarea>
+    </div>
+  `;
+  const overlay=document.getElementById('edit-profile-overlay');
+  overlay.style.display='flex';
+}
+function closeEditProfileUI(){document.getElementById('edit-profile-overlay').style.display='none';_editProfileHandle=''}
+function saveEditedProfile(){
+  if(!_editProfileHandle)return;
+  const all=getAllLiveMemory();
+  const oldKey=_editProfileHandle.toLowerCase();
+  const mem=all[oldKey];if(!mem){showToast('Profile not found');return}
+  const newHandle=(document.getElementById('ep-handle').value||'').trim();
+  const splitLines=v=>(v||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  mem.handle=newHandle||_editProfileHandle;
+  mem.herStyle=(document.getElementById('ep-style').value||'').trim();
+  mem.facts=uniqStrings(splitLines(document.getElementById('ep-facts').value),25);
+  mem.likes=uniqStrings(splitLines(document.getElementById('ep-likes').value),15);
+  mem.dislikes=uniqStrings(splitLines(document.getElementById('ep-dislikes').value),15);
+  mem.hobbies=uniqStrings(splitLines(document.getElementById('ep-hobbies').value),10);
+  mem.topics=uniqStrings(splitLines(document.getElementById('ep-topics').value),12);
+  mem.lastUpdated=Date.now();
+  // If handle changed, re-key the entry
+  const newKey=(newHandle||_editProfileHandle).toLowerCase();
+  if(newKey!==oldKey){
+    delete all[oldKey];
+    all[newKey]=mem;
+    if(liveCurrentHandle.toLowerCase()===oldKey)liveCurrentHandle=newHandle;
+  }else{
+    all[oldKey]=mem;
+  }
+  saveAllLiveMemory(all);
+  renderLiveMemoryList();
+  closeEditProfileUI();
+  showToast('Profile updated for '+mem.handle);
+}
+
+// ── MERGE PROFILES ──
+let _mergeSelected=new Set();
+function openMergeProfilesUI(){
+  const all=getAllLiveMemory();
+  const entries=Object.values(all).sort((a,b)=>(b.lastUpdated||0)-(a.lastUpdated||0));
+  if(entries.length<2){showToast('Need at least 2 profiles to merge');return}
+  _mergeSelected=new Set();
+  const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const listEl=document.getElementById('merge-profile-list');
+  listEl.innerHTML=entries.map(m=>{
+    const hk=esc(m.handle||'?');
+    const hkSafe=(m.handle||'').replace(/'/g,"\\'");
+    const info=`${m.scanCount||0} scans · ${(m.facts||[]).length} facts`;
+    return `<label class="merge-item" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer">
+      <input type="checkbox" value="${hkSafe}" onchange="updateMergeSelection()" style="accent-color:var(--green);width:18px;height:18px;flex-shrink:0" />
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;color:var(--text)">${hk}</div>
+        <div style="font-size:11px;color:var(--text3)">${info}</div>
+      </div>
+    </label>`;
+  }).join('');
+  document.getElementById('merge-preview').style.display='none';
+  updateMergeBtn();
+  document.getElementById('merge-profiles-overlay').style.display='flex';
+}
+function closeMergeUI(){document.getElementById('merge-profiles-overlay').style.display='none';_mergeSelected=new Set()}
+function updateMergeSelection(){
+  const checks=document.querySelectorAll('#merge-profile-list input[type=checkbox]');
+  _mergeSelected=new Set();
+  checks.forEach(c=>{if(c.checked)_mergeSelected.add(c.value)});
+  updateMergeBtn();
+  // Show preview if exactly 2 selected
+  const preview=document.getElementById('merge-preview');
+  if(_mergeSelected.size===2){
+    const [a,b]=[..._mergeSelected];
+    const all=getAllLiveMemory();
+    const ma=all[a.toLowerCase()]||{};
+    const mb=all[b.toLowerCase()]||{};
+    const totalFacts=(ma.facts||[]).length+(mb.facts||[]).length;
+    const totalLikes=(ma.likes||[]).length+(mb.likes||[]).length;
+    const totalHobbies=(ma.hobbies||[]).length+(mb.hobbies||[]).length;
+    preview.innerHTML=`<strong>Merge preview:</strong> "${a}" + "${b}" → <strong>"${a}"</strong><br>${totalFacts} facts, ${totalLikes} likes, ${totalHobbies} hobbies combined. Duplicates will be auto-removed.`;
+    preview.style.display='block';
+  }else{
+    preview.style.display='none';
+  }
+}
+function updateMergeBtn(){
+  const btn=document.getElementById('merge-confirm-btn');
+  if(_mergeSelected.size===2){
+    btn.style.opacity='1';btn.style.pointerEvents='auto';
+    btn.textContent='🔗 Merge these 2 profiles';
+  }else{
+    btn.style.opacity='.4';btn.style.pointerEvents='none';
+    btn.textContent=_mergeSelected.size>2?'Select exactly 2 profiles':'Select 2 profiles to merge';
+  }
+}
+function confirmMergeProfiles(){
+  if(_mergeSelected.size!==2)return;
+  const [keepHandle,mergeHandle]=[..._mergeSelected];
+  if(!confirm(`Merge "${mergeHandle}" into "${keepHandle}"?\n\nAll data from "${mergeHandle}" will be added to "${keepHandle}", and "${mergeHandle}" will be removed.`))return;
+  const all=getAllLiveMemory();
+  const keepKey=keepHandle.toLowerCase();
+  const mergeKey=mergeHandle.toLowerCase();
+  const keep=all[keepKey]||{handle:keepHandle,facts:[],herStyle:'',topics:[],myRecentSends:[],herRecentSends:[],scanCount:0,lastUpdated:0,likes:[],dislikes:[],hobbies:[],currentStrategy:{tone:null,confidence:0.5,note:''},replyHistory:[],successCount:0,deadCount:0};
+  const src=all[mergeKey]||{};
+  // Merge all array fields
+  keep.facts=uniqStrings([...(keep.facts||[]),...(src.facts||[])],25);
+  keep.topics=uniqStrings([...(keep.topics||[]),...(src.topics||[])],12);
+  keep.likes=uniqStrings([...(keep.likes||[]),...(src.likes||[])],15);
+  keep.dislikes=uniqStrings([...(keep.dislikes||[]),...(src.dislikes||[])],15);
+  keep.hobbies=uniqStrings([...(keep.hobbies||[]),...(src.hobbies||[])],10);
+  keep.myRecentSends=uniqStrings([...(keep.myRecentSends||[]),...(src.myRecentSends||[])],10);
+  keep.herRecentSends=uniqStrings([...(keep.herRecentSends||[]),...(src.herRecentSends||[])],10);
+  keep.replyHistory=[...(keep.replyHistory||[]),...(src.replyHistory||[])].slice(0,12);
+  // Sum counts
+  keep.scanCount=(keep.scanCount||0)+(src.scanCount||0);
+  keep.successCount=(keep.successCount||0)+(src.successCount||0);
+  keep.deadCount=(keep.deadCount||0)+(src.deadCount||0);
+  // Keep the newer style/strategy
+  if(src.lastUpdated>(keep.lastUpdated||0)){
+    if(src.herStyle)keep.herStyle=src.herStyle;
+    if(src.currentStrategy?.tone)keep.currentStrategy=src.currentStrategy;
+  }
+  keep.lastUpdated=Date.now();
+  // Save and cleanup
+  all[keepKey]=keep;
+  delete all[mergeKey];
+  saveAllLiveMemory(all);
+  if(liveCurrentHandle.toLowerCase()===mergeKey)liveCurrentHandle=keepHandle;
+  closeMergeUI();
+  renderLiveMemoryList();
+  showToast(`Merged "${mergeHandle}" into "${keepHandle}"`);
 }
 function closePanel(which){document.getElementById(which+'-overlay').classList.remove('open');document.body.style.overflow=''}
 
@@ -1830,6 +2067,7 @@ function renderLiveCards(replies,doc){
         <button class="rw-btn report-rw" onclick="reportLive(${i},this)">🚩 Report</button>
         <button class="rw-btn regen-rw" onclick="toggleRegenPicker(${i},this)">🔄 Regen</button>
         <button class="rw-btn copy-rw" onclick="copyLiveReply(${i})">Copy ↗</button>
+        <button class="rw-btn send-rw" onclick="sendLiveReply(${i},this)" style="display:none">📩 Send</button>
       </div>
       <div class="regen-picker" id="live-regen-${i}">${chips}</div>
     </div>`).join('');
@@ -1848,6 +2086,180 @@ function toggleRegenPicker(i,btn){
   if(picker)picker.classList.toggle('open');
 }
 function copyLiveReply(i){const r=currentReplies[i];if(!r)return;robustCopy(wrapForCopy(r.text,currentRepliesContext));}
+
+// ── 📩 AUTO-REPLY (Chrome extension integration) ──
+let extensionReady=false;
+let autoReplyMode=false;    // when ON: auto-scan → auto-pick → auto-send
+let autoReplyInterval=null;
+
+// Check if the companion extension is installed
+function checkExtension(){
+  if(document.documentElement.getAttribute('data-dm-extension')==='ready'){
+    extensionReady=true;
+    showSendButtons(true);
+    return;
+  }
+  // Ping and wait
+  window.addEventListener('dm-extension-pong',function handler(e){
+    window.removeEventListener('dm-extension-pong',handler);
+    extensionReady=!!(e.detail&&e.detail.ok);
+    showSendButtons(extensionReady);
+  },{once:true});
+  window.dispatchEvent(new CustomEvent('dm-extension-ping'));
+  // Fallback: if no response in 500ms, extension not installed
+  setTimeout(()=>{if(!extensionReady)showSendButtons(false)},500);
+}
+
+function showSendButtons(show){
+  document.querySelectorAll('.send-rw').forEach(btn=>{btn.style.display=show?'':'none'});
+  const autoBtn=document.getElementById('auto-reply-toggle-btn');
+  if(autoBtn)autoBtn.style.display=show?'':'none';
+}
+
+function sendLiveReply(i,btn){
+  const r=currentReplies[i];if(!r)return;
+  if(!extensionReady){showToast('Install the Don\'t Miss extension first');return}
+  if(btn){btn.textContent='📩 Sending...';btn.disabled=true}
+  window.addEventListener('dm-auto-reply-result',function handler(e){
+    window.removeEventListener('dm-auto-reply-result',handler);
+    const res=e.detail||{};
+    if(res.ok){
+      if(btn){btn.textContent='✅ Sent';btn.classList.add('marked')}
+      showToast('📩 Reply sent to Instagram');
+    }else{
+      if(btn){btn.textContent='📩 Send';btn.disabled=false}
+      showToast('Failed: '+(res.error||'unknown error'));
+    }
+  },{once:true});
+  window.dispatchEvent(new CustomEvent('dm-auto-reply',{detail:{text:r.text,autoSend:true}}));
+}
+
+// Auto mode: watch for screen changes → detect new message → generate → send
+let _autoLastHash='';
+let _autoSending=false;
+let _autoScanCount=0;
+
+function toggleAutoReplyMode(){
+  autoReplyMode=!autoReplyMode;
+  const btn=document.getElementById('auto-reply-toggle-btn');
+  if(btn){
+    btn.textContent=autoReplyMode?'🤖 Auto ON — watching for new messages':'🤖 Auto mode';
+    btn.style.borderColor=autoReplyMode?'var(--green)':'';
+    btn.style.color=autoReplyMode?'var(--green)':'';
+  }
+  if(autoReplyMode){
+    _autoLastHash='';_autoSending=false;_autoScanCount=0;
+    showToast('🤖 Auto mode ON — will reply as soon as a new message appears');
+    runAutoReplyLoop();
+  }else{
+    if(autoReplyInterval){clearTimeout(autoReplyInterval);autoReplyInterval=null}
+    showToast('🤖 Auto mode OFF');
+  }
+}
+
+// Fast pixel hash — grab a tiny thumbnail of the chat area and hash it
+function _autoQuickHash(){
+  if(!liveStream)return null;
+  const v=document.getElementById('live-video');
+  const vw=v.videoWidth||0,vh=v.videoHeight||0;
+  if(!vw)return null;
+  // Grab a small 160px wide thumbnail — fast to process
+  const scale=160/Math.max(vw,vh);
+  const c=document.createElement('canvas');
+  c.width=Math.round(vw*scale);c.height=Math.round(vh*scale);
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  // Simple hash: sample every 40th pixel across RGB, sum them
+  const ctx=c.getContext('2d');
+  const img=ctx.getImageData(0,0,c.width,c.height);
+  const d=img.data;
+  let h=0;
+  for(let i=0;i<d.length;i+=160){h=(h*31+d[i])>>>0}
+  return h.toString(36);
+}
+
+async function runAutoReplyLoop(){
+  if(!autoReplyMode)return;
+  if(_autoSending){
+    // Already generating/sending, check again shortly
+    autoReplyInterval=setTimeout(runAutoReplyLoop,2000);
+    return;
+  }
+
+  // Quick screen hash check — did anything change?
+  const hash=_autoQuickHash();
+  if(hash && hash===_autoLastHash){
+    // Nothing changed — poll again in 3s (fast, cheap, no API call)
+    autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+    return;
+  }
+
+  // Screen changed! But wait a beat for the message to fully render
+  if(hash) _autoLastHash=hash;
+  await new Promise(r=>setTimeout(r,800));
+
+  // Re-hash after the settle delay to get stable state
+  const settled=_autoQuickHash();
+  if(settled) _autoLastHash=settled;
+
+  // Now do a full scan + generate
+  _autoSending=true;
+  _autoScanCount++;
+  const targetDoc=(pipWindow&&!pipWindow.closed)?pipWindow.document:document;
+
+  try{
+    const prevMessage=lastGenMessage;
+    await doLiveGenerate(targetDoc);
+    await new Promise(r=>setTimeout(r,500));
+
+    // Check if the AI detected a DIFFERENT message than last time
+    const newMsg=lastGenMessage||'';
+    const isSameMessage=(newMsg===prevMessage && prevMessage!=='[Live chat]' && _autoScanCount>1);
+
+    if(isSameMessage){
+      // Same message as before — she hasn't replied yet, don't send again
+      _autoSending=false;
+      autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+      return;
+    }
+
+    // New message detected! Send the best reply
+    if(currentReplies.length&&extensionReady){
+      const best=currentReplies[0];
+      showToast('🤖 New message detected — sending reply...');
+      window.addEventListener('dm-auto-reply-result',function handler(e){
+        window.removeEventListener('dm-auto-reply-result',handler);
+        const res=e.detail||{};
+        if(res.ok){
+          showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
+          const card=targetDoc.getElementById('live-card-0');
+          if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
+        }else{
+          showToast('Auto-send failed: '+(res.error||'?'));
+        }
+        _autoSending=false;
+      },{once:true});
+      window.dispatchEvent(new CustomEvent('dm-auto-reply',{detail:{text:best.text,autoSend:true}}));
+
+      // After sending, wait a few seconds before watching again
+      // (let our message appear on screen so the hash updates)
+      await new Promise(r=>setTimeout(r,4000));
+      _autoLastHash=_autoQuickHash()||'';
+    }else{
+      _autoSending=false;
+    }
+  }catch(e){
+    console.warn('Auto-reply scan failed',e);
+    _autoSending=false;
+  }
+
+  // Continue watching
+  if(autoReplyMode){
+    autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+  }
+}
+
+// Run extension check on page load
+setTimeout(checkExtension,1000);
 
 // 🔄 REGENERATE A SINGLE LIVE REPLY with a chosen vibe (spicier, flirtier, etc.)
 async function regenSingleLive(i,vibe,doc){
@@ -1990,13 +2402,35 @@ function getAllLiveMemory(){
   return all;
 }
 function saveAllLiveMemory(m){store.setItem('rizz_live_memory',JSON.stringify(m))}
-function loadLiveMemory(handle){if(!handle)return null;const all=getAllLiveMemory();return all[handle.toLowerCase()]||null}
+function loadLiveMemory(handle){if(!handle)return null;const all=getAllLiveMemory();const key=findFuzzyMemoryKey(all,handle);return all[key]||null}
 function clearLiveMemory(handle){const all=getAllLiveMemory();if(handle){delete all[handle.toLowerCase()]}else{Object.keys(all).forEach(k=>delete all[k])}saveAllLiveMemory(all);showToast(handle?'Memory cleared for '+handle:'All chat memory cleared')}
 function uniqStrings(arr,max){const seen=new Set();const out=[];for(const s of arr){const k=(s||'').trim().toLowerCase();if(!k||seen.has(k))continue;seen.add(k);out.push((s||'').trim());if(out.length>=max)break}return out}
+// Fuzzy-match handle against existing memory keys to prevent duplicates
+// Strips emoji, punctuation, underscores, dots and compares the alpha-core
+function findFuzzyMemoryKey(all,handle){
+  const exact=handle.toLowerCase();
+  if(all[exact])return exact;
+  // Strip to alpha-core: "Katiee 🧊" → "katiee", "iheart._.katie" → "iheartkatie"
+  const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const hNorm=norm(handle);
+  if(!hNorm)return exact;
+  for(const key of Object.keys(all)){
+    const kNorm=norm(key);
+    if(!kNorm)continue;
+    // Exact alpha match
+    if(kNorm===hNorm)return key;
+    // One contains the other (handles "katiee" vs "katiee123")
+    if(hNorm.length>=4&&kNorm.length>=4){
+      if(kNorm.includes(hNorm)||hNorm.includes(kNorm))return key;
+    }
+  }
+  return exact;
+}
 function mergeLiveMemory(handle,update){
   if(!handle)return;
-  const key=handle.toLowerCase();
   const all=getAllLiveMemory();
+  // 🔒 Anti-duplicate: fuzzy-match before creating a new key
+  const key=findFuzzyMemoryKey(all,handle);
   const existing=all[key]||{handle,facts:[],herStyle:'',topics:[],myRecentSends:[],herRecentSends:[],scanCount:0,lastUpdated:0,
     // 🆕 THEME B — per-girl profile structure
     likes:[],dislikes:[],hobbies:[],
