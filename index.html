@@ -2252,6 +2252,11 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
             }catch(e){}
           }
         }catch(e){console.warn('Save manual reply failed',e)}
+        // 🧠 TRACK STATE — same as auto-send, so the next scan doesn't reply to OUR message
+        _autoLastSentText=text;
+        _autoSentHistory=[text,..._autoSentHistory].slice(0,5);
+        _autoLastHerMessage=herMsg||'';
+        _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
         showToast('✅ Manual reply sent & saved as training data');
         cleanup();
         resolve({action:'sent',text});
@@ -2341,6 +2346,15 @@ async function sendLiveReply(i,btn){
 let _autoLastHash='';
 let _autoSending=false;
 let _autoScanCount=0;
+let _autoLastSentText='';      // the EXACT text we last sent — never reply to it
+let _autoSentHistory=[];       // last 5 things we sent
+let _autoLastHerMessage='';    // last actual her_message we replied to
+let _autoCooldownUntil=0;      // skip any work until this timestamp
+let _autoUnstableCount=0;      // how many times in a row screen wasn't stable
+let _autoLastApiCallAt=0;      // timestamp of last API call (rate limiting)
+const AUTO_MIN_API_INTERVAL=15000;  // HARD CAP: minimum 15s between vision API calls
+const AUTO_SKIP_COOLDOWN=18000;     // After skipping (typing/waiting/own msg): wait 18s
+const AUTO_SEND_COOLDOWN=10000;     // After successful send: wait 10s before next scan
 
 function toggleAutoReplyMode(){
   autoReplyMode=!autoReplyMode;
@@ -2352,6 +2366,8 @@ function toggleAutoReplyMode(){
   }
   if(autoReplyMode){
     _autoLastHash='';_autoSending=false;_autoScanCount=0;
+    _autoLastSentText='';_autoSentHistory=[];_autoLastHerMessage='';
+    _autoCooldownUntil=0;_autoUnstableCount=0;
     showToast('🤖 Auto mode ON — will reply as soon as a new message appears');
     runAutoReplyLoop();
   }else{
@@ -2360,8 +2376,59 @@ function toggleAutoReplyMode(){
   }
 }
 
-// Fast pixel hash — grab a tiny thumbnail of the chat area and hash it
+// Fuzzy match — is `a` essentially the same as `b`? (case/punctuation-insensitive substring)
+function _fuzzyMatch(a,b){
+  if(!a||!b)return false;
+  const na=(a||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  const nb=(b||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  if(!na||!nb)return false;
+  if(na===nb)return true;
+  if(na.length>=4&&nb.length>=4&&(na.includes(nb)||nb.includes(na)))return true;
+  // token overlap > 70%
+  const ta=new Set(na.split(' ').filter(w=>w.length>2));
+  const tb=new Set(nb.split(' ').filter(w=>w.length>2));
+  if(!ta.size||!tb.size)return false;
+  let c=0;ta.forEach(t=>tb.has(t)&&c++);
+  return c/Math.min(ta.size,tb.size)>=0.7;
+}
+
+// Check screen stability — sample hash 3 times over ~1.4s. If all match, screen is steady.
+// If they don't match, screen is animating (typing indicator, scrolling, etc.) — wait.
+async function _isScreenStable(){
+  const h1=_autoQuickHash();
+  if(!h1)return false;
+  await new Promise(r=>setTimeout(r,600));
+  const h2=_autoQuickHash();
+  if(h1!==h2)return false;
+  await new Promise(r=>setTimeout(r,500));
+  const h3=_autoQuickHash();
+  return h1===h3;
+}
+
+// Fast pixel hash — only hash the BOTTOM-RIGHT chat area to ignore mouse, sidebar, time updates
 function _autoQuickHash(){
+  if(!liveStream)return null;
+  const v=document.getElementById('live-video');
+  const vw=v.videoWidth||0,vh=v.videoHeight||0;
+  if(!vw)return null;
+  // Crop: skip left sidebar (left 30%) and top bar (top 15%) — focus on where messages appear
+  const cropX=Math.round(vw*0.30);
+  const cropY=Math.round(vh*0.15);
+  const cropW=vw-cropX;
+  const cropH=vh-cropY;
+  const scale=180/Math.max(cropW,cropH);
+  const c=document.createElement('canvas');
+  c.width=Math.round(cropW*scale);c.height=Math.round(cropH*scale);
+  c.getContext('2d').drawImage(v,cropX,cropY,cropW,cropH,0,0,c.width,c.height);
+  const img=c.getContext('2d').getImageData(0,0,c.width,c.height);
+  const d=img.data;
+  let h=0;
+  for(let i=0;i<d.length;i+=120){h=(h*31+d[i])>>>0}
+  return h.toString(36);
+}
+
+// Old full-screen hash kept for compatibility but unused
+function _autoQuickHash_FULL_UNUSED(){
   if(!liveStream)return null;
   const v=document.getElementById('live-video');
   const vw=v.videoWidth||0,vh=v.videoHeight||0;
@@ -2388,28 +2455,41 @@ async function runAutoReplyLoop(){
     return;
   }
 
-  // Quick screen hash check — did anything change?
-  const hash=_autoQuickHash();
-  if(hash && hash===_autoLastHash){
-    // Nothing changed — poll again in 3s (fast, cheap, no API call)
-    autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+  // 🕒 COOLDOWN — after sending/skipping, don't even check the screen
+  const now=Date.now();
+  if(now<_autoCooldownUntil){
+    autoReplyInterval=setTimeout(runAutoReplyLoop,Math.min(_autoCooldownUntil-now+200,4000));
     return;
   }
 
-  // Screen changed — wait for it to settle (animations, typing indicators, etc.)
-  await new Promise(r=>setTimeout(r,1200));
-  if(!autoReplyMode)return;
-
-  // Re-hash after settle — if it changed AGAIN, the screen is still moving (scroll, animation)
-  // Wait once more to avoid wasting an API call on a mid-transition frame
-  const settled=_autoQuickHash();
-  if(settled && settled!==hash){
-    // Still changing — wait another beat
-    await new Promise(r=>setTimeout(r,1000));
-    if(!autoReplyMode)return;
+  // 🚨 HARD RATE LIMIT — never call the vision API more than once per 15s
+  const sinceLastApi=now-_autoLastApiCallAt;
+  if(_autoLastApiCallAt && sinceLastApi<AUTO_MIN_API_INTERVAL){
+    autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_MIN_API_INTERVAL-sinceLastApi+100);
+    return;
   }
-  const finalHash=_autoQuickHash();
-  if(finalHash) _autoLastHash=finalHash;
+
+  // 🧊 STABILITY CHECK — screen must hold still for ~1.5s before we trust it
+  const stable=await _isScreenStable();
+  if(!autoReplyMode)return;
+  if(!stable){
+    _autoUnstableCount++;
+    const backoff=Math.min(2500+_autoUnstableCount*1500,10000);
+    if(_autoUnstableCount===1) showToast('🤖 Screen moving — waiting for it to settle');
+    autoReplyInterval=setTimeout(runAutoReplyLoop,backoff);
+    return;
+  }
+  _autoUnstableCount=0;
+
+  // Did anything actually change since last steady state?
+  const hash=_autoQuickHash();
+  if(hash && hash===_autoLastHash){
+    // Same screen — no need to scan. Poll cheaply.
+    autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+    return;
+  }
+  if(hash) _autoLastHash=hash;
+  _autoLastApiCallAt=Date.now(); // mark that we're about to call the API
 
   // Now do a full scan + generate
   _autoSending=true;
@@ -2427,26 +2507,42 @@ async function runAutoReplyLoop(){
   try{
     const prevMessage=lastGenMessage;
     await doLiveGenerate(targetDoc,b64);
-    await new Promise(r=>setTimeout(r,500));
+    await new Promise(r=>setTimeout(r,400));
 
     // Check if the AI detected a DIFFERENT message than last time
     const newMsg=lastGenMessage||'';
     const parsed=window._lastLiveParsed||{};
-    const myRecent=(parsed.my_recent_sends||[]).map(s=>(s||'').toLowerCase().trim()).filter(Boolean);
-    const newMsgLow=newMsg.toLowerCase().trim();
+    const myRecent=(parsed.my_recent_sends||[]).map(s=>(s||'').trim()).filter(Boolean);
 
-    // 🚫 GUARD: AI mis-identified MY message as hers (happens when typing indicator triggers rescan)
-    const isMyOwnMessage=myRecent.some(m=>m===newMsgLow || (m.length>4 && newMsgLow.length>4 && (m.includes(newMsgLow)||newMsgLow.includes(m))));
+    // 🚫 LAYERED GUARDS — refuse to reply if ANY of these match:
+    // 1. The "her message" matches what WE just sent (AI confused our message for hers)
+    // 2. Matches anything in AI-reported my_recent_sends
+    // 3. Matches anything in our local sent history
+    // 4. Matches the last her_message we already replied to
+    // 5. Marked as typing/waiting/sticker/unreadable
+    // 6. Suspiciously short (<2 chars usually = typing dots)
+    const matchesOurLastSend=_fuzzyMatch(_autoLastSentText,newMsg);
+    const matchesOurHistory=_autoSentHistory.some(s=>_fuzzyMatch(s,newMsg));
+    const matchesAiMyRecent=myRecent.some(m=>_fuzzyMatch(m,newMsg));
+    const alreadyRepliedToThis=_fuzzyMatch(_autoLastHerMessage,newMsg);
     const isWaiting=/^\[waiting\]$/i.test(newMsg);
-    const isTypingIndicator=/^\[typing\]$/i.test(newMsg) || /^(\.\.\.|typing|…)$/i.test(newMsg.trim()) || newMsg.trim().length<2;
-    const isSameMessage=(newMsg===prevMessage && prevMessage!=='[Live chat]' && _autoScanCount>1);
+    const isTypingIndicator=/^\[typing\]$/i.test(newMsg) || /^(\.\.\.|typing|…|\.\.|·\.·)$/i.test(newMsg.trim()) || newMsg.trim().length<3;
+    const isSameAsLastScan=(newMsg===prevMessage && prevMessage!=='[Live chat]' && _autoScanCount>1);
 
-    if(isSameMessage||isWaiting||isMyOwnMessage||isTypingIndicator){
-      if(isMyOwnMessage) showToast('🤖 That\'s my last message — waiting for her to reply');
-      else if(isTypingIndicator) showToast('🤖 She\'s typing... waiting');
-      else if(isWaiting) showToast('🤖 She hasn\'t replied yet — watching...');
+    const skip=matchesOurLastSend||matchesOurHistory||matchesAiMyRecent||alreadyRepliedToThis||isWaiting||isTypingIndicator||isSameAsLastScan;
+    if(skip){
+      let reason='watching';
+      if(matchesOurLastSend||matchesAiMyRecent||matchesOurHistory) reason='🚫 That\'s my message — not replying to it';
+      else if(alreadyRepliedToThis) reason='✓ Already replied to this — waiting for new';
+      else if(isTypingIndicator) reason='⌨️ She\'s typing... waiting';
+      else if(isWaiting) reason='⏳ No new reply yet — watching';
+      else if(isSameAsLastScan) reason='✓ Same as last scan — watching';
+      showToast('🤖 '+reason);
+      console.log('[Don\'t Miss] SKIP send:',{newMsg,matchesOurLastSend,matchesOurHistory,matchesAiMyRecent,alreadyRepliedToThis,isWaiting,isTypingIndicator,isSameAsLastScan});
       _autoSending=false;
-      autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
+      // 🕒 LONG cooldown when skipping — avoid burning API calls during typing/idle sessions
+      _autoCooldownUntil=Date.now()+AUTO_SKIP_COOLDOWN;
+      autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_SKIP_COOLDOWN);
       return;
     }
 
@@ -2487,6 +2583,12 @@ async function runAutoReplyLoop(){
         showToast(`🤖 Sent #${(picked?.index??0)+1}: "${best.text.slice(0,40)}..."`);
         const card=targetDoc.getElementById('live-card-'+(picked?.index??0));
         if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
+        // 🧠 TRACK STATE — remember what we sent + what we replied to
+        _autoLastSentText=best.text;
+        _autoSentHistory=[best.text,..._autoSentHistory].slice(0,5);
+        _autoLastHerMessage=newMsg;
+        // 🕒 COOLDOWN — give Instagram time to update before next scan
+        _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
       }else{
         showToast('Auto-send failed: '+(res.error||'?'));
       }
@@ -2494,7 +2596,7 @@ async function runAutoReplyLoop(){
 
       // After sending, wait a few seconds before watching again
       // (let our message appear on screen so the hash updates)
-      await new Promise(r=>setTimeout(r,4000));
+      await new Promise(r=>setTimeout(r,4500));
       _autoLastHash=_autoQuickHash()||'';
     }else{
       _autoSending=false;
