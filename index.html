@@ -1451,6 +1451,12 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <button class="live-stop-btn" style="flex:1;font-size:11px;opacity:.85" onclick="resetLiveChatPointer()" title="Use this when you switch to a different person mid-share">🔄 Switched chats</button>
       </div>
       <button class="live-stop-btn" id="deep-scan-btn" style="width:100%;margin-top:8px" onclick="toggleDeepScan()">📖 Deep scan chat</button>
+      <!-- 🎚 MODE SELECTOR — Preview is default, Auto is opt-in -->
+      <div id="reply-mode-selector" style="display:none;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px;gap:0">
+        <button id="mode-preview-btn" class="mode-btn active" style="flex:1" onclick="setReplyMode('preview')">📋 Preview mode</button>
+        <button id="mode-auto-btn" class="mode-btn" style="flex:1" onclick="setReplyMode('auto')">🤖 Auto-send</button>
+      </div>
+      <div id="reply-mode-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--text3);line-height:1.5;text-align:center"></div>
       <button class="live-stop-btn" id="auto-reply-toggle-btn" style="display:none;width:100%;margin-top:8px" onclick="toggleAutoReplyMode()">🤖 Auto mode</button>
       <button class="live-stop-btn" style="width:100%;margin-top:8px;font-size:11px;opacity:.75" onclick="testManualHelpUI()" title="Test the manual-help alarm UI">🧪 Test manual help alarm</button>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
@@ -2049,6 +2055,12 @@ async function startLiveShare(){
     liveStream.getVideoTracks()[0].addEventListener('ended',stopLiveShare);
     document.getElementById('live-start-area').style.display='none';
     document.getElementById('live-active-area').style.display='block';
+    // Show mode selector + apply saved mode
+    const sel=document.getElementById('reply-mode-selector');
+    const hint=document.getElementById('reply-mode-hint');
+    if(sel)sel.style.display='flex';
+    if(hint)hint.style.display='block';
+    setReplyMode(replyMode);
   }catch(e){showToast('Screen share cancelled');}
 }
 function stopLiveShare(){
@@ -2296,7 +2308,33 @@ function showManualHelpUI(doc, herMsg, candidates, picked){
     // Render overlay in the primary doc (the one the user is most likely looking at)
     // Prefer popout if open since that's the active "auto mode" surface
     const primaryDoc=(pipWindow&&!pipWindow.closed)?pipWindow.document:document;
-    // But ALSO show a simpler overlay in the OTHER doc so the user sees it wherever they're looking
+
+    // 🩹 Ensure manual-help CSS exists in whichever doc we render in (popouts may have missed it)
+    if(!primaryDoc.getElementById('manual-help-inline-css')){
+      const style=primaryDoc.createElement('style');
+      style.id='manual-help-inline-css';
+      style.textContent=`
+        @keyframes mhFlash{0%,100%{box-shadow:inset 0 0 0 12px rgba(244,67,54,0.3),0 0 80px rgba(244,67,54,0.5)}50%{box-shadow:inset 0 0 0 16px rgba(244,67,54,0.9),0 0 100px rgba(244,67,54,0.7)}}
+        @keyframes mhPulse{0%,100%{transform:scale(1);text-shadow:0 0 0 rgba(244,67,54,0)}50%{transform:scale(1.08);text-shadow:0 0 20px rgba(244,67,54,0.9)}}
+        .manual-help-active{animation:mhFlash 0.6s ease-in-out infinite !important}
+        .manual-help-overlay{position:fixed!important;inset:0!important;background:rgba(120,0,0,0.92)!important;backdrop-filter:blur(10px);z-index:999999!important;display:flex!important;align-items:center;justify-content:center;padding:18px;border:8px solid #f44336!important;box-sizing:border-box;font-family:DM Sans,sans-serif}
+        .manual-help-box{background:#171717;border:2px solid #f44336;border-radius:14px;padding:18px;max-width:420px;width:100%;box-shadow:0 0 50px rgba(244,67,54,0.35);color:#e2e2e2}
+        .manual-help-title{font-size:18px;font-weight:800;color:#f44336;margin-bottom:8px;display:flex;align-items:center;gap:8px;animation:mhPulse 0.6s ease-in-out infinite;text-transform:uppercase;letter-spacing:0.04em}
+        .manual-help-sub{font-size:12px;color:#969696;margin-bottom:12px;line-height:1.5}
+        .manual-help-context{background:#1e1e1e;border:1px solid #313131;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#969696}
+        .manual-help-context strong{color:#e2e2e2;font-weight:600}
+        .manual-help-candidates{margin-bottom:12px;font-size:11px;color:#585858;line-height:1.6}
+        .manual-help-candidates ol{margin:4px 0 0 16px;padding:0}
+        .manual-help-input{width:100%;background:#1e1e1e;border:1px solid #424242;border-radius:8px;padding:10px 12px;font-family:DM Sans,sans-serif;font-size:14px;color:#e2e2e2;min-height:60px;resize:vertical;outline:none}
+        .manual-help-input:focus{border-color:#f44336;box-shadow:0 0 0 2px rgba(244,67,54,0.2)}
+        .manual-help-actions{display:flex;gap:8px;margin-top:10px}
+        .manual-help-btn{flex:1;padding:10px;border-radius:8px;border:1px solid #424242;background:#1e1e1e;color:#e2e2e2;font-family:DM Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+        .manual-help-btn.send{background:#f44336;border-color:#f44336;color:#fff}
+        .manual-help-btn.send:hover{background:#e53935}
+      `;
+      primaryDoc.head.appendChild(style);
+    }
+
     const overlay=primaryDoc.createElement('div');
     overlay.className='manual-help-overlay';
     const candList=(candidates||[]).map((c,i)=>`<li${picked&&picked.index===i?' style="color:var(--text2)"':''}>${(c.text||'').replace(/</g,'&lt;')}<span style="color:var(--text3);font-style:italic"> · ${c.tone||''}</span></li>`).join('');
@@ -2469,6 +2507,13 @@ function showSendButtons(show){
   document.querySelectorAll('.send-rw').forEach(btn=>{btn.style.display=show?'':'none'});
   const autoBtn=document.getElementById('auto-reply-toggle-btn');
   if(autoBtn)autoBtn.style.display=show?'':'none';
+  // Also update popout if it's open
+  if(pipWindow&&!pipWindow.closed){
+    try{
+      const pipAuto=pipWindow.document.getElementById('pip-auto');
+      if(pipAuto)pipAuto.style.display=show?'block':'none';
+    }catch(e){}
+  }
 }
 
 async function sendLiveReply(i,btn){
@@ -2508,23 +2553,81 @@ const AUTO_SKIP_COOLDOWN=8000;      // After skipping (own msg, no new): wait 8s
 const AUTO_SEND_COOLDOWN=7000;      // After successful send: wait 7s before next scan
 const AUTO_TYPING_COOLDOWN=18000;   // She's typing → wait 18s for her to actually send
 
-function toggleAutoReplyMode(){
-  autoReplyMode=!autoReplyMode;
-  const btn=document.getElementById('auto-reply-toggle-btn');
-  if(btn){
-    btn.textContent=autoReplyMode?'🤖 Auto ON — watching for new messages':'🤖 Auto mode';
+// ── 🎚 REPLY MODE SYSTEM ──
+// Two modes, explicitly chosen by the user:
+//   'preview' (DEFAULT) — generates replies, shows them, user clicks Send manually
+//   'auto'              — generates replies, runs safety gates, auto-sends if all pass
+let replyMode=(()=>{try{return store.getItem('rizz_reply_mode')||'preview'}catch(e){return 'preview'}})();
+
+function setReplyMode(mode){
+  if(mode!=='preview'&&mode!=='auto')mode='preview';
+  replyMode=mode;
+  try{store.setItem('rizz_reply_mode',mode)}catch(e){}
+  // Update UI in both windows
+  [document,(pipWindow&&!pipWindow.closed)?pipWindow.document:null].forEach(doc=>{
+    if(!doc)return;
+    const pv=doc.getElementById('mode-preview-btn');
+    const au=doc.getElementById('mode-auto-btn');
+    const hint=doc.getElementById('reply-mode-hint');
+    if(pv&&au){
+      pv.classList.toggle('active',mode==='preview');
+      au.classList.toggle('active',mode==='auto');
+    }
+    if(hint){
+      hint.textContent=mode==='preview'
+        ?'Replies will be shown for you to review, edit, and send manually.'
+        :'⚠️ When auto-send is toggled ON, replies will be sent automatically if confidence is high.';
+    }
+  });
+  // If switching to preview while auto mode is running, stop it
+  if(mode==='preview'&&autoReplyMode){
+    autoReplyMode=false;
+    if(autoReplyInterval){clearTimeout(autoReplyInterval);autoReplyInterval=null}
+    _syncAutoButtons();
+    showToast('🤖 Switched to Preview mode — auto-send disabled');
+  }
+  // Show/hide the auto-mode toggle button based on selected mode
+  const toggleAutoBtn=()=>document.getElementById('auto-reply-toggle-btn');
+  const pipAutoBtn=()=>(pipWindow&&!pipWindow.closed)?pipWindow.document.getElementById('pip-auto'):null;
+  [toggleAutoBtn(),pipAutoBtn()].forEach(b=>{
+    if(!b)return;
+    // Auto button only visible in 'auto' mode (and only if extension is ready)
+    if(mode==='auto'&&extensionReady){b.style.display='block'}
+    else{b.style.display='none'}
+  });
+}
+
+function _syncAutoButtons(){
+  // Update BOTH the main window and popout buttons so they always match
+  const updateBtn=(btn)=>{
+    if(!btn)return;
+    btn.textContent=autoReplyMode?'🤖 Auto-send ON — watching':'🤖 Toggle auto-send ON';
     btn.style.borderColor=autoReplyMode?'var(--green)':'';
     btn.style.color=autoReplyMode?'var(--green)':'';
+  };
+  updateBtn(document.getElementById('auto-reply-toggle-btn'));
+  if(pipWindow&&!pipWindow.closed){
+    try{updateBtn(pipWindow.document.getElementById('pip-auto'))}catch(e){}
   }
+}
+
+function toggleAutoReplyMode(){
+  // Guard: auto-send only works in 'auto' reply mode
+  if(replyMode!=='auto'){
+    showToast('⚠️ Switch to Auto-send mode first');
+    return;
+  }
+  autoReplyMode=!autoReplyMode;
+  _syncAutoButtons();
   if(autoReplyMode){
     _autoLastHash='';_autoSending=false;_autoSendingStartedAt=0;_autoScanCount=0;
     _autoLastSentText='';_autoSentHistory=[];_autoLastHerMessage='';
     _autoCooldownUntil=0;_autoUnstableCount=0;
-    showToast('🤖 Auto mode ON — will reply as soon as a new message appears');
+    showToast('🤖 Auto-send ON — will reply automatically when confidence is high');
     runAutoReplyLoop();
   }else{
     if(autoReplyInterval){clearTimeout(autoReplyInterval);autoReplyInterval=null}
-    showToast('🤖 Auto mode OFF');
+    showToast('🤖 Auto-send OFF — scans will preview only');
   }
 }
 
@@ -2616,6 +2719,45 @@ function _autoQuickHash_FULL_UNUSED(){
   return h.toString(36);
 }
 
+// ── 🛡 AUTO-SEND SAFETY GATES ──
+// Isolated, named checks for auto-send eligibility. Returns:
+//   { pass: true } — clear to auto-send
+//   { pass: false, reason: '...', fallback: 'manual_help' | 'skip' | 'preview' }
+//
+// Auto-send fires ONLY when:
+//   1. replyMode === 'auto' AND autoReplyMode === true
+//   2. Latest message is definitely from her (not self, not seen, not typing)
+//   3. AI confidence >= 0.5
+//   4. Message is readable
+//   5. Best reply scored OK locally
+//   6. Decision allows (not WAIT_* etc.)
+function passesAutoSendGates({decision, parsed, newMsg, picked, currentReplies, replyTargetText}){
+  // Gate 1: must be in auto mode AND auto toggle on
+  if(replyMode!=='auto')return {pass:false,reason:'preview mode selected',fallback:'skip'};
+  if(!autoReplyMode)return {pass:false,reason:'auto toggle off',fallback:'skip'};
+  // Gate 2: decision must be REPLY
+  if(decision!=='REPLY')return {pass:false,reason:'decision: '+decision,fallback:'skip'};
+  // Gate 3: must have replies + extension
+  if(!currentReplies||!currentReplies.length)return {pass:false,reason:'no replies generated',fallback:'skip'};
+  if(!extensionReady)return {pass:false,reason:'extension not connected',fallback:'skip'};
+  // Gate 4: message must be readable
+  const isUnreadable=/\[(unreadable|sticker)\]/i.test(newMsg||'')||(newMsg||'').length<2;
+  if(isUnreadable)return {pass:false,reason:'message unreadable',fallback:'manual_help'};
+  // Gate 5: AI confidence threshold
+  const aiConf=Number(parsed?.recommended_strategy?.confidence ?? 0.7);
+  if(aiConf<0.5)return {pass:false,reason:`low AI confidence (${aiConf})`,fallback:'manual_help'};
+  // Gate 6: typing/seen state
+  if(parsed?.typing_indicator_visible)return {pass:false,reason:'she is typing',fallback:'skip'};
+  if(parsed?.latest_actual_sender==='self')return {pass:false,reason:'latest is mine',fallback:'skip'};
+  // Gate 7: best reply must not be empty
+  if(!picked?.reply?.text||picked.reply.text.length<2)return {pass:false,reason:'picked reply empty',fallback:'manual_help'};
+  // Gate 8: reply length sanity (auto-send shouldn't blast paragraph-length texts)
+  if(picked.reply.text.length>280)return {pass:false,reason:'reply too long for auto-send',fallback:'manual_help'};
+  // Gate 9: best score must be reasonable (catches "all replies are bad" case)
+  if(typeof picked.score==='number'&&picked.score<-2)return {pass:false,reason:`best reply scored too low (${picked.score})`,fallback:'manual_help'};
+  return {pass:true};
+}
+
 async function runAutoReplyLoop(){
   if(!autoReplyMode)return;
   if(_autoSending){
@@ -2645,20 +2787,29 @@ async function runAutoReplyLoop(){
   }
 
   // 🧊 STABILITY CHECK — screen must hold still for ~1.5s before we trust it
-  // This also catches typing indicators — if screen is bouncing (typing dots), skip API call entirely
+  // If unstable, back off briefly. After many failures, scan ANYWAY to break out of stuck states.
   const stable=await _isScreenStable();
   if(!autoReplyMode)return;
   if(!stable){
     _autoUnstableCount++;
-    // After 3+ unstable checks in a row, likely typing indicator — longer backoff
-    const isLikelyTyping=_autoUnstableCount>=3;
-    const backoff=isLikelyTyping?AUTO_TYPING_COOLDOWN:Math.min(2500+_autoUnstableCount*1500,10000);
-    if(_autoUnstableCount===1) showToast('🤖 Screen moving — waiting for it to settle');
-    if(isLikelyTyping) showToast('🤖 Looks like typing — waiting for message to send');
-    autoReplyInterval=setTimeout(runAutoReplyLoop,backoff);
-    return;
+    // After 6 unstable checks in a row (~25s of waiting), force a scan anyway —
+    // user might have stopped typing and we're stuck on unrelated UI motion (cursor blink, etc.)
+    if(_autoUnstableCount>=6){
+      console.log('[Don\'t Miss] Screen unstable for too long ('+_autoUnstableCount+' checks) — forcing scan anyway');
+      showToast('🤖 Forcing scan — waited long enough');
+      _autoUnstableCount=0;
+      // Fall through to scan
+    }else{
+      // Quick backoff so we recheck soon after typing might stop
+      const backoff=_autoUnstableCount<=2?2500:5000;
+      if(_autoUnstableCount===1) showToast('🤖 Waiting for screen to settle...');
+      else if(_autoUnstableCount===3) showToast('🤖 Still moving — will force scan in ~15s if needed');
+      autoReplyInterval=setTimeout(runAutoReplyLoop,backoff);
+      return;
+    }
+  } else {
+    _autoUnstableCount=0;
   }
-  _autoUnstableCount=0;
 
   // Did anything actually change since last steady state?
   const hash=_autoQuickHash();
@@ -2824,27 +2975,32 @@ async function runAutoReplyLoop(){
       const best=picked?picked.reply:currentReplies[0];
       console.log('[Don\'t Miss] Picked reply',picked?.index,'score',picked?.score,'text:',best?.text?.slice(0,50));
 
-      // 🚨 CONFIDENCE GATE — fire on low confidence or unreadable messages
-      const aiConf=Number(parsed.recommended_strategy?.confidence ?? 0.7);
-      const isUnreadable=/\[(unreadable|sticker)\]/i.test(newMsg)||newMsg.length<2;
-      // Require manual help if AI said low confidence (< 0.5) OR message is unreadable
-      const isRisky=(aiConf<0.5 || isUnreadable);
-      console.log('[Don\'t Miss] Risk check: aiConf=',aiConf,'isUnreadable=',isUnreadable,'isRisky=',isRisky);
+      // 🛡 RUN AUTO-SEND GATES — centralized safety check
+      const gate=passesAutoSendGates({decision,parsed,newMsg,picked,currentReplies,replyTargetText});
+      console.log('[Don\'t Miss] Gate result:',gate);
 
-      if(isRisky){
-        console.log('[Don\'t Miss] Confidence too low (conf:',aiConf,'unreadable:',isUnreadable,') — manual help');
-        showToast('🚨 AI unsure — check window for manual help prompt');
-        _autoSending=false;
-        const result=await showManualHelpUI(targetDoc,newMsg,currentReplies,picked);
-        if(result.action==='sent'){
-          await new Promise(r=>setTimeout(r,4000));
-          _autoLastHash=_autoQuickHash()||'';
-          _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
+      if(!gate.pass){
+        if(gate.fallback==='manual_help'){
+          showToast('🚨 Auto-send blocked ('+gate.reason+') — manual help');
+          _autoSending=false;
+          const result=await showManualHelpUI(targetDoc,newMsg,currentReplies,picked);
+          if(result.action==='sent'){
+            await new Promise(r=>setTimeout(r,4000));
+            _autoLastHash=_autoQuickHash()||'';
+            _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
+          }
+          if(autoReplyMode){autoReplyInterval=setTimeout(runAutoReplyLoop,3000)}
+          return;
         }
-        if(autoReplyMode){autoReplyInterval=setTimeout(runAutoReplyLoop,3000)}
+        // fallback === 'skip' — preview mode or other non-action condition
+        showToast('🤖 '+gate.reason+' — skipping auto-send');
+        _autoSending=false;
+        _autoCooldownUntil=Date.now()+AUTO_SKIP_COOLDOWN;
+        autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_SKIP_COOLDOWN);
         return;
       }
 
+      // All gates passed — proceed to auto-send
       const delay=Math.floor(Math.random()*3000)+2000; // 2-5s
       showToast(`🤖 Sending in ${Math.round(delay/1000)}s: "${best.text.slice(0,40)}..."`);
       console.log('[Don\'t Miss] Will send in',delay,'ms:',best.text);
@@ -4490,18 +4646,24 @@ Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
         }
       }
     }catch(e){console.warn('memory merge failed',e)}
-    // 🧠 Auto-learn user style during EVERY scan (always on — no learn mode gate)
+    // 🧠 LIGHT learning during live scan — accumulate samples only, defer expensive analysis
+    // Heavy analysis runs in Training Mode (deep scan import) or every 10 new samples here
     try{
-      const profile=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
-      // Always accumulate raw samples from my_recent_sends
+      const profile=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0,_pendingNewSamples:0};
       const newSamples=(parsed.my_recent_sends||[]).filter(s=>s&&typeof s==='string'&&s.length>1);
-      if(newSamples.length){
-        profile.samples=uniqStrings([...newSamples,...(profile.samples||[])],50);
-        profile.sampleCount=(profile.sampleCount||0)+newSamples.length;
-        // Run comprehensive style analysis
-        analyzeUserStyleFromMessages(profile,newSamples);
+      const fresh=newSamples.filter(s=>!(profile.samples||[]).some(ex=>ex.toLowerCase().trim()===s.toLowerCase().trim()));
+      if(fresh.length){
+        profile.samples=uniqStrings([...fresh,...(profile.samples||[])],50);
+        profile.sampleCount=(profile.sampleCount||0)+fresh.length;
+        profile._pendingNewSamples=(profile._pendingNewSamples||0)+fresh.length;
+        // Only re-run the EXPENSIVE local analysis every 10 new samples — saves loops/CPU
+        if(profile._pendingNewSamples>=10 || !profile.styleSummary){
+          console.log('[Don\'t Miss] Re-analyzing user style ('+profile._pendingNewSamples+' new samples since last analysis)');
+          analyzeUserStyleFromMessages(profile,profile.samples.slice(0,30));
+          profile._pendingNewSamples=0;
+        }
       }
-      // If AI returned style analysis, merge it
+      // If AI returned style analysis in this scan, merge it (cheap, just text)
       if(parsed.my_style_summary){
         profile.styleSummary=parsed.my_style_summary;
         profile.lastUpdated=Date.now();
@@ -4549,21 +4711,28 @@ async function popOutLive(){
     </div>
     <button class="live-stop-btn" id="pip-reset" style="width:100%;padding:8px;margin-bottom:8px;font-size:11px;opacity:.85">🔄 Switched chats — start fresh memory</button>
     <button class="live-stop-btn" id="pip-deep" style="width:100%;padding:10px;margin-bottom:8px">📖 Deep scan chat</button>
-    <button class="live-stop-btn" id="pip-auto" style="width:100%;padding:10px;margin-bottom:12px;display:${extensionReady?'block':'none'}">🤖 Auto mode</button>
+    <!-- Mode selector in popout -->
+    <div id="reply-mode-selector" style="display:flex;margin-bottom:6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px;gap:0">
+      <button id="mode-preview-btn" class="mode-btn active" style="flex:1" onclick="setReplyMode('preview')">📋 Preview</button>
+      <button id="mode-auto-btn" class="mode-btn" style="flex:1" onclick="setReplyMode('auto')">🤖 Auto-send</button>
+    </div>
+    <div id="reply-mode-hint" style="margin-bottom:8px;font-size:10px;color:var(--text3);line-height:1.4;text-align:center"></div>
+    <button class="live-stop-btn" id="pip-auto" style="width:100%;padding:10px;margin-bottom:12px;display:none">🤖 Toggle auto-send ON</button>
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker','toggleDeepScan','toggleAutoReplyMode','sendLiveReply'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker','toggleDeepScan','toggleAutoReplyMode','sendLiveReply','setReplyMode'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-profile').addEventListener('click',()=>profileScanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-story').addEventListener('click',()=>storyReplyLive(pipWindow.document));
   pipWindow.document.getElementById('pip-reset').addEventListener('click',()=>resetLiveChatPointer());
   pipWindow.document.getElementById('pip-deep').addEventListener('click',()=>toggleDeepScan(pipWindow.document));
   pipWindow.document.getElementById('pip-auto').addEventListener('click',()=>{
-    toggleAutoReplyMode();
-    const ab=pipWindow.document.getElementById('pip-auto');
-    if(ab){ab.textContent=autoReplyMode?'🤖 Auto ON — watching for new messages':'🤖 Auto mode';ab.style.borderColor=autoReplyMode?'var(--green)':'';ab.style.color=autoReplyMode?'var(--green)':'';}
+    toggleAutoReplyMode(); // _syncAutoButtons() inside will update both windows
   });
+  // When popout opens, ensure the auto button + mode selector reflect current state
+  _syncAutoButtons();
+  setReplyMode(replyMode);
   pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
   showToast('Popped out — keep it over your chat and scan from there');
 }
