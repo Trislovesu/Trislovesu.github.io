@@ -757,15 +757,16 @@ input[type="text"]::placeholder{color:var(--text3)}
 #admin-icon[data-show="1"]{display:inline-flex!important}
 #admin-badge[data-show="1"]{display:flex!important}
 .hdr-icon.live-icon:hover{border-color:var(--green);background:var(--green-bg)}
-.live-overlay{position:fixed;inset:0;z-index:960;background:var(--bg);display:none;flex-direction:column;overflow-y:auto}
+.live-overlay{position:fixed;inset:0;z-index:960;background:var(--bg);display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden}
 .live-overlay.open{display:flex}
+.live-overlay *{max-width:100%;box-sizing:border-box}
 .live-header{display:flex;align-items:center;justify-content:space-between;padding:calc(20px + env(safe-area-inset-top)) 22px 0;flex-shrink:0;gap:12px}
-.live-body{flex:1;padding:18px 18px 40px;max-width:720px;width:100%;margin:0 auto}
+.live-body{flex:1;padding:18px 18px 40px;max-width:720px;width:100%;margin:0 auto;overflow-x:hidden}
 .live-hint{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:16px}
 .live-unsupported{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--amber);line-height:1.6}
 .live-start-btn{width:100%;padding:16px;background:var(--green);color:#06140c;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 32px rgba(77,179,122,0.35);transition:all .15s}
 .live-start-btn:hover{opacity:.92;box-shadow:0 0 50px rgba(77,179,122,0.5)}
-.live-video{width:100%;max-height:90px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:8px;opacity:.7}
+.live-video{display:block;width:100%;max-width:100%;height:70px;max-height:70px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:8px;opacity:.55}
 .live-scan-btn{flex:1;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 0 28px rgba(226,226,226,0.18)}
 .live-scan-btn:hover{opacity:.93}
 .live-scan-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;box-shadow:none}
@@ -1200,7 +1201,8 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <div class="panel-handle"></div>
     <div class="panel-head"><h2>🕑 Reply History</h2><button class="panel-close" onclick="closePanel('history')">Done</button></div>
     <div class="panel-body">
-      <div class="history-actions-row" style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <div class="history-actions-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input type="text" id="history-search" placeholder="🔍 Search by their message, your reply, tone..." oninput="renderHistory()" style="flex:1;font-size:12px;padding:8px 10px">
         <button class="history-clear-btn" onclick="clearHistory()">Clear all</button>
       </div>
       <div id="history-list"><div class="empty">No replies yet.</div></div>
@@ -1248,6 +1250,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearGoods()">Clear all</button>
         </div>
         <button id="goods-toggle-btn" class="action-btn" style="width:100%;margin-bottom:8px;font-size:12px;padding:8px;opacity:.7" onclick="toggleGoodsList()">▶ Show all saved replies</button>
+        <input type="text" id="goods-search" placeholder="🔍 Search saved replies..." oninput="renderGoods()" style="display:none;margin-bottom:8px;font-size:12px;padding:8px 10px">
         <div id="goods-list" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       </div>
 
@@ -1262,6 +1265,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearReports()">Clear all</button>
         </div>
         <button id="reports-toggle-btn" class="action-btn" style="width:100%;margin-bottom:8px;font-size:12px;padding:8px;opacity:.7" onclick="toggleReportsList()">▶ Show all reported replies</button>
+        <input type="text" id="reports-search" placeholder="🔍 Search reported replies..." oninput="renderReports()" style="display:none;margin-bottom:8px;font-size:12px;padding:8px 10px">
         <div id="reports-list" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       </div>
 
@@ -1276,6 +1280,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="openMergeProfilesUI()">🔗 Merge</button>
           <button class="action-btn" style="flex:none;padding:10px 16px" onclick="clearAllLiveMemory()">Clear all</button>
         </div>
+        <input type="text" id="memory-search" placeholder="🔍 Search profiles by name, fact, hobby..." oninput="renderLiveMemoryList()" style="margin-bottom:8px;font-size:12px;padding:8px 10px">
         <div id="memory-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:0"></div>
       </div>
 
@@ -1458,7 +1463,6 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       </div>
       <div id="reply-mode-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--text3);line-height:1.5;text-align:center"></div>
       <button class="live-stop-btn" id="auto-reply-toggle-btn" style="display:none;width:100%;margin-top:8px" onclick="toggleAutoReplyMode()">🤖 Auto mode</button>
-      <button class="live-stop-btn" style="width:100%;margin-top:8px;font-size:11px;opacity:.75" onclick="testManualHelpUI()" title="Test the manual-help alarm UI">🧪 Test manual help alarm</button>
       <button class="live-stop-btn" style="width:100%;margin-top:8px" onclick="popOutLive()">⧉ Pop out floating window (so you don't switch back here)</button>
       <div class="live-detected" id="live-detected"></div>
       <div class="reply-cards" id="live-reply-cards"></div>
@@ -1728,9 +1732,19 @@ function openSettingsPanel(){
 function renderLiveMemoryList(){
   const list=document.getElementById('memory-list');if(!list)return;
   const all=getAllLiveMemory();
-  const entries=Object.values(all).sort((a,b)=>(b.lastUpdated||0)-(a.lastUpdated||0));
+  let entries=Object.values(all).sort((a,b)=>(b.lastUpdated||0)-(a.lastUpdated||0));
   const badge=document.getElementById('memory-count-badge');if(badge)badge.textContent=entries.length;
   if(!entries.length){list.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0">No profiles yet — start a Live Help scan to begin learning.</div>';return}
+  // Search filter
+  const searchEl=document.getElementById('memory-search');
+  const query=(searchEl?.value||'').toLowerCase().trim();
+  if(query){
+    entries=entries.filter(m=>{
+      const hay=[m.handle,...(m.facts||[]),...(m.likes||[]),...(m.dislikes||[]),...(m.hobbies||[]),...(m.topics||[]),m.herStyle].join(' ').toLowerCase();
+      return hay.includes(query);
+    });
+    if(!entries.length){list.innerHTML=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0">No profiles match "${(query||'').replace(/</g,'&lt;')}"</div>`;return}
+  }
   const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   list.innerHTML=entries.map(m=>{
     const hk=esc(m.handle||'?');
@@ -2045,7 +2059,18 @@ function openLive(){
   document.getElementById('live-active-area').style.display=liveStream?'block':'none';
   renderLiveToneChips();
 }
-function closeLive(){if(autoScanActive)stopAutoScan();if(deepScanActive)stopDeepScan();document.getElementById('live-overlay').classList.remove('open');document.body.style.overflow=''}
+function closeLive(){
+  if(autoScanActive)stopAutoScan();
+  if(deepScanActive)stopDeepScan();
+  // Also stop auto-reply loop so it doesn't run in the background
+  if(autoReplyMode){
+    autoReplyMode=false;
+    if(autoReplyInterval){clearTimeout(autoReplyInterval);autoReplyInterval=null}
+    _syncAutoButtons();
+  }
+  document.getElementById('live-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
 async function startLiveShare(){
   if(!liveSupported()){showToast('Not supported on this device');return}
   try{
@@ -2066,6 +2091,12 @@ async function startLiveShare(){
 function stopLiveShare(){
   if(autoScanActive)stopAutoScan();
   if(deepScanActive)stopDeepScan();
+  // Stop auto-reply loop so it doesn't keep running without a stream
+  if(autoReplyMode){
+    autoReplyMode=false;
+    if(autoReplyInterval){clearTimeout(autoReplyInterval);autoReplyInterval=null}
+    _syncAutoButtons();
+  }
   if(liveStream){liveStream.getTracks().forEach(t=>t.stop());liveStream=null;}
   const v=document.getElementById('live-video');if(v)v.srcObject=null;
   document.getElementById('live-start-area').style.display='block';
@@ -3352,8 +3383,15 @@ function setLearnMode(on){
 function renderUserProfileStatus(){
   const el=document.getElementById('user-profile-status');if(!el)return;
   const p=getUserProfile();
-  if(!p){el.textContent=learnModeOn?'No style learned yet — scan a chat to start':'Off';return}
-  el.textContent=`✅ Style learned · ${p.sampleCount||0} messages scanned · updated ${new Date(p.lastUpdated).toLocaleDateString()}`;
+  if(!p||!p.sampleCount){
+    el.innerHTML=learnModeOn
+      ?'<span style="color:var(--text3)">No style learned yet — </span><span style="color:var(--blue)">scan a chat or import a deep-scan JSON to start</span>'
+      :'<span style="color:var(--text3)">Off — turn on the toggle to start learning</span>';
+    return;
+  }
+  const date=p.lastUpdated?new Date(p.lastUpdated).toLocaleDateString():'never';
+  const traits=p.styleTraits?.length||0;
+  el.innerHTML=`<span style="color:var(--green)">✅ Style learned</span> · <strong>${p.sampleCount||0}</strong> messages · ${traits} traits · updated ${date}`;
   const sum=document.getElementById('user-profile-summary');
   if(sum&&p.styleSummary){sum.style.display='block';sum.innerHTML=`<strong style="color:var(--text)">Your texting style:</strong><br>${p.styleSummary.replace(/</g,'&lt;')}`;}
 }
@@ -3447,25 +3485,53 @@ function buildUserStyleBlock(){
 
 // ── 📂 DEEP SCAN IMPORT — process deep scan JSON files to build profiles ──
 let _deepScanImporting=false;
+let _deepScanCancel=false;
+
+function cancelDeepScanImport(){
+  if(!_deepScanImporting)return;
+  _deepScanCancel=true;
+  showToast('🛑 Cancelling import after current batch...');
+}
+
+function renderDeepScanStatus(html){
+  const statusEl=document.getElementById('deep-scan-import-status');
+  if(!statusEl)return;
+  statusEl.style.display='block';
+  statusEl.innerHTML=html;
+}
+
+function renderDeepScanProgress({filename, fileIdx, fileTotal, batchIdx, batchTotal, messagesFound, error}){
+  const pct=batchTotal?Math.round((batchIdx/batchTotal)*100):0;
+  const cancelBtn=_deepScanImporting?`<button onclick="cancelDeepScanImport()" style="margin-top:8px;padding:6px 14px;border:1px solid var(--red);background:transparent;color:var(--red);border-radius:8px;cursor:pointer;font-size:11px">🛑 Cancel</button>`:'';
+  renderDeepScanStatus(`
+    <div style="font-size:12px;color:var(--text);margin-bottom:6px"><strong>📂 ${(filename||'').replace(/</g,'&lt;')}</strong> · file ${fileIdx}/${fileTotal}</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Batch ${batchIdx}/${batchTotal} (${pct}%) · ${messagesFound||0} messages extracted${error?` · <span style="color:var(--red)">${error}</span>`:''}</div>
+    <div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--blue);transition:width .3s"></div></div>
+    ${cancelBtn}
+  `);
+}
 
 async function importDeepScanFiles(files){
   if(!files||!files.length)return;
   if(!apiKey){showToast('Enter your API key first');return}
   if(_deepScanImporting){showToast('Already importing — please wait');return}
   _deepScanImporting=true;
-  const statusEl=document.getElementById('deep-scan-import-status');
-  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='📂 Loading files...';}
+  _deepScanCancel=false;
+  renderDeepScanStatus('📂 Loading files...');
 
   const allResults=[];
+  let fileIdx=0;
   for(const file of files){
+    fileIdx++;
+    if(_deepScanCancel)break;
     try{
       const text=await file.text();
       const data=JSON.parse(text);
-      if(!data.frames||!data.frames.length){showToast(`${file.name}: no frames`);continue}
-      if(statusEl)statusEl.innerHTML=`📂 Processing <strong>${file.name}</strong> (${data.frames.length} frames)...<br>This uses the vision API — may take a while.`;
+      if(!data.frames||!data.frames.length){showToast(`${file.name}: no frames — skipping`);continue}
 
-      const result=await processDeepScanFrames(data,file.name,statusEl);
-      if(result)allResults.push(result);
+      const result=await processDeepScanFrames(data,file.name,fileIdx,files.length);
+      if(result&&result.messages.length)allResults.push(result);
+      else if(result)showToast(`${file.name}: no messages extracted`);
     }catch(e){
       console.error('Import failed for',file.name,e);
       showToast(`Failed: ${file.name} — ${e.message}`);
@@ -3475,41 +3541,57 @@ async function importDeepScanFiles(files){
   // Merge all results into profiles
   if(allResults.length){
     mergeDeepScanResults(allResults);
-    if(statusEl){
-      const handles=allResults.map(r=>r.handle||'unknown').join(', ');
-      const totalMsgs=allResults.reduce((a,r)=>a+(r.messages||[]).length,0);
-      statusEl.innerHTML=`✅ Imported ${allResults.length} conversation(s): ${handles}<br>${totalMsgs} total messages extracted<br>Girl profiles + your style profile updated.`;
-    }
+    const handles=allResults.map(r=>r.handle||'(no handle found)').join(', ');
+    const totalMsgs=allResults.reduce((a,r)=>a+(r.messages||[]).length,0);
+    const userMsgs=allResults.reduce((a,r)=>a+r.messages.filter(m=>m.sender==='user').length,0);
+    const cancelNote=_deepScanCancel?'<br><span style="color:var(--amber)">⚠️ Cancelled partway through</span>':'';
+    renderDeepScanStatus(`
+      <div style="font-size:13px;color:var(--green);margin-bottom:6px"><strong>✅ Import complete</strong></div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">
+        ${allResults.length} conversation(s): <strong>${handles.replace(/</g,'&lt;')}</strong><br>
+        ${totalMsgs} total messages · ${userMsgs} from you<br>
+        Girl profiles updated · Your style profile refreshed${cancelNote}
+      </div>
+    `);
     renderUserProfileStatus();
+    renderLiveMemoryList();
+  }else if(!_deepScanCancel){
+    renderDeepScanStatus('<span style="color:var(--red)">❌ No messages extracted from any file. Check your API key and try again.</span>');
+  }else{
+    renderDeepScanStatus('<span style="color:var(--amber)">🛑 Import cancelled — no changes saved.</span>');
   }
   _deepScanImporting=false;
-  // Reset file input
+  _deepScanCancel=false;
   const inp=document.getElementById('deep-scan-import-file');
   if(inp)inp.value='';
 }
 
-async function processDeepScanFrames(data,filename,statusEl){
+async function processDeepScanFrames(data,filename,fileIdx,fileTotal){
   const frames=data.frames||[];
-  // Process in batches of 3 to save API calls — send 3 frames at a time as a grid
   const allMessages=[];
   let handle=data.handle||'';
   const batchSize=3;
   const totalBatches=Math.ceil(frames.length/batchSize);
+  let failedBatches=0;
 
   for(let i=0;i<frames.length;i+=batchSize){
+    if(_deepScanCancel)break;
     const batch=frames.slice(i,i+batchSize);
     const batchIdx=Math.floor(i/batchSize)+1;
-    if(statusEl)statusEl.innerHTML=`📂 <strong>${filename}</strong>: scanning batch ${batchIdx}/${totalBatches}...`;
+    renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length});
 
-    try{
-      // Send each frame in the batch as separate images
-      const userContent=[];
-      batch.forEach((frame,fi)=>{
-        let imgData=frame.image||'';
-        if(!imgData.startsWith('data:'))imgData='data:image/jpeg;base64,'+imgData;
-        userContent.push({type:'image_url',image_url:{url:imgData}});
-      });
-      userContent.push({type:'text',text:`These are ${batch.length} screenshot(s) of an Instagram DM conversation. Extract ALL messages from ALL frames.
+    // Try the batch up to 2 times (retry once on transient failures)
+    let batchSuccess=false;
+    for(let attempt=1;attempt<=2&&!batchSuccess;attempt++){
+      if(_deepScanCancel)break;
+      try{
+        const userContent=[];
+        batch.forEach(frame=>{
+          let imgData=frame.image||'';
+          if(!imgData.startsWith('data:'))imgData='data:image/jpeg;base64,'+imgData;
+          userContent.push({type:'image_url',image_url:{url:imgData}});
+        });
+        userContent.push({type:'text',text:`These are ${batch.length} screenshot(s) of an Instagram DM conversation. Extract ALL messages from ALL frames.
 
 RULES:
 - BLUE/PURPLE bubbles (RIGHT side) = user's messages → sender: "user"
@@ -3522,58 +3604,61 @@ RULES:
 Return ONLY valid JSON:
 {"handle":"her_handle_or_name","messages":[{"sender":"user"|"female","text":"exact message text"}],"her_style":"one-line description of how she texts","user_style":"one-line description of how the user texts"}`});
 
-      const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-        body:JSON.stringify({
-          model:'meta-llama/llama-4-scout-17b-16e-instruct',
-          max_tokens:2000,temperature:0.2,
-          messages:[
-            {role:'system',content:'You are a precise message extractor for Instagram DM screenshots. Extract every visible message bubble with correct sender attribution. BLUE/PURPLE (right) = user. GREY (left) = female. The handle/name at the top centre of the chat panel is the girl\'s name. Do NOT confuse the left sidebar handles with the conversation partner. Return valid JSON only.'},
-            {role:'user',content:userContent}
-          ]
-        })
-      });
+        const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+          body:JSON.stringify({
+            model:'meta-llama/llama-4-scout-17b-16e-instruct',
+            max_tokens:2000,temperature:0.2,
+            messages:[
+              {role:'system',content:'You are a precise message extractor for Instagram DM screenshots. Extract every visible message bubble with correct sender attribution. BLUE/PURPLE (right) = user. GREY (left) = female. The handle/name at the top centre of the chat panel is the girl\'s name. Do NOT confuse the left sidebar handles with the conversation partner. Return valid JSON only.'},
+              {role:'user',content:userContent}
+            ]
+          })
+        });
 
-      if(!res.ok){
-        const errText=await res.text();
-        console.warn('Deep scan batch failed:',errText);
-        continue;
-      }
+        if(!res.ok){
+          const status=res.status;
+          // 429 = rate limit, wait longer before retry. 5xx = transient
+          if((status===429||status>=500)&&attempt===1){
+            renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`HTTP ${status} — retrying...`});
+            await new Promise(r=>setTimeout(r,status===429?6000:3000));
+            continue;
+          }
+          throw new Error(`HTTP ${status}`);
+        }
 
-      const resData=await res.json();
-      const raw=resData.choices?.[0]?.message?.content?.trim()||'';
-      const parsed=parseJsonLoose(raw);
-      if(parsed){
-        if(parsed.handle&&!handle)handle=parsed.handle;
-        if(Array.isArray(parsed.messages)){
-          parsed.messages.forEach(m=>{
-            if(m.text&&m.sender){
-              // Deduplicate by normalized text
-              const norm=m.text.toLowerCase().replace(/\s+/g,' ').trim();
-              if(!allMessages.some(ex=>ex._norm===norm&&ex.sender===m.sender)){
-                allMessages.push({...m,_norm:norm});
+        const resData=await res.json();
+        const raw=resData.choices?.[0]?.message?.content?.trim()||'';
+        const parsed=parseJsonLoose(raw);
+        if(parsed){
+          if(parsed.handle&&!handle)handle=parsed.handle;
+          if(Array.isArray(parsed.messages)){
+            parsed.messages.forEach(m=>{
+              if(m.text&&m.sender){
+                const norm=m.text.toLowerCase().replace(/\s+/g,' ').trim();
+                if(!allMessages.some(ex=>ex._norm===norm&&ex.sender===m.sender)){
+                  allMessages.push({...m,_norm:norm});
+                }
               }
-            }
-          });
+            });
+          }
+        }
+        batchSuccess=true;
+      }catch(e){
+        if(attempt===2){
+          console.warn(`Batch ${batchIdx} failed twice:`,e);
+          failedBatches++;
+          renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`Batch ${batchIdx} failed`});
         }
       }
-
-      // Rate limit between batches
-      if(i+batchSize<frames.length)await new Promise(r=>setTimeout(r,2000));
-    }catch(e){
-      console.warn('Batch processing error:',e);
     }
+
+    // Rate limit between batches (avoid hitting Groq's free tier limits)
+    if(i+batchSize<frames.length && !_deepScanCancel)await new Promise(r=>setTimeout(r,2000));
   }
 
-  // Clean up _norm field
   allMessages.forEach(m=>delete m._norm);
-
-  return {
-    handle:handle,
-    filename:filename,
-    messages:allMessages,
-    frameCount:frames.length
-  };
+  return {handle,filename,messages:allMessages,frameCount:frames.length,failedBatches};
 }
 
 function mergeDeepScanResults(results){
@@ -7978,15 +8063,18 @@ function updateReportCount(){
 function toggleReportsList(){
   const list=document.getElementById('reports-list');
   const btn=document.getElementById('reports-toggle-btn');
+  const search=document.getElementById('reports-search');
   if(!list||!btn)return;
   const isHidden=list.style.display==='none';
   list.style.display=isHidden?'flex':'none';
+  if(search)search.style.display=isHidden?'block':'none';
   const n=reportedReplies.length;
   btn.textContent=isHidden?`▼ Hide reported replies (${n})`:`▶ Show all reported replies (${n})`;
 }
 function renderReports(){
   const list=document.getElementById('reports-list');if(!list)return;
   const btn=document.getElementById('reports-toggle-btn');
+  const searchInput=document.getElementById('reports-search');
   const n=reportedReplies.length;
   if(btn){
     const isOpen=list.style.display==='flex';
@@ -7994,12 +8082,21 @@ function renderReports(){
     btn.style.display=n?'':'none';
   }
   if(!n){list.innerHTML='';return}
-  // newest first
-  list.innerHTML=reportedReplies.slice().reverse().map((r,revIdx)=>{
-    const realIdx=reportedReplies.length-1-revIdx;
-    const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const query=(searchInput?.value||'').toLowerCase().trim();
+  const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const items=reportedReplies.map((r,i)=>({r,i}))
+    .filter(({r})=>{
+      if(!query)return true;
+      return `${r.reply||''} ${r.message||''} ${r.reason||''}`.toLowerCase().includes(query);
+    })
+    .reverse();
+  if(!items.length){
+    list.innerHTML=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:14px">No matches for "${esc(query)}"</div>`;
+    return;
+  }
+  list.innerHTML=items.map(({r,i})=>{
     return`<div class="report-item">
-      <button class="ri-del" onclick="deleteReport(${realIdx})" title="Remove">✕</button>
+      <button class="ri-del" onclick="deleteReport(${i})" title="Remove">✕</button>
       <div class="ri-reply">"${esc(r.reply)}"</div>
       <div class="ri-reason">⚠ ${esc(r.reason)}</div>
       ${r.message?`<div class="ri-msg">on: "${esc(r.message)}"</div>`:''}
@@ -8313,15 +8410,18 @@ function markGood(i){
 function toggleGoodsList(){
   const list=document.getElementById('goods-list');
   const btn=document.getElementById('goods-toggle-btn');
+  const search=document.getElementById('goods-search');
   if(!list||!btn)return;
   const isHidden=list.style.display==='none';
   list.style.display=isHidden?'flex':'none';
+  if(search)search.style.display=isHidden?'block':'none';
   const n=savedGoodReplies.length;
   btn.textContent=isHidden?`▼ Hide saved replies (${n})`:`▶ Show all saved replies (${n})`;
 }
 function renderGoods(){
   const list=document.getElementById('goods-list');if(!list)return;
   const btn=document.getElementById('goods-toggle-btn');
+  const searchInput=document.getElementById('goods-search');
   const n=savedGoodReplies.length;
   if(btn){
     const isOpen=list.style.display==='flex';
@@ -8329,11 +8429,23 @@ function renderGoods(){
     btn.style.display=n?'':'none';
   }
   if(!n){list.innerHTML='';return}
-  list.innerHTML=savedGoodReplies.slice().reverse().map((r,revIdx)=>{
-    const realIdx=savedGoodReplies.length-1-revIdx;
-    const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const query=(searchInput?.value||'').toLowerCase().trim();
+  const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Build {item, realIdx} pairs, filter, then render
+  const items=savedGoodReplies.map((r,i)=>({r,i}))
+    .filter(({r})=>{
+      if(!query)return true;
+      const hay=`${r.reply||''} ${r.message||''} ${r.tone||''}`.toLowerCase();
+      return hay.includes(query);
+    })
+    .reverse();
+  if(!items.length){
+    list.innerHTML=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:14px">No matches for "${esc(query)}"</div>`;
+    return;
+  }
+  list.innerHTML=items.map(({r,i})=>{
     return`<div class="report-item good">
-      <button class="ri-del" onclick="deleteGood(${realIdx})" title="Remove">✕</button>
+      <button class="ri-del" onclick="deleteGood(${i})" title="Remove">✕</button>
       <div class="ri-reply">"${esc(r.reply)}"</div>
       ${r.tone?`<div class="ri-good-tag">⭐ ${esc(r.tone)}</div>`:''}
       ${r.message?`<div class="ri-msg">on: "${esc(r.message)}"</div>`:''}
@@ -9333,7 +9445,15 @@ function renderHistory(){
   document.getElementById('history-count').textContent=history.length;
   const el=document.getElementById('history-list');
   if(!history.length){el.innerHTML='<div class="empty">No replies yet.</div>';return}
-  el.innerHTML=history.map((h,i)=>`
+  const searchEl=document.getElementById('history-search');
+  const query=(searchEl?.value||'').toLowerCase().trim();
+  const items=history.map((h,i)=>({h,i}))
+    .filter(({h})=>{
+      if(!query)return true;
+      return `${h.their||''} ${h.reply||''} ${h.tone||''} ${h.mode||''}`.toLowerCase().includes(query);
+    });
+  if(!items.length){el.innerHTML=`<div class="empty">No history matches "${query.replace(/</g,'&lt;')}"</div>`;return}
+  el.innerHTML=items.map(({h,i})=>`
     <div class="history-item">
       <div class="history-meta">
         <span class="tone-badge">${toneEmoji(h.tone)} ${h.tone}</span>
