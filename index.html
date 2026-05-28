@@ -766,7 +766,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .live-unsupported{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--amber);line-height:1.6}
 .live-start-btn{width:100%;padding:16px;background:var(--green);color:#06140c;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 32px rgba(77,179,122,0.35);transition:all .15s}
 .live-start-btn:hover{opacity:.92;box-shadow:0 0 50px rgba(77,179,122,0.5)}
-.live-video{display:block;width:100%;max-width:100%;height:70px;max-height:70px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:8px;opacity:.55}
+.live-video,#live-video{display:block;width:100%;max-width:100%;height:70px;max-height:70px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:8px;opacity:.55}
 .live-scan-btn{flex:1;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 0 28px rgba(226,226,226,0.18)}
 .live-scan-btn:hover{opacity:.93}
 .live-scan-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;box-shadow:none}
@@ -1148,13 +1148,30 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
     <div class="panel-handle"></div>
     <div class="panel-head"><h2>🔑 API & Gallery</h2><button class="panel-close" onclick="closePanel('api')">Done</button></div>
     <div class="panel-body">
-      <div class="card-label">Groq API key</div>
-      <p style="font-size:13px;color:var(--text2);margin:6px 0 12px;">Powers all replies. Get one free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--text);font-weight:500;">console.groq.com</a>. Stored only on your device.</p>
-      <div class="setup-row">
-        <input type="text" id="api-key-input" placeholder="gsk_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
-        <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveApiKey()">Save</button>
+      <div class="card-label">AI Provider</div>
+      <p style="font-size:13px;color:var(--text2);margin:6px 0 10px;">Choose which API powers your replies. Both are free.</p>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button id="provider-groq" class="mode-btn active" style="flex:1" onclick="setAiProvider('groq')">⚡ Groq</button>
+        <button id="provider-nvidia" class="mode-btn" style="flex:1" onclick="setAiProvider('nvidia')">🟢 NVIDIA NIM</button>
       </div>
-      <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
+      <div id="groq-key-section">
+        <div class="card-label">Groq API key</div>
+        <p style="font-size:13px;color:var(--text2);margin:6px 0 12px;">Get one free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--text);font-weight:500;">console.groq.com</a>. Stored only on your device.</p>
+        <div class="setup-row">
+          <input type="text" id="api-key-input" placeholder="gsk_..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
+          <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveApiKey()">Save</button>
+        </div>
+        <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
+      </div>
+      <div id="nvidia-key-section" style="display:none">
+        <div class="card-label">NVIDIA NIM API key</div>
+        <p style="font-size:13px;color:var(--text2);margin:6px 0 12px;">Free, no credit card. Get one at <a href="https://build.nvidia.com/" target="_blank" style="color:var(--text);font-weight:500;">build.nvidia.com</a> → sign up → generate key.</p>
+        <div class="setup-row">
+          <input type="text" id="nim-key-input" placeholder="nvapi-..." style="font-family:'DM Mono',monospace;font-size:13px;flex:1" />
+          <button class="action-btn" style="flex:none;padding:10px 18px;font-weight:600;white-space:nowrap" onclick="saveNimApiKey()">Save</button>
+        </div>
+        <div id="nim-key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
+      </div>
       <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border)">
         <div class="card-label" style="margin-bottom:8px">Image Gallery — GitHub <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></div>
         <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6">Auto-saves uploaded images to your GitHub repo. <a href="https://github.com/settings/tokens/new?scopes=repo&description=DM+Assistant" target="_blank" style="color:var(--text2)">Create a token</a> (check the <strong style="color:var(--text2)">repo</strong> scope).</p>
@@ -1440,7 +1457,7 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
       <button class="live-start-btn" onclick="startLiveShare()">▶ Start screen share</button>
     </div>
     <div id="live-active-area" style="display:none">
-      <video id="live-video" autoplay muted playsinline></video>
+      <video id="live-video" class="live-video" autoplay muted playsinline></video>
       <div class="live-tone-label">Reply vibe — pick up to 2 (2 replies lean these ways, 1 is the AI's best call)</div>
       <div class="live-tone-row" id="live-tone-row"></div>
       <div style="display:flex;gap:8px">
@@ -3122,7 +3139,7 @@ _extObserver.observe(document.documentElement,{attributes:true,attributeFilter:[
 // 🔄 REGENERATE A SINGLE LIVE REPLY with a chosen vibe (spicier, flirtier, etc.)
 async function regenSingleLive(i,vibe,doc){
   doc=doc||document;
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(!checkCallLimit())return;
   const existing=currentReplies[i];if(!existing)return;
   const her=lastGenMessage&&lastGenMessage!=='[Live chat]'?lastGenMessage:'';
@@ -3170,8 +3187,8 @@ Return ONLY JSON: {"text":"the new reply","tone":"label","why":"short reason"}`;
     const userContent=useImg
       ?[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${lastLiveFrame}`}},{type:'text',text:`Rewrite reply #${i+1} to be ${vibe}. Her message: "${her}". Return ONE replacement reply as JSON.`}]
       :`Rewrite the existing reply to be ${vibe}. Her message: "${her}". Return ONE replacement reply as JSON.`;
-    const body={model:useImg?'meta-llama/llama-4-scout-17b-16e-instruct':getTextModel(),max_tokens:250,temperature:1.05,top_p:0.95,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:sys},{role:'user',content:userContent}]};
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify(body)});
+    const body={model:useImg?getVisionModel():getTextModel(),max_tokens:250,temperature:1.05,top_p:0.95,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:sys},{role:'user',content:userContent}]};
+    const res=await fetch(getApiUrl(),{method:'POST',headers:getApiHeaders(),body:JSON.stringify(body)});
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
     const raw=data.choices?.[0]?.message?.content?.trim()||'';
@@ -3403,14 +3420,14 @@ function clearUserProfile(){
 }
 async function learnFromLiveFrame(){
   if(!liveStream){showToast('Start Live Help screen share first');return}
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   const b64=captureLiveFrame();if(!b64)return;
   showToast('🧠 Learning your style...');
   const existing=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.3,messages:[
+    const res=await fetch(getApiUrl(),{
+      method:'POST',headers:getApiHeaders(),
+      body:JSON.stringify({model:getVisionModel(),max_tokens:500,temperature:0.3,messages:[
         {role:'system',content:`You are a texting style analyst. You're looking at a screenshot of an Instagram DM conversation. Your job is to extract the USER's texting style by reading ONLY the BLUE/PURPLE bubbles (right side). These are the USER's own messages. IGNORE grey bubbles (those are from someone else).
 
 Extract:
@@ -3513,7 +3530,7 @@ function renderDeepScanProgress({filename, fileIdx, fileTotal, batchIdx, batchTo
 
 async function importDeepScanFiles(files){
   if(!files||!files.length)return;
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(_deepScanImporting){showToast('Already importing — please wait');return}
   _deepScanImporting=true;
   _deepScanCancel=false;
@@ -3604,10 +3621,10 @@ RULES:
 Return ONLY valid JSON:
 {"handle":"her_handle_or_name","messages":[{"sender":"user"|"female","text":"exact message text"}],"her_style":"one-line description of how she texts","user_style":"one-line description of how the user texts"}`});
 
-        const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+        const res=await fetch(getApiUrl(),{
+          method:'POST',headers:getApiHeaders(),
           body:JSON.stringify({
-            model:'meta-llama/llama-4-scout-17b-16e-instruct',
+            model:getVisionModel(),
             max_tokens:2000,temperature:0.2,
             messages:[
               {role:'system',content:'You are a precise message extractor for Instagram DM screenshots. Extract every visible message bubble with correct sender attribution. BLUE/PURPLE (right) = user. GREY (left) = female. The handle/name at the top centre of the chat panel is the girl\'s name. Do NOT confuse the left sidebar handles with the conversation partner. Return valid JSON only.'},
@@ -4095,7 +4112,7 @@ function updateDeepScanBtn(active){
 async function profileScanLive(targetDoc){
   targetDoc=targetDoc||document;
   const b64=captureLiveFrame();if(!b64)return;
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(!checkCallLimit())return;
   const btn=targetDoc.getElementById('pip-profile')||document.getElementById('live-profile-btn');
   if(btn){btn.disabled=true;btn.textContent='📡 Scanning profile...';}
@@ -4149,9 +4166,9 @@ VERDICT mapping:
 Return ONLY raw JSON, no markdown:
 {"verdict":"follow|maybe|skip","score":<integer 1-11>,"vibe":"short fair read — can be playful","reasons":["specific observation 1","specific observation 2","specific observation 3"],"move":"one practical line"}`;
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Fair honest rating of this Instagram profile. Most real humans land at 5-7 — only drop below for genuinely empty/spam profiles, only push to 8+ for clearly strong ones. Recognise humour, irony, and personality in bios (e.g. "Adult Entertainment Service" on someone obviously not in adult work = JOKE, treat as personality not red flag). Don\'t be harsh just for the sake of it. ⚠️ IMPORTANT: if the @handle is "trislovesu.7", apply the OWNER OVERRIDE from the system prompt — 11/10 automatic, with the warm reasons listed. Give 3-5 specific observations. Ignore left nav and suggestions. Return the JSON.'}]}]})
+    const res=await fetch(getApiUrl(),{
+      method:'POST',headers:getApiHeaders(),
+      body:JSON.stringify({model:getVisionModel(),max_tokens:500,temperature:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Fair honest rating of this Instagram profile. Most real humans land at 5-7 — only drop below for genuinely empty/spam profiles, only push to 8+ for clearly strong ones. Recognise humour, irony, and personality in bios (e.g. "Adult Entertainment Service" on someone obviously not in adult work = JOKE, treat as personality not red flag). Don\'t be harsh just for the sake of it. ⚠️ IMPORTANT: if the @handle is "trislovesu.7", apply the OWNER OVERRIDE from the system prompt — 11/10 automatic, with the warm reasons listed. Give 3-5 specific observations. Ignore left nav and suggestions. Return the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -4196,7 +4213,7 @@ function renderProfileResult(targetDoc,d){
 async function storyReplyLive(targetDoc){
   targetDoc=targetDoc||document;
   const b64=captureLiveFrame();if(!b64)return;
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(!checkCallLimit())return;
   const btn=targetDoc.getElementById('pip-story')||document.getElementById('live-story-btn');
   if(btn){btn.disabled=true;btn.textContent='📡 Reading the story...';}
@@ -4391,9 +4408,9 @@ THE REAL RHYTHM:
 
 Return ONLY JSON: {"her_message":"brief description of what's actually in the story (the outfit + what she's doing + location + song/caption if any)","replies":[{"text":"the literal dm","tone":"one-word vibe","why":"the specific detail it noticed"}]}`;
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:600,temperature:1.15,top_p:0.95,frequency_penalty:0.8,presence_penalty:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore dimmed side previews). 🎯 PRIMARY GOAL: every opener MUST PULL A SUBSTANTIVE REPLY — give her SOMETHING SPECIFIC TO TELL YOU. If her realistic reply to your opener is "yeah" / "ikr" / 😂 / a single emoji → REWRITE before submitting. ✅ USE THESE SHAPES: (1) OPEN-ENDED Q she has info on ("where is this i need to go" / "okay drop the location" / "okay drop the playlist" / "who took this") (2) WRONG-GUESS she corrects ("wait is this trinidad?" / "you in mexico?") (3) CALLBACK to memory ("wait this is where you went last time too?") (4) TEASE-Q begging context ("you actually on a boat or staged this" / "this is u rn or from the trip") (5) PLAYFUL DEMAND ("okay influencer drop the location" / "i need the full context"). 💕 MANDATORY: AT LEAST 1 of the 3 must have a FLIRTY EDGE — a tease/playful claim that hints at interest WITHOUT being a compliment or thirsty. Examples: "this is dangerous behaviour for a wednesday" / "okay confident behaviour" / "tell me you didn\'t go without me" / "what\'s a guy gotta do to get an invite" / "you taking applications for the next trip" / "are you trying to ruin my day or". The flirty one still has to PULL A REPLY — tease, not compliment. Mix the 3 so they\'re different SHAPES (one flirty + two curiosity), not all the same. ❌ AVOID REPLY-DEAD SHAPES: just-naming ("the boots" / "the song fr" / "the location 😭"), one-word reactions ("criminal." / "unreal."), closed Y/N ("you in trinidad?"), statements needing only agreement ("this song is unreal"), mock-judgment alone ("okay influencer"). ⚠️ HARD GUARDS — REJECT YOUR REPLY IF: (1) it names a bikini/swimsuit/lingerie/shorts/body part — body-coded items count as thirsty even when phrased as observation; (2) it uses "[noun] vibes" ("boat vibes" / "city vibes" / "summer vibes") — banned pattern. When she\'s in revealing clothing pivot to NEUTRAL detail: the song, location, what she\'s doing, accessory, context of the moment. GRANDMA TEST: would her grandma not feel weird? if no, repick. 🎯 KEEP IT SHORT: most replies 4-12 words. AT LEAST 1 of the 3 should be very short (3-6 words) but it MUST still pull a reply (question or tease, not naming). Mix lengths + shapes. 🚫 STOP: "okay but..." / "wait..." / "okay so..." as manufactured fragments. Writer-y vocab repeated: "criminal" / "doing numbers" / "is a choice" / "i\'m onto you" / "you peaked" / "suspiciously curated". Compound "+ + =" structures. 2-clause setup+punchline. 🔒 EACH "text" FIELD = LITERAL DM HE\'D TYPE — never 3rd person, narration, "reply:" labels. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "[noun] vibes", "you look amazing/beautiful/stunning", "he would", "i\'d probably", "as a confident guy", "a reply might be", "that bikini", "those legs". Lowercase. MAX 1 emoji per opener, at least 2 of 3 should have NO emoji. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
+    const res=await fetch(getApiUrl(),{
+      method:'POST',headers:getApiHeaders(),
+      body:JSON.stringify({model:getVisionModel(),max_tokens:600,temperature:1.15,top_p:0.95,frequency_penalty:0.8,presence_penalty:0.6,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:'Read ONLY the big central story (ignore dimmed side previews). 🎯 PRIMARY GOAL: every opener MUST PULL A SUBSTANTIVE REPLY — give her SOMETHING SPECIFIC TO TELL YOU. If her realistic reply to your opener is "yeah" / "ikr" / 😂 / a single emoji → REWRITE before submitting. ✅ USE THESE SHAPES: (1) OPEN-ENDED Q she has info on ("where is this i need to go" / "okay drop the location" / "okay drop the playlist" / "who took this") (2) WRONG-GUESS she corrects ("wait is this trinidad?" / "you in mexico?") (3) CALLBACK to memory ("wait this is where you went last time too?") (4) TEASE-Q begging context ("you actually on a boat or staged this" / "this is u rn or from the trip") (5) PLAYFUL DEMAND ("okay influencer drop the location" / "i need the full context"). 💕 MANDATORY: AT LEAST 1 of the 3 must have a FLIRTY EDGE — a tease/playful claim that hints at interest WITHOUT being a compliment or thirsty. Examples: "this is dangerous behaviour for a wednesday" / "okay confident behaviour" / "tell me you didn\'t go without me" / "what\'s a guy gotta do to get an invite" / "you taking applications for the next trip" / "are you trying to ruin my day or". The flirty one still has to PULL A REPLY — tease, not compliment. Mix the 3 so they\'re different SHAPES (one flirty + two curiosity), not all the same. ❌ AVOID REPLY-DEAD SHAPES: just-naming ("the boots" / "the song fr" / "the location 😭"), one-word reactions ("criminal." / "unreal."), closed Y/N ("you in trinidad?"), statements needing only agreement ("this song is unreal"), mock-judgment alone ("okay influencer"). ⚠️ HARD GUARDS — REJECT YOUR REPLY IF: (1) it names a bikini/swimsuit/lingerie/shorts/body part — body-coded items count as thirsty even when phrased as observation; (2) it uses "[noun] vibes" ("boat vibes" / "city vibes" / "summer vibes") — banned pattern. When she\'s in revealing clothing pivot to NEUTRAL detail: the song, location, what she\'s doing, accessory, context of the moment. GRANDMA TEST: would her grandma not feel weird? if no, repick. 🎯 KEEP IT SHORT: most replies 4-12 words. AT LEAST 1 of the 3 should be very short (3-6 words) but it MUST still pull a reply (question or tease, not naming). Mix lengths + shapes. 🚫 STOP: "okay but..." / "wait..." / "okay so..." as manufactured fragments. Writer-y vocab repeated: "criminal" / "doing numbers" / "is a choice" / "i\'m onto you" / "you peaked" / "suspiciously curated". Compound "+ + =" structures. 2-clause setup+punchline. 🔒 EACH "text" FIELD = LITERAL DM HE\'D TYPE — never 3rd person, narration, "reply:" labels. BANNED phrasings: "your go-to [X]", "the [X] is doing some work", "you\'re really [X] or something", "selling this", "looks fun", "vibes", "[noun] vibes", "you look amazing/beautiful/stunning", "he would", "i\'d probably", "as a confident guy", "a reply might be", "that bikini", "those legs". Lowercase. MAX 1 emoji per opener, at least 2 of 3 should have NO emoji. Good: 😭 👀 😏 💀 🤷‍♂️. Avoid: 😂 ❤️ 🔥 😍. Return EXACTLY 3 distinct DM openers in the JSON.'}]}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -4421,7 +4438,7 @@ function fixLiveMessage(targetDoc){
 
 async function doLiveGenerate(targetDoc,b64,overrideMsg){
   targetDoc=targetDoc||document;
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(!checkCallLimit())return;
 
   const btn=targetDoc.getElementById('live-scan-btn')||targetDoc.getElementById('pip-scan')||document.getElementById('live-scan-btn');
@@ -4638,9 +4655,9 @@ Return ONLY valid JSON with EXACTLY this shape:
 ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of the USER (the guy). Extract "my_style_traits" (4-8 specific observations like "uses lowercase only", "short punchy messages", "dry humor", "uses 😭 often") and "my_style_summary" (2-3 sentences describing how he texts, as if briefing a ghostwriter). This is based ONLY on the blue/purple bubbles. IMPORTANT: make your replies SOUND LIKE HIM — match his slang, length, energy, punctuation, emoji habits. Do NOT over-polish.`;
 
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:1000,temperature:0.85,top_p:0.92,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends. Return EXACTLY 3 distinct replies + learning fields in the JSON.`:`🚨 BEFORE ANYTHING ELSE — IDENTIFY HER NEWEST MESSAGE CORRECTLY:
+    const res=await fetch(getApiUrl(),{
+      method:'POST',headers:getApiHeaders(),
+      body:JSON.stringify({model:getVisionModel(),max_tokens:1000,temperature:0.85,top_p:0.92,frequency_penalty:0.6,presence_penalty:0.5,messages:[{role:'system',content:system},{role:'user',content:[{type:'image_url',image_url:{url:`data:image/jpeg;base64,${b64}`}},{type:'text',text:overrideMsg?`Her exact latest message is: "${overrideMsg}". Reply to that. If it contains a question, ANSWER it directly first, then add a follow-up. Look at my recent blue/purple messages — if they were passive/sweet/short, switch lanes. At least 2 of the 3 replies must push the convo forward. At least 1 must be SUBSTANTIVE. ALSO extract her_handle, new_facts, her_style, topics_now, my_recent_sends, her_recent_sends. Return EXACTLY 3 distinct replies + learning fields in the JSON.`:`🚨 BEFORE ANYTHING ELSE — IDENTIFY HER NEWEST MESSAGE CORRECTLY:
 
 Step 1: Find the message INPUT BOX at the very bottom of the active chat (it says "Message..." with mic/image/sticker icons). This is your ANCHOR POINT.
 Step 2: Starting from that input box, scan UPWARDS one bubble at a time. Count each bubble.
@@ -4822,26 +4839,103 @@ async function popOutLive(){
   showToast('Popped out — keep it over your chat and scan from there');
 }
 
-// ── API KEY ──────────────────────────────────
+// ── API PROVIDER + KEYS ──────────────────────
 let apiKey='';
+let nimApiKey='';
+let aiProvider='groq'; // 'groq' or 'nvidia'
+
+const PROVIDER_CONFIG={
+  groq:{
+    baseUrl:'https://api.groq.com/openai/v1/chat/completions',
+    visionModel:'meta-llama/llama-4-scout-17b-16e-instruct',
+    textModelFast:'llama-3.1-8b-instant',
+    textModelBetter:'llama-3.3-70b-versatile',
+    textModelTiny:'llama-3.1-8b-instant',
+    keyPrefix:'gsk_',
+    name:'Groq'
+  },
+  nvidia:{
+    baseUrl:'https://integrate.api.nvidia.com/v1/chat/completions',
+    visionModel:'meta/llama-4-scout-17b-16e-instruct',
+    textModelFast:'meta/llama-3.1-8b-instruct',
+    textModelBetter:'meta/llama-3.3-70b-instruct',
+    textModelTiny:'meta/llama-3.1-8b-instruct',
+    keyPrefix:'nvapi-',
+    name:'NVIDIA NIM'
+  }
+};
+
+function getProviderConfig(){return PROVIDER_CONFIG[aiProvider]||PROVIDER_CONFIG.groq}
+function getApiUrl(){return getProviderConfig().baseUrl}
+function getActiveApiKey(){return aiProvider==='nvidia'?nimApiKey:apiKey}
+function getVisionModel(){return getProviderConfig().visionModel}
+function getApiHeaders(){return{'Content-Type':'application/json','Authorization':`Bearer ${getActiveApiKey()}`}}
+
+function setAiProvider(p){
+  aiProvider=p;
+  store.setItem('rizz_ai_provider',p);
+  // Update UI
+  document.getElementById('provider-groq').classList.toggle('active',p==='groq');
+  document.getElementById('provider-nvidia').classList.toggle('active',p==='nvidia');
+  document.getElementById('groq-key-section').style.display=p==='groq'?'block':'none';
+  document.getElementById('nvidia-key-section').style.display=p==='nvidia'?'block':'none';
+  // Update status
+  const activeKey=getActiveApiKey();
+  const statusEl=document.getElementById('key-status');
+  if(statusEl)statusEl.textContent=activeKey?`✅ Using ${getProviderConfig().name}`:'⚠️ Enter your API key';
+  showToast(`Switched to ${getProviderConfig().name}`);
+}
+
 function saveApiKey(){
   const inp=document.getElementById('api-key-input');
   const k=inp.value.trim();
-  if(k.includes('•'))return; // already masked, no change
+  if(k.includes('•'))return;
   if(!k.startsWith('gsk_')){document.getElementById('key-status').textContent='⚠️ Should start with gsk_';return}
   apiKey=k;store.setItem('ig_api_key',k);
-  document.getElementById('key-status').textContent='✅ Key saved.';
+  document.getElementById('key-status').textContent='✅ Groq key saved.';
   inp.value=k.slice(0,14)+'••••••••••••';
   markApiSaved();
 }
+
+function saveNimApiKey(){
+  const inp=document.getElementById('nim-key-input');
+  const k=inp.value.trim();
+  if(k.includes('•'))return;
+  if(!k.startsWith('nvapi-')){document.getElementById('nim-key-status').textContent='⚠️ Should start with nvapi-';return}
+  nimApiKey=k;store.setItem('ig_nim_api_key',k);
+  document.getElementById('nim-key-status').textContent='✅ NVIDIA NIM key saved.';
+  inp.value=k.slice(0,16)+'••••••••••••';
+  markApiSaved();
+}
+
 function loadApiKey(){
+  // Load provider
+  const savedProvider=store.getItem('rizz_ai_provider');
+  if(savedProvider)aiProvider=savedProvider;
+  // Load Groq key
   const k=store.getItem('ig_api_key');
   if(k){
     apiKey=k;
     const inp=document.getElementById('api-key-input');
     if(inp)inp.value=k.slice(0,14)+'••••••••••••';
-    markApiSaved();
   }
+  // Load NIM key
+  const nk=store.getItem('ig_nim_api_key');
+  if(nk){
+    nimApiKey=nk;
+    const inp=document.getElementById('nim-key-input');
+    if(inp)inp.value=nk.slice(0,16)+'••••••••••••';
+  }
+  // Set provider UI state
+  const pg=document.getElementById('provider-groq');
+  const pn=document.getElementById('provider-nvidia');
+  if(pg)pg.classList.toggle('active',aiProvider==='groq');
+  if(pn)pn.classList.toggle('active',aiProvider==='nvidia');
+  const gs=document.getElementById('groq-key-section');
+  const ns=document.getElementById('nvidia-key-section');
+  if(gs)gs.style.display=aiProvider==='groq'?'block':'none';
+  if(ns)ns.style.display=aiProvider==='nvidia'?'block':'none';
+  if(k||nk)markApiSaved();
 }
 function markApiSaved(){
   const icon=document.getElementById('api-icon');
@@ -5018,7 +5112,7 @@ let selectedAngles={dm:null,story:null};
 let imageAngles={dm:[],story:[]};
 
 async function analyzeImage(id='dm'){
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(!imgs[id].b64)return;
   if(!checkCallLimit())return;
 
@@ -5070,11 +5164,11 @@ Rules: observations must quote or paraphrase the ACTUAL words from the messages.
     :'Instagram DM conversation screenshot. ONLY read the actual text inside the message bubbles. RIGHT bubbles = my messages, LEFT bubbles = hers. The bottom-most LEFT bubble is the most recent message from her that I need to reply to. Ignore everything else (header, status bar, icons, timestamps). Return the JSON.';
 
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch(getApiUrl(),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      headers:getApiHeaders(),
       body:JSON.stringify({
-        model:'meta-llama/llama-4-scout-17b-16e-instruct',
+        model:getVisionModel(),
         max_tokens:600,
         messages:[
           {role:'system',content:sysPrompt},
@@ -5214,7 +5308,7 @@ const cachedSuggestions={dm:{},story:{}};
 
 // ── BATCH PRELOAD ────────────────────────────
 async function preloadAngleSuggestions(angles,id){
-  if(!apiKey||!imgs[id]?.b64)return;
+  if(!getActiveApiKey()||!imgs[id]?.b64)return;
   if(!checkCallLimit())return;
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
@@ -5337,11 +5431,11 @@ Return ONLY raw JSON, no markdown:
     :'Instagram DM screenshot. ONLY read the actual message bubbles. RIGHT = my messages, LEFT = hers. The bottom-most LEFT bubble is what I need to reply to. Read those exact words. Generate 3 replies per angle that directly respond to what she literally said — quote-level relevance. Ignore the username, status bar, icons, timestamps, all UI.';
 
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch(getApiUrl(),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      headers:getApiHeaders(),
       body:JSON.stringify({
-        model:'meta-llama/llama-4-scout-17b-16e-instruct',
+        model:getVisionModel(),
         max_tokens:750,
         temperature:1.0,
         top_p:0.95,
@@ -5375,7 +5469,7 @@ Return ONLY raw JSON, no markdown:
 }
 
 async function generateAngleSuggestions(angle,id,cacheIndex=null){
-  if(!apiKey)return;
+  if(!getActiveApiKey())return;
   if(!checkCallLimit())return;
   const tone=getActiveTone();
   const ctx=document.getElementById('ctx-input').value.trim();
@@ -5458,11 +5552,11 @@ Generate exactly 3 distinct reply options. Return ONLY raw JSON:
       :`Instagram DM screenshot. ONLY read the text inside the message bubbles. RIGHT = my messages, LEFT = hers. Read the bottom-most LEFT bubble — that's her latest message. Every reply must directly respond to those exact words. Ignore the username, status bar, icons, timestamps, all UI.`);
 
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch(getApiUrl(),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      headers:getApiHeaders(),
       body:JSON.stringify({
-        model:'meta-llama/llama-4-scout-17b-16e-instruct',
+        model:getVisionModel(),
         max_tokens:450,
         temperature:isSpicy?1.1:1.0,
         top_p:0.95,
@@ -8829,7 +8923,7 @@ function setQuality(q){
   document.getElementById('qt-fast').classList.toggle('active',q==='fast');
   document.getElementById('qt-better').classList.toggle('active',q==='better');
 }
-function getTextModel(){return qualityMode==='better'?'llama-3.3-70b-versatile':'llama-3.1-8b-instant'}
+function getTextModel(){const c=getProviderConfig();return qualityMode==='better'?c.textModelBetter:c.textModelFast}
 
 // ── CHAR COUNTERS ─────────────────────────────
 function updateCharCount(){
@@ -8982,13 +9076,13 @@ Return ONLY valid JSON, no markdown:
     let body;
     if(isImage){
       const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.dm.type};base64,${imgs.dm.b64}`}},{type:'text',text:`Instagram DM screenshot. ONLY read the text inside the message bubbles. RIGHT bubbles = my messages, LEFT bubbles = hers. The bottom-most LEFT bubble is her latest message — reply to that. Ignore the username, status bar, icons, timestamps, all UI. Generate 3 replies as JSON.`}];
-      body={model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:0.92,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
+      body={model:getVisionModel(),max_tokens:500,temperature:0.92,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
     }else{
       body={model:getTextModel(),max_tokens:500,temperature:0.92,messages:[{role:'system',content:system},{role:'user',content:`Their message:\n"${textMsg.slice(0,1000)}"\n\nGenerate 3 replies as JSON.`}]};
     }
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch(getApiUrl(),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+      headers:getApiHeaders(),
       body:JSON.stringify(body)
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
@@ -9024,7 +9118,7 @@ function pickQuickTone(t){
 }
 
 async function quickGenerate(forcedTone){
-  if(!apiKey){showToast('⚠️ Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('⚠️ Enter your API key first');return}
   const isImage=quickTab==='image';
   const textMsg=document.getElementById('quick-msg').value.trim();
   const ctx=document.getElementById('quick-ctx').value.trim();
@@ -9112,12 +9206,12 @@ Return ONLY valid JSON, no markdown. The "replies" array MUST contain exactly 3 
     let body;
     if(isImage){
       const userMsg=[{type:'image_url',image_url:{url:`data:${imgs.quick.type};base64,${imgs.quick.b64}`}},{type:'text',text:`Chat screenshot. ONLY read the text in the message bubbles. RIGHT = my messages, LEFT = theirs. Reply to the latest LEFT message. Ignore all UI. Detect the vibe and return EXACTLY 3 distinct replies in the JSON.`}];
-      body={model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
+      body={model:getVisionModel(),max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:userMsg}]};
     }else{
       body={model:getTextModel(),max_tokens:500,temperature:1.0,top_p:0.95,frequency_penalty:0.5,presence_penalty:0.4,messages:[{role:'system',content:system},{role:'user',content:`Their message:\n"${textMsg.slice(0,1000)}"\n\nDetect the vibe and return EXACTLY 3 distinct replies in the JSON.`}]};
     }
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+    const res=await fetch(getApiUrl(),{
+      method:'POST',headers:getApiHeaders(),
       body:JSON.stringify(body)
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
@@ -9163,7 +9257,7 @@ const REWRITE_PROMPTS={
 };
 
 async function rewriteReply(index,type){
-  if(!apiKey){showToast('Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('Enter your API key first');return}
   if(!checkCallLimit())return;
   const reply=currentReplies[index];
   if(!reply)return;
@@ -9188,10 +9282,10 @@ CRITICAL:
 - Return ONLY the rewritten reply text — no quotes, no explanation, no preamble.`;
 
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch(getApiUrl(),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:120,temperature:0.8,messages:[{role:'user',content:prompt}]})
+      headers:getApiHeaders(),
+      body:JSON.stringify({model:getProviderConfig().textModelTiny,max_tokens:120,temperature:0.8,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
     const data=await res.json();
@@ -9248,7 +9342,7 @@ function copyCardReply(index){
 // ── GENERATE (image/story modes) ─────────────
 let lastReply='';
 async function generate(){
-  if(!apiKey){showToast('⚠️ Enter your API key first');return}
+  if(!getActiveApiKey()){showToast('⚠️ Enter your API key first');return}
 
   // Route by mode
   if(mode==='quick') return quickGenerate();
@@ -9377,10 +9471,10 @@ If it's scenery, food, or no people: react to what's actually happening.${angleT
 
 Write ONLY the DM reply text. Nothing else.`}];
 
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch(getApiUrl(),{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:250,stream:true,temperature:0.95,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
+      headers:getApiHeaders(),
+      body:JSON.stringify({model:getVisionModel(),max_tokens:250,stream:true,temperature:0.95,messages:[{role:'system',content:system},{role:'user',content:userMsg}]})
     });
     if(!res.ok)throw new Error(await apiErrorMessage(res));
 
