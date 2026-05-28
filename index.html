@@ -2120,7 +2120,12 @@ function sendLiveReply(i,btn){
   const r=currentReplies[i];if(!r)return;
   if(!extensionReady){showToast('Install the Don\'t Miss extension first');return}
   if(btn){btn.textContent='📩 Sending...';btn.disabled=true}
+  let done=false;
+  const timeout=setTimeout(()=>{
+    if(!done){done=true;if(btn){btn.textContent='📩 Send';btn.disabled=false}showToast('⚠️ Extension didn\'t respond — reload extension & refresh page')}
+  },8000);
   window.addEventListener('dm-auto-reply-result',function handler(e){
+    if(done)return;done=true;clearTimeout(timeout);
     window.removeEventListener('dm-auto-reply-result',handler);
     const res=e.detail||{};
     if(res.ok){
@@ -2221,10 +2226,12 @@ async function runAutoReplyLoop(){
 
     // Check if the AI detected a DIFFERENT message than last time
     const newMsg=lastGenMessage||'';
+    const isWaiting=/^\[waiting\]$/i.test(newMsg);
     const isSameMessage=(newMsg===prevMessage && prevMessage!=='[Live chat]' && _autoScanCount>1);
 
-    if(isSameMessage){
-      // Same message as before — she hasn't replied yet, don't send again
+    if(isSameMessage||isWaiting){
+      // Same message or she hasn't replied yet — don't send
+      if(isWaiting) showToast('🤖 She hasn\'t replied yet — watching...');
       _autoSending=false;
       autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
       return;
@@ -2233,23 +2240,34 @@ async function runAutoReplyLoop(){
     // New message detected! Wait a bit so she doesn't think it's instant
     if(currentReplies.length&&extensionReady){
       const best=currentReplies[0];
-      const delay=Math.floor(Math.random()*25000)+20000; // 20-45 seconds
+      const delay=Math.floor(Math.random()*3000)+2000; // 2-5s (TESTING — bump to 20-45s for production)
       showToast(`🤖 New message detected — replying in ${Math.round(delay/1000)}s`);
       await new Promise(r=>setTimeout(r,delay));
       if(!autoReplyMode){_autoSending=false;return} // user turned it off during wait
-      window.addEventListener('dm-auto-reply-result',function handler(e){
-        window.removeEventListener('dm-auto-reply-result',handler);
-        const res=e.detail||{};
-        if(res.ok){
-          showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
-          const card=targetDoc.getElementById('live-card-0');
-          if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
-        }else{
-          showToast('Auto-send failed: '+(res.error||'?'));
-        }
-        _autoSending=false;
-      },{once:true});
-      window.dispatchEvent(new CustomEvent('dm-auto-reply',{detail:{text:best.text,autoSend:true}}));
+      // Send with timeout fallback — if extension doesn't respond in 8s, unstick
+      let sendDone=false;
+      const sendPromise=new Promise(resolve=>{
+        const timeout=setTimeout(()=>{
+          if(!sendDone){sendDone=true;showToast('⚠️ Extension didn\'t respond — is it loaded? Reload extension & refresh page');resolve(false)}
+        },8000);
+        window.addEventListener('dm-auto-reply-result',function handler(e){
+          if(sendDone)return;
+          sendDone=true;clearTimeout(timeout);
+          window.removeEventListener('dm-auto-reply-result',handler);
+          const res=e.detail||{};
+          if(res.ok){
+            showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
+            const card=targetDoc.getElementById('live-card-0');
+            if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
+          }else{
+            showToast('Auto-send failed: '+(res.error||'?'));
+          }
+          resolve(res.ok);
+        },{once:true});
+        window.dispatchEvent(new CustomEvent('dm-auto-reply',{detail:{text:best.text,autoSend:true}}));
+      });
+      await sendPromise;
+      _autoSending=false;
 
       // After sending, wait a few seconds before watching again
       // (let our message appear on screen so the hash updates)
@@ -3262,6 +3280,12 @@ ABSOLUTE FAILURE MODES — these are the mistakes that ruin every scan:
 ❌ EVER generating a reply that responds to something I (the user) said — you can READ my blue messages for context/flow, but your reply target is ALWAYS a GREY bubble. No exceptions.
 ❌ READING AN OLD BLUE MESSAGE AND ACCIDENTALLY REPLYING TO THE TOPIC IT RAISED — if my blue says "what are you up to tonight" and her grey says "not much wbu", you reply to "not much wbu", NOT to my question. Your reply should ANSWER her "wbu", not re-answer my question.
 ❌ ANCHORING ON A GREY BUBBLE THAT IS SEPARATED FROM THE INPUT BOX BY 5+ MESSAGES — if there are many blue messages below her grey and above the input box, that grey is OLD. The conversation has moved on. Look closer to the bottom.
+❌ REPLYING TO THE SAME MESSAGE TWICE — if my_recent_sends in the memory block already contains a reply to her current grey bubble, she hasn't sent anything NEW yet. Check: is there a BLUE bubble BELOW her grey? If yes, I already replied to that grey — do NOT reply again. Look for a NEWER grey below my blue, or if there is none, set her_message to "[waiting]" and return replies that re-engage ("you went quiet on me", "hello??", "don't leave me on read 😭").
+
+📎 STICKERS, GIFS, HEARTS & REACTIONS:
+- Instagram users send STICKERS, GIFs, animated hearts, reactions, and image-only messages. These show up as grey bubbles but have NO readable text — just a visual element.
+- If the nearest grey bubble to the input box is a sticker/GIF/heart/reaction with no text, set her_message to "[sticker]" or "[reaction]" and write replies that playfully acknowledge it ("okay what does that mean 😭", "you really just sent me that", "elaborate please", "i need words not stickers").
+- If the screenshot is blurry or you genuinely can't read any bubbles, set her_message to "[unreadable]" and still return 3 generic but usable replies. NEVER return an error or say "could not read" — always give something usable.
 
 🔒 FINAL TARGET VERIFICATION (do this BEFORE writing any reply):
 After you pick your grey bubble target, VERIFY all 3 of these:
@@ -3389,6 +3413,10 @@ Step 5: STOP scanning up as soon as you hit a blue bubble. Anything above blue i
 ⚠️ COMMON FAILURE #3: reading MY blue/purple message high up in the chat and accidentally making your reply about the TOPIC I raised. Example: my blue says "what's your type" and her grey says "idk hbu" — your reply must answer HER "idk hbu", NOT discuss "types" because I brought it up. Reply to HER words, not mine.
 
 ⚠️ COMMON FAILURE #4: the MEMORY BLOCK above is from PAST scans — those messages were already replied to. Do NOT let memory pull you toward an old topic. The SCREENSHOT is your only source for the current reply target.
+
+⚠️ COMMON FAILURE #5: replying to the SAME grey message twice. If there's a BLUE bubble BELOW her grey, that means I already replied to it. Look for a NEWER grey below that blue. If there isn't one, she hasn't responded yet — set her_message to "[waiting]" and give re-engagement replies.
+
+⚠️ COMMON FAILURE #6: saying "could not read" when the grey bubble is a sticker/GIF/heart. These are valid messages — set her_message to "[sticker]" and reply playfully.
 
 ⚠️ DISTANCE CHECK: count bubbles between your grey target and the input box. If 4+ blue/purple bubbles sit between them, your target is probably TOO OLD — re-scan from the bottom.
 
@@ -3524,16 +3552,22 @@ async function popOutLive(){
       <button class="live-stop-btn" id="pip-story" style="flex:1;padding:10px">📖 Story reply</button>
     </div>
     <button class="live-stop-btn" id="pip-reset" style="width:100%;padding:8px;margin-bottom:8px;font-size:11px;opacity:.85">🔄 Switched chats — start fresh memory</button>
-    <button class="live-stop-btn" id="pip-deep" style="width:100%;padding:10px;margin-bottom:12px">📖 Deep scan chat</button>
+    <button class="live-stop-btn" id="pip-deep" style="width:100%;padding:10px;margin-bottom:8px">📖 Deep scan chat</button>
+    <button class="live-stop-btn" id="pip-auto" style="width:100%;padding:10px;margin-bottom:12px;display:${extensionReady?'block':'none'}">🤖 Auto mode</button>
     <div class="live-detected" id="live-detected"></div>
     <div class="reply-cards" id="live-reply-cards"></div>`;
   // expose the handlers on the pip window so inline onclicks resolve there
-  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker','toggleDeepScan'].forEach(fn=>{pipWindow[fn]=window[fn];});
+  ['scanLive','copyLiveReply','markGoodLive','reportLive','fixLiveMessage','profileScanLive','storyReplyLive','resetLiveChatPointer','regenSingleLive','toggleRegenPicker','toggleDeepScan','toggleAutoReplyMode','sendLiveReply'].forEach(fn=>{pipWindow[fn]=window[fn];});
   pipWindow.document.getElementById('pip-scan').addEventListener('click',()=>scanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-profile').addEventListener('click',()=>profileScanLive(pipWindow.document));
   pipWindow.document.getElementById('pip-story').addEventListener('click',()=>storyReplyLive(pipWindow.document));
   pipWindow.document.getElementById('pip-reset').addEventListener('click',()=>resetLiveChatPointer());
   pipWindow.document.getElementById('pip-deep').addEventListener('click',()=>toggleDeepScan(pipWindow.document));
+  pipWindow.document.getElementById('pip-auto').addEventListener('click',()=>{
+    toggleAutoReplyMode();
+    const ab=pipWindow.document.getElementById('pip-auto');
+    if(ab){ab.textContent=autoReplyMode?'🤖 Auto ON — watching for new messages':'🤖 Auto mode';ab.style.borderColor=autoReplyMode?'var(--green)':'';ab.style.color=autoReplyMode?'var(--green)':'';}
+  });
   pipWindow.addEventListener('pagehide',()=>{pipWindow=null;});
   showToast('Popped out — keep it over your chat and scan from there');
 }
