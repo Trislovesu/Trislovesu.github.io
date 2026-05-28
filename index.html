@@ -268,6 +268,25 @@ input[type="text"]::placeholder{color:var(--text3)}
 .regen-chip:hover{border-color:var(--text2);color:var(--text)}
 .rw-btn.regen-rw{color:var(--text3)}
 .rw-btn.regen-rw:hover{color:#9b6ee0;border-color:#9b6ee0;background:rgba(155,110,224,0.08)}
+/* 🚨 manual help overlay — fires when AI is unsure */
+@keyframes manualHelpFlash{0%,100%{box-shadow:inset 0 0 0 0 rgba(244,67,54,0)}50%{box-shadow:inset 0 0 0 6px rgba(244,67,54,0.55),0 0 60px rgba(244,67,54,0.4)}}
+.manual-help-active{animation:manualHelpFlash 0.7s ease-in-out infinite}
+.manual-help-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.manual-help-box{background:var(--surface);border:2px solid #f44336;border-radius:14px;padding:18px;max-width:420px;width:100%;box-shadow:0 0 50px rgba(244,67,54,0.35)}
+.manual-help-title{font-size:15px;font-weight:700;color:#f44336;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.manual-help-sub{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.manual-help-context{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--text2)}
+.manual-help-context strong{color:var(--text);font-weight:600}
+.manual-help-candidates{margin-bottom:12px;font-size:11px;color:var(--text3);line-height:1.6}
+.manual-help-candidates ol{margin:4px 0 0 16px;padding:0}
+.manual-help-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);min-height:60px;resize:vertical;outline:none;transition:border-color .15s}
+.manual-help-input:focus{border-color:#f44336;box-shadow:0 0 0 2px rgba(244,67,54,0.2)}
+.manual-help-actions{display:flex;gap:8px;margin-top:10px}
+.manual-help-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.manual-help-btn.send{background:#f44336;border-color:#f44336;color:#fff}
+.manual-help-btn.send:hover{background:#e53935}
+.manual-help-btn.cancel:hover{background:var(--surface3)}
 /* feedback-copy iOS-style toggle */
 #feedback-copy-slider:before{content:"";position:absolute;height:22px;width:22px;left:2px;top:2px;background:var(--text2);border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 #feedback-copy-toggle:checked + #feedback-copy-slider{background:rgba(91,158,245,0.25);border-color:#5b9ef5}
@@ -2114,6 +2133,159 @@ function checkExtension(){
   setTimeout(()=>{window.removeEventListener('message',pongHandler);if(!extensionReady){showSendButtons(false);console.log('[Don\'t Miss] No extension response')}},500);
 }
 
+// 🏆 Score the candidate replies and pick the best one — local scoring against training data,
+// recent sends, and quality heuristics. No extra API call.
+function pickBestReply(replies, parsed){
+  if(!replies||!replies.length)return null;
+  if(replies.length===1)return {reply:replies[0],index:0,score:0,reasons:['only option']};
+  const myRecent=(parsed&&parsed.my_recent_sends)||[];
+  const herMsg=((parsed&&parsed.her_message)||'').toLowerCase();
+  const goods=(typeof savedGoodReplies!=='undefined'?savedGoodReplies:[]).slice(0,30);
+  const bads=(typeof reportedReplies!=='undefined'?reportedReplies:[]).slice(0,30);
+  const refined=(typeof refinedReplies!=='undefined'?refinedReplies:[]).slice(0,20);
+  const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  const tokens=s=>new Set(norm(s).split(' ').filter(w=>w.length>3));
+  const overlap=(a,b)=>{const ta=tokens(a),tb=tokens(b);let c=0;ta.forEach(t=>tb.has(t)&&c++);return Math.min(ta.size,tb.size)?c/Math.min(ta.size,tb.size):0};
+
+  const scored=replies.map((r,i)=>{
+    let score=0;
+    const reasons=[];
+    const text=r.text||'';
+    const tNorm=norm(text);
+    const tLen=text.split(/\s+/).length;
+
+    // Penalty: repeats something I already sent
+    myRecent.forEach(prev=>{if(overlap(text,prev)>0.5){score-=4;reasons.push('repeats my recent send')}});
+
+    // Penalty: too short / dead-end
+    if(tLen<3){score-=2;reasons.push('too short')}
+    if(/^(lol|yeah|bet|true|nice|same|haha|fr|sure)\.?$/i.test(text.trim())){score-=5;reasons.push('dead-end one-word')}
+
+    // Penalty: matches a reported bad pattern
+    bads.forEach(b=>{const o=overlap(text,b.reply);if(o>0.6){score-=3;reasons.push('similar to reported bad reply')}});
+
+    // Bonus: matches a saved good pattern
+    goods.forEach(g=>{const o=overlap(text,g.reply);if(o>0.55){score+=2;reasons.push('similar to saved good reply')}});
+
+    // Bonus: matches a refined (user-edited) reply
+    refined.forEach(rf=>{const o=overlap(text,rf.final||rf.refined||'');if(o>0.55){score+=3;reasons.push('matches refined pattern')}});
+
+    // Bonus: has a hook (question / specific reference)
+    if(/\?/.test(text)){score+=2;reasons.push('has question')}
+    if(/\b(you|u|your|ur)\b/i.test(text)){score+=1;reasons.push('addresses her')}
+
+    // Penalty: banned/cringe phrases
+    const banned=['vibes','you\'re beautiful','you look amazing','you look incredible','stunning','adorable','thinking of you','i hear you','that makes sense','genuinely','lowkey obsessed','okay but','okay so','wait but'];
+    banned.forEach(b=>{if(tNorm.includes(b)){score-=2;reasons.push(`banned: "${b}"`)}});
+
+    // Bonus: substance — sentence-length with content (not just a one-liner)
+    if(tLen>=5 && tLen<=18){score+=1;reasons.push('good length')}
+
+    // Bonus: responds to her question
+    if(/\?/.test(herMsg)){
+      // If her message had a question, prefer replies that look like an answer
+      if(tLen>=4 && !text.trim().endsWith('?')){score+=1;reasons.push('answers her question')}
+    }
+
+    return {reply:r,index:i,score,reasons};
+  });
+
+  // Sort by score desc, tie-break on original order (first wins)
+  scored.sort((a,b)=>b.score-a.score||a.index-b.index);
+  return scored[0];
+}
+
+// 🚨 Manual help UI — fires when AI is unsure. Pauses auto mode, shows a red-flashing
+// input box. User types a manual reply, it gets sent + saved as training data.
+// Returns Promise<{action:'sent'|'cancelled', text?}>
+function showManualHelpUI(doc, herMsg, candidates, picked){
+  return new Promise(resolve=>{
+    // Flash the body
+    doc.body.classList.add('manual-help-active');
+
+    const overlay=doc.createElement('div');
+    overlay.className='manual-help-overlay';
+    const candList=(candidates||[]).map((c,i)=>`<li${picked&&picked.index===i?' style="color:var(--text2)"':''}>${(c.text||'').replace(/</g,'&lt;')}<span style="color:var(--text3);font-style:italic"> · ${c.tone||''}</span></li>`).join('');
+    const scoreNote=picked?` (best score: ${picked.score.toFixed(1)})`:'';
+    overlay.innerHTML=`
+      <div class="manual-help-box">
+        <div class="manual-help-title">🚨 Manual help needed</div>
+        <div class="manual-help-sub">The AI isn't confident enough to send any of these on its own${scoreNote}. Type what you'd reply and I'll send it + learn from it for next time.</div>
+        <div class="manual-help-context"><strong>She said:</strong> "${(herMsg||'').replace(/</g,'&lt;')||'(could not read)'}"</div>
+        <div class="manual-help-candidates">AI's uncertain picks:<ol>${candList||'<li>(none)</li>'}</ol></div>
+        <textarea class="manual-help-input" id="manual-help-input" placeholder="Type your reply..." autocomplete="off"></textarea>
+        <div class="manual-help-actions">
+          <button class="manual-help-btn cancel" id="manual-help-cancel">⏸ Pause auto</button>
+          <button class="manual-help-btn send" id="manual-help-send">📩 Send & learn</button>
+        </div>
+      </div>`;
+    doc.body.appendChild(overlay);
+
+    const input=overlay.querySelector('#manual-help-input');
+    const sendBtn=overlay.querySelector('#manual-help-send');
+    const cancelBtn=overlay.querySelector('#manual-help-cancel');
+    setTimeout(()=>input.focus(),100);
+
+    function cleanup(){
+      try{overlay.remove()}catch(e){}
+      doc.body.classList.remove('manual-help-active');
+    }
+
+    async function doSend(){
+      const text=input.value.trim();
+      if(!text){input.focus();return}
+      sendBtn.disabled=true;sendBtn.textContent='Sending...';
+      const res=await sendViaExtension(text);
+      if(res.ok){
+        // 🧠 Save as training data — high-priority good example since user wrote it
+        try{
+          savedGoodReplies.push({
+            message:herMsg||'',reply:text,tone:'manual-override',
+            ts:Date.now(),source:'manual_help',weight:2
+          });
+          if(typeof saveGoods==='function')saveGoods();
+          if(typeof renderGoods==='function')renderGoods();
+          // Also remember as part of her profile if we know who it is
+          if(liveCurrentHandle){
+            try{
+              mergeLiveMemory(liveCurrentHandle,{my_recent_sends:[text]});
+            }catch(e){}
+          }
+        }catch(e){console.warn('Save manual reply failed',e)}
+        showToast('✅ Manual reply sent & saved as training data');
+        cleanup();
+        resolve({action:'sent',text});
+      }else{
+        sendBtn.disabled=false;sendBtn.textContent='📩 Send & learn';
+        showToast('Send failed: '+(res.error||'?'));
+      }
+    }
+
+    sendBtn.addEventListener('click',doSend);
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Enter' && (e.metaKey||e.ctrlKey)){e.preventDefault();doSend()}
+    });
+    cancelBtn.addEventListener('click',()=>{
+      cleanup();
+      // Pause auto mode
+      if(autoReplyMode){
+        autoReplyMode=false;
+        if(autoReplyInterval){clearTimeout(autoReplyInterval);autoReplyInterval=null}
+        // Sync button state
+        document.querySelectorAll('#auto-reply-toggle-btn, #pip-auto').forEach(btn=>{
+          btn.textContent='🤖 Auto mode';btn.style.borderColor='';btn.style.color='';
+        });
+        if(pipWindow&&!pipWindow.closed){
+          const pipBtn=pipWindow.document.getElementById('pip-auto');
+          if(pipBtn){pipBtn.textContent='🤖 Auto mode';pipBtn.style.borderColor='';pipBtn.style.color=''}
+        }
+        showToast('⏸ Auto mode paused — toggle it back on when ready');
+      }
+      resolve({action:'cancelled'});
+    });
+  });
+}
+
 // 📩 Unified send-via-extension helper — handles postMessage to the right window
 // (main window OR popout's parent), with timeout fallback. Returns Promise<{ok, error?}>
 function sendViaExtension(text){
@@ -2259,20 +2431,52 @@ async function runAutoReplyLoop(){
 
     // Check if the AI detected a DIFFERENT message than last time
     const newMsg=lastGenMessage||'';
+    const parsed=window._lastLiveParsed||{};
+    const myRecent=(parsed.my_recent_sends||[]).map(s=>(s||'').toLowerCase().trim()).filter(Boolean);
+    const newMsgLow=newMsg.toLowerCase().trim();
+
+    // 🚫 GUARD: AI mis-identified MY message as hers (happens when typing indicator triggers rescan)
+    const isMyOwnMessage=myRecent.some(m=>m===newMsgLow || (m.length>4 && newMsgLow.length>4 && (m.includes(newMsgLow)||newMsgLow.includes(m))));
     const isWaiting=/^\[waiting\]$/i.test(newMsg);
+    const isTypingIndicator=/^\[typing\]$/i.test(newMsg) || /^(\.\.\.|typing|…)$/i.test(newMsg.trim()) || newMsg.trim().length<2;
     const isSameMessage=(newMsg===prevMessage && prevMessage!=='[Live chat]' && _autoScanCount>1);
 
-    if(isSameMessage||isWaiting){
-      // Same message or she hasn't replied yet — don't send
-      if(isWaiting) showToast('🤖 She hasn\'t replied yet — watching...');
+    if(isSameMessage||isWaiting||isMyOwnMessage||isTypingIndicator){
+      if(isMyOwnMessage) showToast('🤖 That\'s my last message — waiting for her to reply');
+      else if(isTypingIndicator) showToast('🤖 She\'s typing... waiting');
+      else if(isWaiting) showToast('🤖 She hasn\'t replied yet — watching...');
       _autoSending=false;
       autoReplyInterval=setTimeout(runAutoReplyLoop,3000);
       return;
     }
 
-    // New message detected! Wait a bit so she doesn't think it's instant
+    // New message detected! Pick the BEST reply using local scoring vs training data
     if(currentReplies.length&&extensionReady){
-      const best=currentReplies[0];
+      const picked=pickBestReply(currentReplies,parsed);
+      const best=picked?picked.reply:currentReplies[0];
+      console.log('[Don\'t Miss] Picked reply',picked?.index,'score',picked?.score,'reasons:',picked?.reasons);
+
+      // 🚨 CONFIDENCE GATE — if AI is unsure OR best reply scored poorly, ask user for manual help
+      const aiConf=Number(parsed.recommended_strategy?.confidence ?? 0.7);
+      const bestScore=picked?.score ?? 0;
+      const allLow=(picked && currentReplies.length>=2 && bestScore<=0);
+      const isRisky=(aiConf<0.5 || allLow || /\[(unreadable|sticker)\]/i.test(newMsg));
+
+      if(isRisky){
+        console.log('[Don\'t Miss] Confidence too low (conf:',aiConf,'score:',bestScore,') — asking for manual help');
+        showToast('🚨 AI unsure — manual help needed');
+        const result=await showManualHelpUI(targetDoc,newMsg,currentReplies,picked);
+        _autoSending=false;
+        // After manual help: resume the loop (unless paused)
+        if(result.action==='sent'){
+          // Update hash so we don't immediately rescan our own typed message
+          await new Promise(r=>setTimeout(r,4000));
+          _autoLastHash=_autoQuickHash()||'';
+        }
+        if(autoReplyMode){autoReplyInterval=setTimeout(runAutoReplyLoop,3000)}
+        return;
+      }
+
       const delay=Math.floor(Math.random()*3000)+2000; // 2-5s (TESTING — bump to 20-45s for production)
       showToast(`🤖 New message detected — replying in ${Math.round(delay/1000)}s`);
       await new Promise(r=>setTimeout(r,delay));
@@ -2280,8 +2484,8 @@ async function runAutoReplyLoop(){
       // Use the unified send helper (handles popout/main window automatically)
       const res=await sendViaExtension(best.text);
       if(res.ok){
-        showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
-        const card=targetDoc.getElementById('live-card-0');
+        showToast(`🤖 Sent #${(picked?.index??0)+1}: "${best.text.slice(0,40)}..."`);
+        const card=targetDoc.getElementById('live-card-'+(picked?.index??0));
         if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
       }else{
         showToast('Auto-send failed: '+(res.error||'?'));
@@ -3311,6 +3515,11 @@ ABSOLUTE FAILURE MODES — these are the mistakes that ruin every scan:
 ❌ ANCHORING ON A GREY BUBBLE THAT IS SEPARATED FROM THE INPUT BOX BY 5+ MESSAGES — if there are many blue messages below her grey and above the input box, that grey is OLD. The conversation has moved on. Look closer to the bottom.
 ❌ REPLYING TO THE SAME MESSAGE TWICE — if my_recent_sends in the memory block already contains a reply to her current grey bubble, she hasn't sent anything NEW yet. Check: is there a BLUE bubble BELOW her grey? If yes, I already replied to that grey — do NOT reply again. Look for a NEWER grey below my blue, or if there is none, set her_message to "[waiting]" and return replies that re-engage ("you went quiet on me", "hello??", "don't leave me on read 😭").
 
+⌨️ TYPING INDICATOR — critical to recognize:
+- If you see a small grey bubble with just three dots ("..." / "…" / animated dots) at the bottom of the chat, THAT IS THE TYPING INDICATOR — it means SHE is typing right now. It is NOT a message.
+- When you see the typing indicator, set her_message to "[typing]" and use the LAST ACTUAL grey message as your reply target. If there is no actual grey message yet OR my last reply is already addressing it, set her_message to "[waiting]" and return re-engagement replies.
+- NEVER treat the typing indicator dots as her actual message.
+
 📎 STICKERS, GIFS, HEARTS & REACTIONS:
 - Instagram users send STICKERS, GIFs, animated hearts, reactions, and image-only messages. These show up as grey bubbles but have NO readable text — just a visual element.
 - If the nearest grey bubble to the input box is a sticker/GIF/heart/reaction with no text, set her_message to "[sticker]" or "[reaction]" and write replies that playfully acknowledge it ("okay what does that mean 😭", "you really just sent me that", "elaborate please", "i need words not stickers").
@@ -3475,6 +3684,7 @@ Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
     renderLiveCards(currentReplies,targetDoc);
     currentReplies.forEach(r=>addToHistory(r.tone||'live','[Live]',r.text,'dm',null));
     // 🧠 LEARN from this scan — save what we picked up about her so next scan is sharper
+    window._lastLiveParsed=parsed; // expose for auto-loop validation (always)
     try{
       let handle=(parsed.her_handle||liveCurrentHandle||'').toString().trim();
       // Guard: never save the user's own handle as "her". Strip out anything matching the signed-in email's local-part or known user-side names.
@@ -3486,6 +3696,8 @@ Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
       }
       // Also block common left-sidebar leaks
       if(handle&&/^trislovesu/i.test(handle))handle='';
+      // Fallback: if AI didn't return handle but we have one cached, use it so profile keeps updating
+      if(!handle && liveCurrentHandle && !/^trislovesu/i.test(liveCurrentHandle)) handle=liveCurrentHandle;
       if(handle){
         liveCurrentHandle=handle;
         const mem=mergeLiveMemory(handle,{
