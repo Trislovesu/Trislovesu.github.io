@@ -2099,15 +2099,18 @@ function checkExtension(){
     showSendButtons(true);
     return;
   }
-  // Ping and wait
-  window.addEventListener('dm-extension-pong',function handler(e){
-    window.removeEventListener('dm-extension-pong',handler);
-    extensionReady=!!(e.detail&&e.detail.ok);
-    showSendButtons(extensionReady);
-  },{once:true});
-  window.dispatchEvent(new CustomEvent('dm-extension-ping'));
+  // Ping via postMessage and wait for pong
+  function pongHandler(e){
+    if(e.data&&e.data.type==='dm-extension-pong'){
+      window.removeEventListener('message',pongHandler);
+      extensionReady=!!(e.data.detail&&e.data.detail.ok);
+      showSendButtons(extensionReady);
+    }
+  }
+  window.addEventListener('message',pongHandler);
+  window.postMessage({type:'dm-extension-ping'},'*');
   // Fallback: if no response in 500ms, extension not installed
-  setTimeout(()=>{if(!extensionReady)showSendButtons(false)},500);
+  setTimeout(()=>{window.removeEventListener('message',pongHandler);if(!extensionReady)showSendButtons(false)},500);
 }
 
 function showSendButtons(show){
@@ -2122,21 +2125,24 @@ function sendLiveReply(i,btn){
   if(btn){btn.textContent='📩 Sending...';btn.disabled=true}
   let done=false;
   const timeout=setTimeout(()=>{
-    if(!done){done=true;if(btn){btn.textContent='📩 Send';btn.disabled=false}showToast('⚠️ Extension didn\'t respond — reload extension & refresh page')}
+    if(!done){done=true;window.removeEventListener('message',handler);if(btn){btn.textContent='📩 Send';btn.disabled=false}showToast('⚠️ Extension didn\'t respond — reload extension & refresh page')}
   },8000);
-  window.addEventListener('dm-auto-reply-result',function handler(e){
-    if(done)return;done=true;clearTimeout(timeout);
-    window.removeEventListener('dm-auto-reply-result',handler);
-    const res=e.detail||{};
-    if(res.ok){
-      if(btn){btn.textContent='✅ Sent';btn.classList.add('marked')}
-      showToast('📩 Reply sent to Instagram');
-    }else{
-      if(btn){btn.textContent='📩 Send';btn.disabled=false}
-      showToast('Failed: '+(res.error||'unknown error'));
+  function handler(e){
+    if(e.data&&e.data.type==='dm-auto-reply-result'){
+      if(done)return;done=true;clearTimeout(timeout);
+      window.removeEventListener('message',handler);
+      const res=e.data.detail||{};
+      if(res.ok){
+        if(btn){btn.textContent='✅ Sent';btn.classList.add('marked')}
+        showToast('📩 Reply sent to Instagram');
+      }else{
+        if(btn){btn.textContent='📩 Send';btn.disabled=false}
+        showToast('Failed: '+(res.error||'unknown error'));
+      }
     }
-  },{once:true});
-  window.dispatchEvent(new CustomEvent('dm-auto-reply',{detail:{text:r.text,autoSend:true}}));
+  }
+  window.addEventListener('message',handler);
+  window.postMessage({type:'dm-auto-reply',text:r.text,autoSend:true},'*');
 }
 
 // Auto mode: watch for screen changes → detect new message → generate → send
@@ -2198,13 +2204,20 @@ async function runAutoReplyLoop(){
     return;
   }
 
-  // Screen changed! But wait a beat for the message to fully render
-  if(hash) _autoLastHash=hash;
-  await new Promise(r=>setTimeout(r,800));
+  // Screen changed — wait for it to settle (animations, typing indicators, etc.)
+  await new Promise(r=>setTimeout(r,1200));
+  if(!autoReplyMode)return;
 
-  // Re-hash after the settle delay to get stable state
+  // Re-hash after settle — if it changed AGAIN, the screen is still moving (scroll, animation)
+  // Wait once more to avoid wasting an API call on a mid-transition frame
   const settled=_autoQuickHash();
-  if(settled) _autoLastHash=settled;
+  if(settled && settled!==hash){
+    // Still changing — wait another beat
+    await new Promise(r=>setTimeout(r,1000));
+    if(!autoReplyMode)return;
+  }
+  const finalHash=_autoQuickHash();
+  if(finalHash) _autoLastHash=finalHash;
 
   // Now do a full scan + generate
   _autoSending=true;
@@ -2248,23 +2261,26 @@ async function runAutoReplyLoop(){
       let sendDone=false;
       const sendPromise=new Promise(resolve=>{
         const timeout=setTimeout(()=>{
-          if(!sendDone){sendDone=true;showToast('⚠️ Extension didn\'t respond — is it loaded? Reload extension & refresh page');resolve(false)}
+          if(!sendDone){sendDone=true;window.removeEventListener('message',msgHandler);showToast('⚠️ Extension didn\'t respond — reload extension & refresh page');resolve(false)}
         },8000);
-        window.addEventListener('dm-auto-reply-result',function handler(e){
-          if(sendDone)return;
-          sendDone=true;clearTimeout(timeout);
-          window.removeEventListener('dm-auto-reply-result',handler);
-          const res=e.detail||{};
-          if(res.ok){
-            showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
-            const card=targetDoc.getElementById('live-card-0');
-            if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
-          }else{
-            showToast('Auto-send failed: '+(res.error||'?'));
+        function msgHandler(e){
+          if(e.data&&e.data.type==='dm-auto-reply-result'){
+            if(sendDone)return;
+            sendDone=true;clearTimeout(timeout);
+            window.removeEventListener('message',msgHandler);
+            const res=e.data.detail||{};
+            if(res.ok){
+              showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
+              const card=targetDoc.getElementById('live-card-0');
+              if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
+            }else{
+              showToast('Auto-send failed: '+(res.error||'?'));
+            }
+            resolve(res.ok);
           }
-          resolve(res.ok);
-        },{once:true});
-        window.dispatchEvent(new CustomEvent('dm-auto-reply',{detail:{text:best.text,autoSend:true}}));
+        }
+        window.addEventListener('message',msgHandler);
+        window.postMessage({type:'dm-auto-reply',text:best.text,autoSend:true},'*');
       });
       await sendPromise;
       _autoSending=false;
