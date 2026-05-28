@@ -1294,7 +1294,12 @@ body::after{content:'';position:fixed;inset:-15%;z-index:-3;pointer-events:none;
         <div id="learn-mode-controls" style="display:none;margin-top:14px">
           <p style="font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:10px">Open Live Help, share your chat screen, then tap below. The AI reads YOUR (blue/purple) messages only and builds your texting profile.</p>
           <button class="action-btn" style="width:100%;padding:12px;font-weight:600;background:var(--green-bg);border-color:var(--green);color:var(--green)" onclick="learnFromLiveFrame()">📸 Learn from current screen</button>
+          <div style="position:relative;margin-top:8px">
+            <button class="action-btn" style="width:100%;padding:12px;font-weight:600;background:var(--blue-bg);border-color:var(--blue);color:var(--blue)" onclick="document.getElementById('deep-scan-import-file').click()">📂 Import deep scan JSON</button>
+            <input type="file" id="deep-scan-import-file" accept=".json" multiple style="display:none" onchange="importDeepScanFiles(this.files)">
+          </div>
           <button class="action-btn" style="width:100%;padding:10px;margin-top:6px" onclick="clearUserProfile()">🗑 Reset my style profile</button>
+          <div id="deep-scan-import-status" style="display:none;margin-top:10px;font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px"></div>
           <div id="user-profile-summary" style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:none"></div>
         </div>
       </div>
@@ -2400,6 +2405,7 @@ async function sendLiveReply(i,btn){
 // Auto mode: watch for screen changes → detect new message → generate → send
 let _autoLastHash='';
 let _autoSending=false;
+let _autoSendingStartedAt=0;
 let _autoScanCount=0;
 let _autoLastSentText='';      // the EXACT text we last sent — never reply to it
 let _autoSentHistory=[];       // last 5 things we sent
@@ -2408,8 +2414,9 @@ let _autoCooldownUntil=0;      // skip any work until this timestamp
 let _autoUnstableCount=0;      // how many times in a row screen wasn't stable
 let _autoLastApiCallAt=0;      // timestamp of last API call (rate limiting)
 const AUTO_MIN_API_INTERVAL=10000;  // HARD CAP: minimum 10s between vision API calls
-const AUTO_SKIP_COOLDOWN=8000;      // After skipping (typing/own msg): wait 8s
+const AUTO_SKIP_COOLDOWN=8000;      // After skipping (own msg, no new): wait 8s
 const AUTO_SEND_COOLDOWN=7000;      // After successful send: wait 7s before next scan
+const AUTO_TYPING_COOLDOWN=18000;   // She's typing → wait 18s for her to actually send
 
 function toggleAutoReplyMode(){
   autoReplyMode=!autoReplyMode;
@@ -2420,7 +2427,7 @@ function toggleAutoReplyMode(){
     btn.style.color=autoReplyMode?'var(--green)':'';
   }
   if(autoReplyMode){
-    _autoLastHash='';_autoSending=false;_autoScanCount=0;
+    _autoLastHash='';_autoSending=false;_autoSendingStartedAt=0;_autoScanCount=0;
     _autoLastSentText='';_autoSentHistory=[];_autoLastHerMessage='';
     _autoCooldownUntil=0;_autoUnstableCount=0;
     showToast('🤖 Auto mode ON — will reply as soon as a new message appears');
@@ -2522,9 +2529,15 @@ function _autoQuickHash_FULL_UNUSED(){
 async function runAutoReplyLoop(){
   if(!autoReplyMode)return;
   if(_autoSending){
-    // Already generating/sending, check again shortly
-    autoReplyInterval=setTimeout(runAutoReplyLoop,2000);
-    return;
+    // Already generating/sending — but add a safety timeout (30s max)
+    if(!_autoSendingStartedAt)_autoSendingStartedAt=Date.now();
+    if(Date.now()-_autoSendingStartedAt>30000){
+      console.warn('[Don\'t Miss] _autoSending stuck for 30s — force-releasing');
+      _autoSending=false;_autoSendingStartedAt=0;
+    }else{
+      autoReplyInterval=setTimeout(runAutoReplyLoop,2000);
+      return;
+    }
   }
 
   // 🕒 COOLDOWN — after sending/skipping, don't even check the screen
@@ -2542,12 +2555,16 @@ async function runAutoReplyLoop(){
   }
 
   // 🧊 STABILITY CHECK — screen must hold still for ~1.5s before we trust it
+  // This also catches typing indicators — if screen is bouncing (typing dots), skip API call entirely
   const stable=await _isScreenStable();
   if(!autoReplyMode)return;
   if(!stable){
     _autoUnstableCount++;
-    const backoff=Math.min(2500+_autoUnstableCount*1500,10000);
+    // After 3+ unstable checks in a row, likely typing indicator — longer backoff
+    const isLikelyTyping=_autoUnstableCount>=3;
+    const backoff=isLikelyTyping?AUTO_TYPING_COOLDOWN:Math.min(2500+_autoUnstableCount*1500,10000);
     if(_autoUnstableCount===1) showToast('🤖 Screen moving — waiting for it to settle');
+    if(isLikelyTyping) showToast('🤖 Looks like typing — waiting for message to send');
     autoReplyInterval=setTimeout(runAutoReplyLoop,backoff);
     return;
   }
@@ -2565,6 +2582,7 @@ async function runAutoReplyLoop(){
 
   // Now do a full scan + generate
   _autoSending=true;
+  _autoSendingStartedAt=Date.now();
   _autoScanCount++;
   const targetDoc=(pipWindow&&!pipWindow.closed)?pipWindow.document:document;
 
@@ -2613,7 +2631,7 @@ async function runAutoReplyLoop(){
       console.log('[Don\'t Miss] LEDGER added',newMsgs.length,'new message(s):',newMsgs.map(m=>`${m.sender}:${m.text.slice(0,30)}`));
     }
 
-    // AI state fields (still used as supporting signals)
+    // AI state fields
     const latestSender=(parsed.latest_actual_sender||'').toLowerCase();
     const typingIndicatorVisible=!!parsed.typing_indicator_visible;
     const aiSaysShouldReply=parsed.should_reply!==false;
@@ -2627,12 +2645,11 @@ async function runAutoReplyLoop(){
     // Decision logic — ledger-driven
     let decision='REPLY';
     let decisionReason='';
-    if(typingIndicatorVisible){decision='WAIT_TYPING';decisionReason='She\'s typing — waiting';}
+    if(typingIndicatorVisible){decision='WAIT_TYPING';decisionReason='She\'s typing — waiting for her to send';}
     else if(!newMsgs.length){decision='WAIT_NO_NEW';decisionReason='No new messages since last scan';}
     else if(newestNewMsg && newestNewMsg.sender==='self'){decision='WAIT_SELF_LATEST';decisionReason='Newest is MINE — saved, waiting for her';}
     else if(!newestOther){decision='WAIT_NO_NEW_OTHER';decisionReason='New messages saved but none from her — waiting';}
     else if(!aiSaysShouldReply){decision='WAIT_AI_SAID_NO';decisionReason='AI said don\'t reply: '+aiReason;}
-    else if(latestSender==='unknown' || latestSender===''){decision='WAIT_UNKNOWN_SENDER';decisionReason='Sender unclear — waiting to be safe';}
 
     // 🔁 Defense-in-depth — exact duplicate of what we just sent
     if(decision==='REPLY' && newestOther){
@@ -2641,9 +2658,32 @@ async function runAutoReplyLoop(){
       }
     }
 
-    // Use the newest "other" message as the reply target (instead of AI's her_message which may be stale)
-    const replyTargetText=newestOther?newestOther.text:newMsg;
-    const replyTargetId=newestOther?newestOther.fingerprint:(parsed.latest_message_id||`other:${newMsg.toLowerCase().slice(0,40)}`);
+    // 🎯 VERIFY the AI's replies actually match the new message (don't override, just verify)
+    // If AI's her_message matches the new other message (fuzzy), trust the replies.
+    // If they don't match, the AI got confused — skip this scan.
+    let replyTargetText=newestOther?newestOther.text:newMsg;
+    let replyTargetId=newestOther?newestOther.fingerprint:(parsed.latest_message_id||`other:${newMsg.toLowerCase().slice(0,40)}`);
+    if(decision==='REPLY' && newestOther){
+      const aiTarget=(parsed.her_message||'').trim();
+      // If AI's target matches the ledger's new other message, replies are aligned ✓
+      // If AI's target is wildly different, the replies are for the WRONG message
+      const aiMatchesLedger=aiTarget && _fuzzyMatch(aiTarget,newestOther.text);
+      if(aiTarget && !aiMatchesLedger){
+        // AI replied to a different message than what the ledger says is new. Possible explanations:
+        // - AI extracted an old message (already in ledger) — skip, will rescan
+        // - AI extracted a NEWER message we missed — trust the AI
+        // Heuristic: if AI's target IS in the ledger (already seen), the AI is stale → skip
+        const aiTargetSeen=ledger.some(m=>m.sender==='other'&&_fuzzyMatch(m.text,aiTarget));
+        if(aiTargetSeen){
+          decision='WAIT_AI_STALE';
+          decisionReason='AI replied to old message — skipping, will rescan';
+        }else{
+          // AI saw something newer than what we extracted — trust AI
+          replyTargetText=aiTarget;
+          replyTargetId=`other:${aiTarget.toLowerCase().slice(0,80)}`;
+        }
+      }
+    }
 
     // 📊 DEBUG LOG
     console.log('[Don\'t Miss] DECISION:',{
@@ -2651,6 +2691,7 @@ async function runAutoReplyLoop(){
       visible_count:visibleMsgs.length,
       new_count:newMsgs.length,
       new_other_count:newOtherMsgs.length,
+      ai_her_message:parsed.her_message,
       reply_target:replyTargetText,
       latest_actual_sender:latestSender,
       typing_indicator:typingIndicatorVisible,
@@ -2662,14 +2703,12 @@ async function runAutoReplyLoop(){
     if(decision!=='REPLY'){
       showToast('🤖 '+decisionReason);
       _autoSending=false;
-      _autoCooldownUntil=Date.now()+AUTO_SKIP_COOLDOWN;
-      autoReplyInterval=setTimeout(runAutoReplyLoop,AUTO_SKIP_COOLDOWN);
+      // 🕒 LONGER cooldown for typing — wait for her to actually send
+      const cd=(decision==='WAIT_TYPING')?AUTO_TYPING_COOLDOWN:AUTO_SKIP_COOLDOWN;
+      _autoCooldownUntil=Date.now()+cd;
+      autoReplyInterval=setTimeout(runAutoReplyLoop,cd);
       return;
     }
-
-    // 🎯 OVERRIDE her_message with the actual ledger-confirmed new message (more reliable than AI's her_message)
-    // This ensures we reply to the RIGHT message
-    lastGenMessage=replyTargetText;
 
     // New message detected! Pick the BEST reply using local scoring vs training data
     if(currentReplies.length&&extensionReady){
@@ -2686,13 +2725,14 @@ async function runAutoReplyLoop(){
       if(isRisky){
         console.log('[Don\'t Miss] Confidence too low (conf:',aiConf,'score:',bestScore,') — asking for manual help');
         showToast('🚨 AI unsure — manual help needed');
+        _autoSending=false; // Release lock BEFORE blocking on manual help
         const result=await showManualHelpUI(targetDoc,newMsg,currentReplies,picked);
-        _autoSending=false;
         // After manual help: resume the loop (unless paused)
         if(result.action==='sent'){
           // Update hash so we don't immediately rescan our own typed message
           await new Promise(r=>setTimeout(r,4000));
           _autoLastHash=_autoQuickHash()||'';
+          _autoCooldownUntil=Date.now()+AUTO_SEND_COOLDOWN;
         }
         if(autoReplyMode){autoReplyInterval=setTimeout(runAutoReplyLoop,3000)}
         return;
@@ -2700,21 +2740,24 @@ async function runAutoReplyLoop(){
 
       const delay=Math.floor(Math.random()*3000)+2000; // 2-5s (TESTING — bump to 20-45s for production)
       showToast(`🤖 New message detected — replying in ${Math.round(delay/1000)}s`);
+      _autoSending=false; // Release lock during delay — we're just waiting
       const hashBeforeDelay=_autoLastHash;
       await new Promise(r=>setTimeout(r,delay));
-      if(!autoReplyMode){_autoSending=false;return} // user turned it off during wait
+      if(!autoReplyMode){return} // user turned it off during wait
 
-      // 🛂 FINAL PRE-SEND CHECK (brief §21) — if the screen changed during the delay,
+      // 🛂 FINAL PRE-SEND CHECK — if the screen changed during the delay,
       // the user might have manually replied OR she sent something new. Abort and rescan.
       const hashNow=_autoQuickHash();
       if(hashNow && hashBeforeDelay && hashNow!==hashBeforeDelay){
         console.log('[Don\'t Miss] Screen changed during reply delay — aborting send, re-evaluating');
         showToast('🤖 Chat updated mid-delay — re-checking');
-        _autoSending=false;
         _autoLastHash=hashNow;
         autoReplyInterval=setTimeout(runAutoReplyLoop,2000);
         return;
       }
+
+      // Re-acquire lock for send
+      _autoSending=true;
 
       // Use the unified send helper (handles popout/main window automatically)
       const res=await sendViaExtension(best.text);
@@ -2757,6 +2800,9 @@ async function runAutoReplyLoop(){
       _autoLastHash=_autoQuickHash()||'';
     }else{
       _autoSending=false;
+      if(!extensionReady&&currentReplies.length){
+        showToast('🤖 Replies ready but extension not connected — install Don\'t Miss extension');
+      }
     }
   }catch(e){
     console.warn('Auto-reply scan failed',e);
@@ -3108,21 +3154,331 @@ Return ONLY valid JSON.`},
     showToast(`🧠 Learned from ${newSamples.length} messages`);
   }catch(err){showToast('Learn failed: '+err.message);console.error(err)}
 }
-// Build the injection block for prompts — only active when learn mode is on + profile exists
+// Build the injection block for prompts — ALWAYS active when profile exists (no learn mode gate)
 function buildUserStyleBlock(){
-  if(!learnModeOn)return '';
   const p=getUserProfile();if(!p||!p.styleSummary)return '';
   const parts=['\n\n═══ USER\'S OWN TEXTING STYLE (match this closely — replies should sound like HIM) ═══'];
   parts.push(`Style: ${p.styleSummary}`);
   if(p.styleTraits&&p.styleTraits.length)parts.push(`Traits: ${p.styleTraits.join(', ')}`);
   if(p.avgLength)parts.push(`Typical length: ${p.avgLength}`);
   if(p.emojiUsage)parts.push(`Emoji use: ${p.emojiUsage}`);
+  if(p.toneDefault)parts.push(`Default tone: ${p.toneDefault}`);
   if(p.vocabQuirks&&p.vocabQuirks.length)parts.push(`His go-to words/phrases: ${p.vocabQuirks.join(', ')}`);
+  if(p.flirtingStyle)parts.push(`Flirting style: ${p.flirtingStyle}`);
+  if(p.humorStyle)parts.push(`Humor style: ${p.humorStyle}`);
+  if(p.teasingStyle)parts.push(`Teasing style: ${p.teasingStyle}`);
+  if(p.punctuationStyle)parts.push(`Punctuation: ${p.punctuationStyle}`);
+  if(p.spellingHabits)parts.push(`Spelling habits: ${p.spellingHabits}`);
+  if(p.caseStyle)parts.push(`Capitalization: ${p.caseStyle}`);
+  if(p.responsePatterns&&p.responsePatterns.length)parts.push(`Response patterns: ${p.responsePatterns.slice(0,5).join('; ')}`);
   if(p.samples&&p.samples.length){
-    const ex=p.samples.slice(0,5).map(s=>`"${s}"`).join(', ');
+    const ex=p.samples.slice(0,8).map(s=>`"${s}"`).join(', ');
     parts.push(`Examples of how he actually texts: ${ex}`);
   }
-  parts.push('═══ END USER STYLE — make the replies sound like the examples above ═══');
+  if(p.commonPhrases&&p.commonPhrases.length)parts.push(`Common phrases: ${p.commonPhrases.join(', ')}`);
+  if(p.boundaries)parts.push(`Boundaries: ${p.boundaries}`);
+  parts.push('═══ END USER STYLE — make the replies sound like the examples above. Do NOT over-smooth. Keep natural imperfections. ═══');
+  return parts.join('\n');
+}
+
+// ── 📂 DEEP SCAN IMPORT — process deep scan JSON files to build profiles ──
+let _deepScanImporting=false;
+
+async function importDeepScanFiles(files){
+  if(!files||!files.length)return;
+  if(!apiKey){showToast('Enter your API key first');return}
+  if(_deepScanImporting){showToast('Already importing — please wait');return}
+  _deepScanImporting=true;
+  const statusEl=document.getElementById('deep-scan-import-status');
+  if(statusEl){statusEl.style.display='block';statusEl.innerHTML='📂 Loading files...';}
+
+  const allResults=[];
+  for(const file of files){
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+      if(!data.frames||!data.frames.length){showToast(`${file.name}: no frames`);continue}
+      if(statusEl)statusEl.innerHTML=`📂 Processing <strong>${file.name}</strong> (${data.frames.length} frames)...<br>This uses the vision API — may take a while.`;
+
+      const result=await processDeepScanFrames(data,file.name,statusEl);
+      if(result)allResults.push(result);
+    }catch(e){
+      console.error('Import failed for',file.name,e);
+      showToast(`Failed: ${file.name} — ${e.message}`);
+    }
+  }
+
+  // Merge all results into profiles
+  if(allResults.length){
+    mergeDeepScanResults(allResults);
+    if(statusEl){
+      const handles=allResults.map(r=>r.handle||'unknown').join(', ');
+      const totalMsgs=allResults.reduce((a,r)=>a+(r.messages||[]).length,0);
+      statusEl.innerHTML=`✅ Imported ${allResults.length} conversation(s): ${handles}<br>${totalMsgs} total messages extracted<br>Girl profiles + your style profile updated.`;
+    }
+    renderUserProfileStatus();
+  }
+  _deepScanImporting=false;
+  // Reset file input
+  const inp=document.getElementById('deep-scan-import-file');
+  if(inp)inp.value='';
+}
+
+async function processDeepScanFrames(data,filename,statusEl){
+  const frames=data.frames||[];
+  // Process in batches of 3 to save API calls — send 3 frames at a time as a grid
+  const allMessages=[];
+  let handle=data.handle||'';
+  const batchSize=3;
+  const totalBatches=Math.ceil(frames.length/batchSize);
+
+  for(let i=0;i<frames.length;i+=batchSize){
+    const batch=frames.slice(i,i+batchSize);
+    const batchIdx=Math.floor(i/batchSize)+1;
+    if(statusEl)statusEl.innerHTML=`📂 <strong>${filename}</strong>: scanning batch ${batchIdx}/${totalBatches}...`;
+
+    try{
+      // Send each frame in the batch as separate images
+      const userContent=[];
+      batch.forEach((frame,fi)=>{
+        let imgData=frame.image||'';
+        if(!imgData.startsWith('data:'))imgData='data:image/jpeg;base64,'+imgData;
+        userContent.push({type:'image_url',image_url:{url:imgData}});
+      });
+      userContent.push({type:'text',text:`These are ${batch.length} screenshot(s) of an Instagram DM conversation. Extract ALL messages from ALL frames.
+
+RULES:
+- BLUE/PURPLE bubbles (RIGHT side) = user's messages → sender: "user"
+- GREY bubbles (LEFT side) = her messages → sender: "female"
+- The girl's name/handle is at the TOP CENTRE of the conversation panel (NOT the left sidebar)
+- Extract the handle if visible
+- Include ALL messages you can read, in conversation order (oldest first)
+- Deduplicate messages that appear in multiple frames
+
+Return ONLY valid JSON:
+{"handle":"her_handle_or_name","messages":[{"sender":"user"|"female","text":"exact message text"}],"her_style":"one-line description of how she texts","user_style":"one-line description of how the user texts"}`});
+
+      const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+        body:JSON.stringify({
+          model:'meta-llama/llama-4-scout-17b-16e-instruct',
+          max_tokens:2000,temperature:0.2,
+          messages:[
+            {role:'system',content:'You are a precise message extractor for Instagram DM screenshots. Extract every visible message bubble with correct sender attribution. BLUE/PURPLE (right) = user. GREY (left) = female. The handle/name at the top centre of the chat panel is the girl\'s name. Do NOT confuse the left sidebar handles with the conversation partner. Return valid JSON only.'},
+            {role:'user',content:userContent}
+          ]
+        })
+      });
+
+      if(!res.ok){
+        const errText=await res.text();
+        console.warn('Deep scan batch failed:',errText);
+        continue;
+      }
+
+      const resData=await res.json();
+      const raw=resData.choices?.[0]?.message?.content?.trim()||'';
+      const parsed=parseJsonLoose(raw);
+      if(parsed){
+        if(parsed.handle&&!handle)handle=parsed.handle;
+        if(Array.isArray(parsed.messages)){
+          parsed.messages.forEach(m=>{
+            if(m.text&&m.sender){
+              // Deduplicate by normalized text
+              const norm=m.text.toLowerCase().replace(/\s+/g,' ').trim();
+              if(!allMessages.some(ex=>ex._norm===norm&&ex.sender===m.sender)){
+                allMessages.push({...m,_norm:norm});
+              }
+            }
+          });
+        }
+      }
+
+      // Rate limit between batches
+      if(i+batchSize<frames.length)await new Promise(r=>setTimeout(r,2000));
+    }catch(e){
+      console.warn('Batch processing error:',e);
+    }
+  }
+
+  // Clean up _norm field
+  allMessages.forEach(m=>delete m._norm);
+
+  return {
+    handle:handle,
+    filename:filename,
+    messages:allMessages,
+    frameCount:frames.length
+  };
+}
+
+function mergeDeepScanResults(results){
+  // 1. Build/update girl profiles
+  const all=getAllLiveMemory();
+  results.forEach(r=>{
+    if(!r.handle||!r.messages.length)return;
+    const key=r.handle.toLowerCase().replace(/^@/,'');
+    const existing=all[key]||{handle:r.handle,facts:[],topics:[],myRecentSends:[],herRecentSends:[],
+      likes:[],dislikes:[],hobbies:[],currentStrategy:{tone:null,confidence:0.5,note:''},
+      replyHistory:[],successCount:0,deadCount:0,scanCount:0,lastUpdated:0};
+
+    // Extract her messages for profile
+    const herMsgs=r.messages.filter(m=>m.sender==='female').map(m=>m.text);
+    const userMsgs=r.messages.filter(m=>m.sender==='user').map(m=>m.text);
+
+    existing.herRecentSends=uniqStrings([...herMsgs,...(existing.herRecentSends||[])],25);
+    existing.myRecentSends=uniqStrings([...userMsgs,...(existing.myRecentSends||[])],25);
+    existing.handle=r.handle;
+    existing.scanCount=(existing.scanCount||0)+1;
+    existing.lastUpdated=Date.now();
+    existing.deepScanImported=true;
+    existing.messageCount=(existing.messageCount||0)+r.messages.length;
+
+    // Store extracted conversation for context
+    if(!existing.extractedConversation)existing.extractedConversation=[];
+    existing.extractedConversation=uniqStrings([
+      ...r.messages.map(m=>`${m.sender==='user'?'ME':'HER'}: ${m.text}`),
+      ...(existing.extractedConversation||[])
+    ],60);
+
+    all[key]=existing;
+  });
+  saveAllLiveMemory(all);
+
+  // 2. Build/update user style profile from ALL user messages across all conversations
+  const allUserMessages=[];
+  results.forEach(r=>{
+    r.messages.filter(m=>m.sender==='user').forEach(m=>{
+      if(m.text&&m.text.length>1)allUserMessages.push(m.text);
+    });
+  });
+
+  if(allUserMessages.length){
+    const profile=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
+    profile.samples=uniqStrings([...allUserMessages,...(profile.samples||[])],50);
+    profile.sampleCount=(profile.sampleCount||0)+allUserMessages.length;
+
+    // Analyze user style from messages
+    analyzeUserStyleFromMessages(profile,allUserMessages);
+    saveUserProfile(profile);
+  }
+}
+
+function analyzeUserStyleFromMessages(profile,messages){
+  if(!messages.length)return;
+
+  // Sentence length analysis
+  const avgLen=messages.reduce((a,s)=>a+s.length,0)/messages.length;
+  profile.avgLength=avgLen<20?'very short':avgLen<35?'short':avgLen<60?'medium':'long';
+
+  // Emoji analysis
+  const emojiPattern=/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}]/gu;
+  const msgsWithEmoji=messages.filter(s=>emojiPattern.test(s)).length;
+  const emojiRatio=msgsWithEmoji/messages.length;
+  profile.emojiUsage=emojiRatio<0.05?'none':emojiRatio<0.15?'light':emojiRatio<0.35?'moderate':'heavy';
+
+  // Find common emojis
+  const emojiCounts={};
+  messages.forEach(m=>{
+    const found=m.match(emojiPattern);
+    if(found)found.forEach(e=>{emojiCounts[e]=(emojiCounts[e]||0)+1});
+  });
+  const topEmojis=Object.entries(emojiCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+  if(topEmojis.length)profile.topEmojis=topEmojis;
+
+  // Case analysis
+  const allLower=messages.filter(m=>m===m.toLowerCase()).length;
+  const lowerRatio=allLower/messages.length;
+  profile.caseStyle=lowerRatio>0.8?'mostly lowercase':lowerRatio>0.5?'mixed, leaning lowercase':'mixed case';
+
+  // Punctuation analysis
+  const withPeriods=messages.filter(m=>/\.\s*$/.test(m.trim())).length;
+  const withExcl=messages.filter(m=>/!/.test(m)).length;
+  const withQuestion=messages.filter(m=>/\?/.test(m)).length;
+  const periodRatio=withPeriods/messages.length;
+  profile.punctuationStyle=periodRatio<0.1?'rarely uses periods':'uses periods sometimes';
+  if(withExcl/messages.length<0.05)profile.punctuationStyle+=', almost no exclamation marks';
+  if(withQuestion/messages.length>0.2)profile.punctuationStyle+=', asks questions often';
+
+  // Slang detection
+  const slangWords=['lmao','lmfao','ngl','lowkey','highkey','bruh','bro','twin','bet','fr','nah','tbh','ong','wyd','rn','asf','icl','deadass','finna','tryna','gonna','wanna','ion','imo','idk','idc','stg','smh','atp'];
+  const foundSlang=new Set();
+  messages.forEach(m=>{
+    const words=m.toLowerCase().split(/\s+/);
+    words.forEach(w=>{
+      const clean=w.replace(/[^a-z]/g,'');
+      if(slangWords.includes(clean))foundSlang.add(clean);
+    });
+  });
+  if(foundSlang.size)profile.vocabQuirks=uniqStrings([...foundSlang,...(profile.vocabQuirks||[])],12);
+
+  // Repeated letters detection (e.g. "lmaooo", "yooo", "noooo")
+  const repeatedLetterMsgs=messages.filter(m=>/(.)\1{2,}/.test(m));
+  if(repeatedLetterMsgs.length>messages.length*0.1){
+    profile.spellingHabits=(profile.spellingHabits?profile.spellingHabits+'; ':'')+'often extends letters (e.g. "lmaooo", "yooo")';
+  }
+
+  // Common phrases (2-3 word combos that appear multiple times)
+  const phraseCounts={};
+  messages.forEach(m=>{
+    const words=m.toLowerCase().split(/\s+/).filter(w=>w.length>1);
+    for(let i=0;i<words.length-1;i++){
+      const pair=words[i]+' '+words[i+1];
+      if(pair.length>4)phraseCounts[pair]=(phraseCounts[pair]||0)+1;
+    }
+  });
+  const commonPhrases=Object.entries(phraseCounts).filter(e=>e[1]>=2).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>e[0]);
+  if(commonPhrases.length)profile.commonPhrases=uniqStrings([...commonPhrases,...(profile.commonPhrases||[])],12);
+
+  // Response patterns
+  const patterns=[];
+  if(avgLen<25)patterns.push('keeps messages short and punchy');
+  if(lowerRatio>0.7)patterns.push('types in lowercase');
+  if(foundSlang.size>=3)patterns.push('uses slang naturally ('+[...foundSlang].slice(0,4).join(', ')+')');
+  if(emojiRatio>0.2)patterns.push('uses emojis regularly');
+  if(emojiRatio<0.1)patterns.push('rarely uses emojis');
+  if(repeatedLetterMsgs.length>2)patterns.push('extends letters for emphasis');
+  profile.responsePatterns=uniqStrings([...patterns,...(profile.responsePatterns||[])],10);
+
+  // Auto-generate style summary if we have enough data
+  if(messages.length>=5&&!profile.styleSummary){
+    const parts=[];
+    parts.push(`Texts in ${profile.caseStyle||'mixed case'} with ${profile.avgLength||'short'} messages.`);
+    if(foundSlang.size)parts.push(`Uses slang like ${[...foundSlang].slice(0,4).join(', ')}.`);
+    parts.push(`${profile.emojiUsage||'Light'} emoji usage. ${profile.punctuationStyle||'Casual punctuation'}.`);
+    if(patterns.length)parts.push(patterns.slice(0,3).join('. ')+'.');
+    profile.styleSummary=parts.join(' ');
+  }
+
+  profile.lastUpdated=Date.now();
+}
+
+// Build girl profile context block for reply generation
+function buildGirlProfileBlock(handle){
+  if(!handle)return '';
+  const all=getAllLiveMemory();
+  const key=handle.toLowerCase().replace(/^@/,'');
+  const mem=all[key];
+  if(!mem)return '';
+
+  const parts=['\n\n═══ GIRL PROFILE — what you know about her (use this to decide WHAT to say) ═══'];
+  parts.push(`Handle: ${mem.handle}`);
+  if(mem.herStyle)parts.push(`Her texting style: ${mem.herStyle}`);
+  if(mem.facts&&mem.facts.length)parts.push(`Facts: ${mem.facts.join(', ')}`);
+  if(mem.likes&&mem.likes.length)parts.push(`Likes: ${mem.likes.join(', ')}`);
+  if(mem.dislikes&&mem.dislikes.length)parts.push(`Dislikes: ${mem.dislikes.join(', ')}`);
+  if(mem.hobbies&&mem.hobbies.length)parts.push(`Hobbies: ${mem.hobbies.join(', ')}`);
+  if(mem.topics&&mem.topics.length)parts.push(`Recent topics: ${mem.topics.join(', ')}`);
+  if(mem.currentStrategy&&mem.currentStrategy.tone)parts.push(`Current strategy: ${mem.currentStrategy.tone} — ${mem.currentStrategy.note||''}`);
+  if(mem.herRecentSends&&mem.herRecentSends.length){
+    const recent=mem.herRecentSends.slice(0,5).map(s=>`"${s}"`).join(', ');
+    parts.push(`Her recent messages: ${recent}`);
+  }
+  if(mem.extractedConversation&&mem.extractedConversation.length){
+    const convo=mem.extractedConversation.slice(0,10).join(' | ');
+    parts.push(`Recent conversation flow: ${convo}`);
+  }
+  parts.push('═══ END GIRL PROFILE — the girl profile tells you WHAT kind of reply fits her ═══');
   return parts.join('\n');
 }
 
@@ -3738,7 +4094,8 @@ async function doLiveGenerate(targetDoc,b64,overrideMsg){
   const memoryBlock=buildLiveMemoryBlock(liveCurrentHandle);
 
   const userStyleBlock=buildUserStyleBlock();
-  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${getFemaleReactionsContext(3)}${toneLine}${overrideBlock}${memoryBlock}${userStyleBlock}
+  const girlProfileBlock=buildGirlProfileBlock(liveCurrentHandle);
+  const system=`You are a fast texting assistant. You're looking at a full screenshot of the guy's computer screen. You write replies for HIM — you are ALWAYS the man.${getRefinedContext('',3)}${getGoodsContext('',4)}${getReportsContext('',4)}${getFemaleReactionsContext(3)}${toneLine}${overrideBlock}${memoryBlock}${girlProfileBlock}${userStyleBlock}
 
 STEP 1 — ONLY look at the active conversation panel (the RIGHT side of the screen):
 - IGNORE EVERYTHING on the LEFT SIDEBAR — that's MY chat list, MY username, MY notes, MY story circles, MY profile picture, search bar, navigation icons. The username at the top of the left sidebar (e.g. "trislovesu.7") is MINE — NEVER use that as her name.
@@ -3926,9 +4283,9 @@ Also include these STATE FIELDS at the end (used to decide whether to send):
 🆕 "visible_messages": an ORDERED array of EVERY message bubble currently visible in the chat panel, from oldest (top) to newest (bottom). Format: [{"sender":"self|other","text":"exact bubble text"}, ...]. This is THE source of truth — used to diff against memory and find what's actually new. Include EVERY bubble (even short ones like "yeah", "lol"). Exclude: timestamps, "Seen" labels, typing indicator dots, date dividers, the input box. ONLY actual message bubbles. Get the SENDER right — bottom-right-aligned blue/purple = self, left-aligned grey = other.
 
 Return ONLY valid JSON with EXACTLY this shape:
-{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"},"latest_actual_sender":"self|other|unknown","latest_message_id":"sender:text","typing_indicator_visible":false,"seen_receipt_visible":false,"should_reply":true,"should_reply_reason":"why","visible_messages":[{"sender":"other","text":"hey"},{"sender":"self","text":"yo"},{"sender":"other","text":"wyd"}]${learnModeOn?',"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality"':''},"replies":[{"text":"reply","tone":"label","why":"short reason"}]}${learnModeOn?`
+{"her_message":"HER newest grey message, quoted exactly","her_handle":"her name/handle from chat header","new_facts":["fact 1","fact 2"],"her_style":"one-line style description","topics_now":["topic1","topic2"],"my_recent_sends":["my last bubble","my prev bubble"],"her_recent_sends":["her last","her prev"],"new_likes":["thing she engaged with"],"new_dislikes":["angle that died"],"new_hobbies":["specific interest"],"last_our_reply":"exact text of my last blue bubble or empty","last_her_reaction":"exact text of her reply to my last blue or empty","last_reply_rating":"good|mid|bad|empty if no rating possible","recommended_strategy":{"tone":"flirty|chill|teasing|wholesome|bold|playful","confidence":0.7,"note":"one-line on what's working"},"latest_actual_sender":"self|other|unknown","latest_message_id":"sender:text","typing_indicator_visible":false,"seen_receipt_visible":false,"should_reply":true,"should_reply_reason":"why","visible_messages":[{"sender":"other","text":"hey"},{"sender":"self","text":"yo"},{"sender":"other","text":"wyd"}],"my_style_traits":["trait1","trait2","trait3","trait4"],"my_style_summary":"2-3 sentence description of how the blue/purple sender texts — their tone, vocabulary, length, emoji habits, personality","replies":[{"text":"reply","tone":"label","why":"short reason"}]}
 
-ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of the USER (the guy). Extract "my_style_traits" (4-8 specific observations like "uses lowercase only", "short punchy messages", "dry humor", "uses 😭 often") and "my_style_summary" (2-3 sentences describing how he texts, as if briefing a ghostwriter). This is based ONLY on the blue/purple bubbles.`:''}`;
+ALSO: analyze the BLUE/PURPLE (right-side) messages to build a style profile of the USER (the guy). Extract "my_style_traits" (4-8 specific observations like "uses lowercase only", "short punchy messages", "dry humor", "uses 😭 often") and "my_style_summary" (2-3 sentences describing how he texts, as if briefing a ghostwriter). This is based ONLY on the blue/purple bubbles. IMPORTANT: make your replies SOUND LIKE HIM — match his slang, length, energy, punctuation, emoji habits. Do NOT over-polish.`;
 
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -4024,36 +4381,28 @@ Return EXACTLY 3 distinct replies + learning fields in the JSON.`}]}]})
         }
       }
     }catch(e){console.warn('memory merge failed',e)}
-    // 🧠 Fix B+C: Auto-learn user style during scan when learn mode is on
-    if(learnModeOn){
-      try{
-        const profile=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
-        // Fix C: always accumulate raw samples from my_recent_sends
-        const newSamples=(parsed.my_recent_sends||[]).filter(s=>s&&typeof s==='string'&&s.length>1);
-        if(newSamples.length){
-          profile.samples=uniqStrings([...newSamples,...(profile.samples||[])],30);
-          profile.sampleCount=(profile.sampleCount||0)+newSamples.length;
-        }
-        // Fix B: if AI returned style analysis, merge it
-        if(parsed.my_style_summary){
-          profile.styleSummary=parsed.my_style_summary;
-          profile.lastUpdated=Date.now();
-        }
-        if(parsed.my_style_traits&&parsed.my_style_traits.length){
-          profile.styleTraits=uniqStrings([...(parsed.my_style_traits||[]),...(profile.styleTraits||[])],12);
-        }
-        // Infer basic stats from accumulated samples
-        if(newSamples.length){
-          const avgLen=profile.samples.reduce((a,s)=>a+s.length,0)/profile.samples.length;
-          profile.avgLength=avgLen<25?'short':avgLen<60?'medium':'long';
-          const emojiCount=profile.samples.filter(s=>/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(s)).length;
-          const emojiRatio=emojiCount/profile.samples.length;
-          profile.emojiUsage=emojiRatio<0.1?'none':emojiRatio<0.3?'light':emojiRatio<0.6?'moderate':'heavy';
-        }
-        saveUserProfile(profile);
-        renderUserProfileStatus();
-      }catch(e){console.warn('auto-learn style failed',e)}
-    }
+    // 🧠 Auto-learn user style during EVERY scan (always on — no learn mode gate)
+    try{
+      const profile=getUserProfile()||{samples:[],styleSummary:'',sampleCount:0,lastUpdated:0};
+      // Always accumulate raw samples from my_recent_sends
+      const newSamples=(parsed.my_recent_sends||[]).filter(s=>s&&typeof s==='string'&&s.length>1);
+      if(newSamples.length){
+        profile.samples=uniqStrings([...newSamples,...(profile.samples||[])],50);
+        profile.sampleCount=(profile.sampleCount||0)+newSamples.length;
+        // Run comprehensive style analysis
+        analyzeUserStyleFromMessages(profile,newSamples);
+      }
+      // If AI returned style analysis, merge it
+      if(parsed.my_style_summary){
+        profile.styleSummary=parsed.my_style_summary;
+        profile.lastUpdated=Date.now();
+      }
+      if(parsed.my_style_traits&&parsed.my_style_traits.length){
+        profile.styleTraits=uniqStrings([...(parsed.my_style_traits||[]),...(profile.styleTraits||[])],12);
+      }
+      saveUserProfile(profile);
+      renderUserProfileStatus();
+    }catch(e){console.warn('auto-learn style failed',e)}
   }catch(err){
     showToast(err.message&&err.message.length<90?err.message:'Scan failed');console.error(err);
   }finally{
