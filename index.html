@@ -745,7 +745,7 @@ input[type="text"]::placeholder{color:var(--text3)}
 .live-unsupported{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:16px;font-size:13px;color:var(--amber);line-height:1.6}
 .live-start-btn{width:100%;padding:16px;background:var(--green);color:#06140c;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 0 32px rgba(77,179,122,0.35);transition:all .15s}
 .live-start-btn:hover{opacity:.92;box-shadow:0 0 50px rgba(77,179,122,0.5)}
-.live-video{width:100%;max-height:230px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:12px}
+.live-video{width:100%;max-height:90px;border-radius:var(--radius-sm);object-fit:contain;background:#000;border:1px solid var(--border);margin-bottom:8px;opacity:.7}
 .live-scan-btn{flex:1;padding:14px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 0 28px rgba(226,226,226,0.18)}
 .live-scan-btn:hover{opacity:.93}
 .live-scan-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;box-shadow:none}
@@ -2097,6 +2097,7 @@ function checkExtension(){
   if(document.documentElement.getAttribute('data-dm-extension')==='ready'){
     extensionReady=true;
     showSendButtons(true);
+    console.log('[Don\'t Miss] Extension detected via attribute');
     return;
   }
   // Ping via postMessage and wait for pong
@@ -2105,12 +2106,43 @@ function checkExtension(){
       window.removeEventListener('message',pongHandler);
       extensionReady=!!(e.data.detail&&e.data.detail.ok);
       showSendButtons(extensionReady);
+      console.log('[Don\'t Miss] Extension pong received',e.data.detail);
     }
   }
   window.addEventListener('message',pongHandler);
   window.postMessage({type:'dm-extension-ping'},'*');
-  // Fallback: if no response in 500ms, extension not installed
-  setTimeout(()=>{window.removeEventListener('message',pongHandler);if(!extensionReady)showSendButtons(false)},500);
+  setTimeout(()=>{window.removeEventListener('message',pongHandler);if(!extensionReady){showSendButtons(false);console.log('[Don\'t Miss] No extension response')}},500);
+}
+
+// 📩 Unified send-via-extension helper — handles postMessage to the right window
+// (main window OR popout's parent), with timeout fallback. Returns Promise<{ok, error?}>
+function sendViaExtension(text){
+  return new Promise(resolve=>{
+    console.log('[Don\'t Miss] sendViaExtension called with:',text.slice(0,60));
+    let done=false;
+    // Listen on BOTH the current window and the opener (for popout case)
+    const targets=[window];
+    try{if(window.opener && !window.opener.closed) targets.push(window.opener)}catch(e){}
+    const handler=(e)=>{
+      if(e.data&&e.data.type==='dm-auto-reply-result'){
+        if(done)return;done=true;
+        clearTimeout(timeout);
+        targets.forEach(t=>t.removeEventListener('message',handler));
+        console.log('[Don\'t Miss] Got reply result',e.data.detail);
+        resolve(e.data.detail||{ok:false,error:'No detail'});
+      }
+    };
+    targets.forEach(t=>t.addEventListener('message',handler));
+    const timeout=setTimeout(()=>{
+      if(done)return;done=true;
+      targets.forEach(t=>t.removeEventListener('message',handler));
+      console.warn('[Don\'t Miss] Send timed out after 8s — bridge.js not responding');
+      resolve({ok:false,error:'Extension timeout — reload extension at chrome://extensions and refresh this page'});
+    },8000);
+    // Post to BOTH windows to ensure bridge.js receives it
+    targets.forEach(t=>{try{t.postMessage({type:'dm-auto-reply',text:text,autoSend:true},'*')}catch(e){console.warn('postMessage failed on target',e)}});
+    console.log('[Don\'t Miss] Posted to',targets.length,'window(s)');
+  });
 }
 
 function showSendButtons(show){
@@ -2119,30 +2151,18 @@ function showSendButtons(show){
   if(autoBtn)autoBtn.style.display=show?'':'none';
 }
 
-function sendLiveReply(i,btn){
+async function sendLiveReply(i,btn){
   const r=currentReplies[i];if(!r)return;
   if(!extensionReady){showToast('Install the Don\'t Miss extension first');return}
   if(btn){btn.textContent='📩 Sending...';btn.disabled=true}
-  let done=false;
-  const timeout=setTimeout(()=>{
-    if(!done){done=true;window.removeEventListener('message',handler);if(btn){btn.textContent='📩 Send';btn.disabled=false}showToast('⚠️ Extension didn\'t respond — reload extension & refresh page')}
-  },8000);
-  function handler(e){
-    if(e.data&&e.data.type==='dm-auto-reply-result'){
-      if(done)return;done=true;clearTimeout(timeout);
-      window.removeEventListener('message',handler);
-      const res=e.data.detail||{};
-      if(res.ok){
-        if(btn){btn.textContent='✅ Sent';btn.classList.add('marked')}
-        showToast('📩 Reply sent to Instagram');
-      }else{
-        if(btn){btn.textContent='📩 Send';btn.disabled=false}
-        showToast('Failed: '+(res.error||'unknown error'));
-      }
-    }
+  const res=await sendViaExtension(r.text);
+  if(res.ok){
+    if(btn){btn.textContent='✅ Sent';btn.classList.add('marked')}
+    showToast('📩 Reply sent to Instagram');
+  }else{
+    if(btn){btn.textContent='📩 Send';btn.disabled=false}
+    showToast('Failed: '+(res.error||'unknown error'));
   }
-  window.addEventListener('message',handler);
-  window.postMessage({type:'dm-auto-reply',text:r.text,autoSend:true},'*');
 }
 
 // Auto mode: watch for screen changes → detect new message → generate → send
@@ -2257,32 +2277,15 @@ async function runAutoReplyLoop(){
       showToast(`🤖 New message detected — replying in ${Math.round(delay/1000)}s`);
       await new Promise(r=>setTimeout(r,delay));
       if(!autoReplyMode){_autoSending=false;return} // user turned it off during wait
-      // Send with timeout fallback — if extension doesn't respond in 8s, unstick
-      let sendDone=false;
-      const sendPromise=new Promise(resolve=>{
-        const timeout=setTimeout(()=>{
-          if(!sendDone){sendDone=true;window.removeEventListener('message',msgHandler);showToast('⚠️ Extension didn\'t respond — reload extension & refresh page');resolve(false)}
-        },8000);
-        function msgHandler(e){
-          if(e.data&&e.data.type==='dm-auto-reply-result'){
-            if(sendDone)return;
-            sendDone=true;clearTimeout(timeout);
-            window.removeEventListener('message',msgHandler);
-            const res=e.data.detail||{};
-            if(res.ok){
-              showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
-              const card=targetDoc.getElementById('live-card-0');
-              if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
-            }else{
-              showToast('Auto-send failed: '+(res.error||'?'));
-            }
-            resolve(res.ok);
-          }
-        }
-        window.addEventListener('message',msgHandler);
-        window.postMessage({type:'dm-auto-reply',text:best.text,autoSend:true},'*');
-      });
-      await sendPromise;
+      // Use the unified send helper (handles popout/main window automatically)
+      const res=await sendViaExtension(best.text);
+      if(res.ok){
+        showToast('🤖 Sent: "'+best.text.slice(0,40)+'..."');
+        const card=targetDoc.getElementById('live-card-0');
+        if(card){card.style.borderColor='var(--green)';const sb=card.querySelector('.send-rw');if(sb)sb.textContent='✅ Sent'}
+      }else{
+        showToast('Auto-send failed: '+(res.error||'?'));
+      }
       _autoSending=false;
 
       // After sending, wait a few seconds before watching again
