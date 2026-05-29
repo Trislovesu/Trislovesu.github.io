@@ -3621,27 +3621,34 @@ RULES:
 Return ONLY valid JSON:
 {"handle":"her_handle_or_name","messages":[{"sender":"user"|"female","text":"exact message text"}],"her_style":"one-line description of how she texts","user_style":"one-line description of how the user texts"}`});
 
-        const res=await fetch(getApiUrl(),{
-          method:'POST',headers:getApiHeaders(),
-          body:JSON.stringify({
-            model:getVisionModel(),
-            max_tokens:2000,temperature:0.2,
-            messages:[
-              {role:'system',content:'You are a precise message extractor for Instagram DM screenshots. Extract every visible message bubble with correct sender attribution. BLUE/PURPLE (right) = user. GREY (left) = female. The handle/name at the top centre of the chat panel is the girl\'s name. Do NOT confuse the left sidebar handles with the conversation partner. Return valid JSON only.'},
-              {role:'user',content:userContent}
-            ]
-          })
-        });
+        // 90s timeout per batch so it can't hang forever
+        const controller=new AbortController();
+        const timeoutId=setTimeout(()=>controller.abort(),90000);
+        let res;
+        try{
+          res=await fetch(getApiUrl(),{
+            method:'POST',headers:getApiHeaders(),
+            signal:controller.signal,
+            body:JSON.stringify({
+              model:getVisionModel(),
+              max_tokens:2000,temperature:0.2,
+              messages:[
+                {role:'system',content:'You are a precise message extractor for Instagram DM screenshots. Extract every visible message bubble with correct sender attribution. BLUE/PURPLE (right) = user. GREY (left) = female. The handle/name at the top centre of the chat panel is the girl\'s name. Do NOT confuse the left sidebar handles with the conversation partner. Return valid JSON only.'},
+                {role:'user',content:userContent}
+              ]
+            })
+          });
+        }finally{clearTimeout(timeoutId)}
 
         if(!res.ok){
           const status=res.status;
           let errBody='';
           try{errBody=await res.text()}catch(_){}
           console.warn(`Deep scan batch ${batchIdx} HTTP ${status}:`,errBody);
-          // 429 = rate limit, wait longer before retry. 5xx = transient. 404 = bad model name
-          if(status===404){
-            throw new Error(`Model not found (${getVisionModel()}) — check provider settings`);
-          }
+          // 403/404 = bad model name or auth — don't retry, fail clearly
+          if(status===403)throw new Error(`Model ${getVisionModel()} not accessible — your NIM account may not have access. Switch to Groq in API settings.`);
+          if(status===404)throw new Error(`Model not found (${getVisionModel()}) — check provider settings`);
+          if(status===401)throw new Error(`API key invalid — re-enter it in settings`);
           if((status===429||status>=500)&&attempt===1){
             renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`HTTP ${status} — retrying...`});
             await new Promise(r=>setTimeout(r,status===429?6000:3000));
@@ -3668,10 +3675,19 @@ Return ONLY valid JSON:
         }
         batchSuccess=true;
       }catch(e){
+        const msg=e.message||'failed';
+        // Fatal errors: stop the whole scan immediately, don't try more batches
+        if(msg.includes('not accessible')||msg.includes('not found')||msg.includes('invalid')){
+          console.warn(`Deep scan fatal error:`,msg);
+          renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:msg});
+          _deepScanCancel=true;
+          showToast('⚠️ '+msg);
+          break;
+        }
         if(attempt===2){
           console.warn(`Batch ${batchIdx} failed twice:`,e);
           failedBatches++;
-          renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`Batch ${batchIdx}: ${e.message||'failed'}`});
+          renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`Batch ${batchIdx}: ${msg}`});
         }
       }
     }
