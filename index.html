@@ -3587,7 +3587,8 @@ async function processDeepScanFrames(data,filename,fileIdx,fileTotal){
   const frames=data.frames||[];
   const allMessages=[];
   let handle=data.handle||'';
-  const batchSize=3;
+  // NVIDIA NIM struggles with multi-image batches — use 1 image at a time
+  const batchSize=aiProvider==='nvidia'?1:3;
   const totalBatches=Math.ceil(frames.length/batchSize);
   let failedBatches=0;
 
@@ -4879,7 +4880,7 @@ const PROVIDER_CONFIG={
   },
   nvidia:{
     baseUrl:'https://nvidia-nim-proxy.rbr9myp5jd.workers.dev/v1/chat/completions',
-    visionModel:'meta/llama-4-maverick-17b-128e-instruct',
+    visionModel:'meta/llama-3.2-11b-vision-instruct',
     textModelFast:'meta/llama-3.1-8b-instruct',
     textModelBetter:'meta/llama-3.3-70b-instruct',
     textModelTiny:'meta/llama-3.1-8b-instruct',
