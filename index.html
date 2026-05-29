@@ -3635,13 +3635,19 @@ Return ONLY valid JSON:
 
         if(!res.ok){
           const status=res.status;
-          // 429 = rate limit, wait longer before retry. 5xx = transient
+          let errBody='';
+          try{errBody=await res.text()}catch(_){}
+          console.warn(`Deep scan batch ${batchIdx} HTTP ${status}:`,errBody);
+          // 429 = rate limit, wait longer before retry. 5xx = transient. 404 = bad model name
+          if(status===404){
+            throw new Error(`Model not found (${getVisionModel()}) — check provider settings`);
+          }
           if((status===429||status>=500)&&attempt===1){
             renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`HTTP ${status} — retrying...`});
             await new Promise(r=>setTimeout(r,status===429?6000:3000));
             continue;
           }
-          throw new Error(`HTTP ${status}`);
+          throw new Error(`HTTP ${status}: ${errBody.slice(0,120)}`);
         }
 
         const resData=await res.json();
@@ -3665,13 +3671,14 @@ Return ONLY valid JSON:
         if(attempt===2){
           console.warn(`Batch ${batchIdx} failed twice:`,e);
           failedBatches++;
-          renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`Batch ${batchIdx} failed`});
+          renderDeepScanProgress({filename,fileIdx,fileTotal,batchIdx,batchTotal:totalBatches,messagesFound:allMessages.length,error:`Batch ${batchIdx}: ${e.message||'failed'}`});
         }
       }
     }
 
-    // Rate limit between batches (avoid hitting Groq's free tier limits)
-    if(i+batchSize<frames.length && !_deepScanCancel)await new Promise(r=>setTimeout(r,2000));
+    // Rate limit between batches — NVIDIA NIM needs more cooldown (40rpm limit)
+    const batchDelay=aiProvider==='nvidia'?4000:2000;
+    if(i+batchSize<frames.length && !_deepScanCancel)await new Promise(r=>setTimeout(r,batchDelay));
   }
 
   allMessages.forEach(m=>delete m._norm);
@@ -4856,7 +4863,7 @@ const PROVIDER_CONFIG={
   },
   nvidia:{
     baseUrl:'https://nvidia-nim-proxy.rbr9myp5jd.workers.dev/v1/chat/completions',
-    visionModel:'meta/llama-4-scout-17b-16e-instruct',
+    visionModel:'meta/llama-4-maverick-17b-128e-instruct',
     textModelFast:'meta/llama-3.1-8b-instruct',
     textModelBetter:'meta/llama-3.3-70b-instruct',
     textModelTiny:'meta/llama-3.1-8b-instruct',
